@@ -49,10 +49,11 @@ export function StripeConnectBanner({
           <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" />
           <div>
             <p className="text-sm font-semibold text-emerald-950">
-              Stripe payouts connected
+              Stripe payments ready
             </p>
             <p className="text-xs text-emerald-800/80">
-              Client payments go directly to your connected Stripe account.
+              You accept client payments on your connected Stripe account as
+              the merchant of record. Portal receives its disclosed platform fee.
             </p>
           </div>
         </div>
@@ -76,13 +77,13 @@ export function StripeConnectBanner({
               : "Connect Stripe to get paid"}
           </p>
           <p className="text-xs text-amber-900/80">
-            Clients can only pay after you complete Stripe Connect Express
-            onboarding. Funds go to your account, not a shared platform wallet.
+            Clients can only pay after Stripe activates card payments on your
+            connected account. Existing Express accounts can continue setup here.
           </p>
           {connectStatus === "pending" ? (
             <p className="text-xs font-medium text-amber-900">
-              Onboarding saved. Complete any remaining Stripe steps if payouts
-              are still disabled.
+              Onboarding saved. Complete any remaining Stripe requirements if
+              card payments are still inactive.
             </p>
           ) : null}
           {connectStatus === "error" ? (

@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(37);
+select plan(39);
 
 -- Column grants are the first line of defense for system-managed state.
 select ok(not has_column_privilege('authenticated', 'public.users', 'subscription_status', 'update'), 'subscription status is not user-writable');
@@ -17,6 +17,7 @@ select ok(has_column_privilege('authenticated', 'public.users', 'full_name', 'up
 select ok(not has_column_privilege('authenticated', 'public.invoices', 'status', 'update'), 'invoice payment status is not user-writable');
 select ok(not has_column_privilege('authenticated', 'public.invoices', 'stripe_payment_intent_id', 'update'), 'payment intent id is not user-writable');
 select ok(not has_column_privilege('authenticated', 'public.invoices', 'stripe_checkout_session_id', 'update'), 'Checkout session id is not user-writable');
+select ok(not has_column_privilege('authenticated', 'public.invoices', 'stripe_connected_account_id', 'update'), 'originating connected account is not user-writable');
 select ok(not has_column_privilege('authenticated', 'public.invoices', 'amount_paid', 'update'), 'amount paid is not user-writable');
 select ok(not has_column_privilege('authenticated', 'public.invoices', 'amount_refunded', 'update'), 'amount refunded is not user-writable');
 select ok(not has_column_privilege('authenticated', 'public.invoices', 'stripe_charge_id', 'update'), 'charge id is not user-writable');
@@ -98,6 +99,12 @@ select throws_ok(
   $$insert into public.invoices (project_id, amount, amount_paid, status, title) values ('a0000000-0000-0000-0000-000000000001', 5000, 5000, 'paid', 'Forged paid invoice')$$,
   '42501', null,
   'owner cannot create an invoice with forged payment state'
+);
+
+select throws_ok(
+  $$insert into public.invoices (project_id, amount, stripe_connected_account_id, status, title) values ('a0000000-0000-0000-0000-000000000001', 5000, 'acct_attacker', 'pending', 'Forged account boundary')$$,
+  '42501', null,
+  'owner cannot assign a Stripe connected account to an invoice'
 );
 
 select is(

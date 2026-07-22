@@ -8,6 +8,10 @@ import type {
   InvoiceStatus,
 } from "@/types/database";
 import { createAdminClient } from "@/utils/supabase/admin";
+import {
+  connectedAccountRequestOptions,
+  paymentAccountMatches,
+} from "@/utils/stripe/direct-charge";
 
 export type InvoicePaymentOutcome =
   | "processing"
@@ -26,6 +30,7 @@ export type NormalizedInvoicePaymentEvent = {
   stripeObjectId: string | null;
   invoiceId: string;
   outcome: InvoicePaymentOutcome;
+  connectedAccountId: string | null;
   occurredAt: number;
   amountPaid?: number;
   amountRefunded?: number;
@@ -47,6 +52,7 @@ type PaymentState = Pick<
   | "dispute_status"
   | "stripe_payment_intent_id"
   | "stripe_checkout_session_id"
+  | "stripe_connected_account_id"
   | "last_payment_event_created_at"
 >;
 
@@ -123,13 +129,17 @@ export function reduceInvoicePaymentState(
       event.paymentIntentId ?? current.stripe_payment_intent_id,
     stripe_checkout_session_id:
       event.checkoutSessionId ?? current.stripe_checkout_session_id,
+    stripe_connected_account_id: current.stripe_connected_account_id,
     last_payment_event_created_at: event.occurredAt,
     payment_status_updated_at: new Date(event.occurredAt * 1000).toISOString(),
   };
 }
 
-export function invoiceCheckoutIdempotencyKey(invoice: Pick<Invoice, "id" | "updated_at">) {
-  return `portal:invoice-checkout:${invoice.id}:${Date.parse(invoice.updated_at)}`;
+export function invoiceCheckoutIdempotencyKey(
+  invoice: Pick<Invoice, "id" | "updated_at">,
+  connectedAccountId: string,
+) {
+  return `portal:invoice-checkout:${connectedAccountId}:${invoice.id}:${Date.parse(invoice.updated_at)}`;
 }
 
 async function findInvoiceId(
@@ -163,6 +173,28 @@ export async function applyInvoicePaymentEvent(
   event: NormalizedInvoicePaymentEvent,
   admin = createAdminClient(),
 ) {
+  const { data, error } = await admin
+    .from("invoices")
+    .select("*")
+    .eq("id", event.invoiceId)
+    .maybeSingle();
+  if (error || !data) {
+    return { ok: false as const, error: error?.message ?? "Invoice not found." };
+  }
+
+  const invoice = data as Invoice;
+  if (
+    !paymentAccountMatches(
+      invoice.stripe_connected_account_id,
+      event.connectedAccountId,
+    )
+  ) {
+    return {
+      ok: false as const,
+      error: "Stripe event connected account does not match the invoice owner.",
+    };
+  }
+
   const { error: historyError } = await admin.from("invoice_payment_events").insert({
     invoice_id: event.invoiceId,
     stripe_event_id: event.stripeEventId,
@@ -174,6 +206,7 @@ export async function applyInvoicePaymentEvent(
     amount_refunded: event.amountRefunded ?? null,
     stripe_charge_id: event.chargeId ?? null,
     stripe_dispute_id: event.disputeId ?? null,
+    stripe_connected_account_id: event.connectedAccountId,
     failure_code: event.failureCode ?? null,
     failure_message: event.failureMessage ?? null,
     occurred_at: new Date(event.occurredAt * 1000).toISOString(),
@@ -191,17 +224,6 @@ export async function applyInvoicePaymentEvent(
       .eq("stripe_event_id", event.stripeEventId);
   }
 
-  const { data, error } = await admin
-    .from("invoices")
-    .select("*")
-    .eq("id", event.invoiceId)
-    .maybeSingle();
-  if (error || !data) {
-    await discardHistory();
-    return { ok: false as const, error: error?.message ?? "Invoice not found." };
-  }
-
-  const invoice = data as Invoice;
   const next = reduceInvoicePaymentState(invoice, event);
   const isOutOfOrder =
     invoice.last_payment_event_created_at != null &&
@@ -247,7 +269,11 @@ function id(value: string | { id: string } | null | undefined) {
   return typeof value === "string" ? value : value?.id ?? null;
 }
 
-export async function handleInvoiceStripeEvent(stripe: Stripe, event: Stripe.Event) {
+export async function handleInvoiceStripeEvent(
+  stripe: Stripe,
+  event: Stripe.Event,
+  connectedAccountId: string | null,
+) {
   const admin = createAdminClient();
   const occurredAt = event.created;
 
@@ -258,7 +284,7 @@ export async function handleInvoiceStripeEvent(stripe: Stripe, event: Stripe.Eve
       checkoutSessionId: session.id,
       paymentIntentId: id(session.payment_intent),
     });
-    if (!invoiceId) return { ok: false as const, error: "Invoice not found for Checkout session." };
+    if (!invoiceId) return { ok: true as const, ignored: true as const };
 
     let outcome: InvoicePaymentOutcome;
     if (event.type === "checkout.session.async_payment_failed") outcome = "failed";
@@ -270,7 +296,13 @@ export async function handleInvoiceStripeEvent(stripe: Stripe, event: Stripe.Eve
     let chargeId: string | null = null;
     let amountPaid = session.payment_status === "paid" ? session.amount_total ?? undefined : undefined;
     if (paymentIntentId && outcome === "succeeded") {
-      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      const paymentIntent = connectedAccountId
+        ? await stripe.paymentIntents.retrieve(
+            paymentIntentId,
+            {},
+            connectedAccountRequestOptions(connectedAccountId),
+          )
+        : await stripe.paymentIntents.retrieve(paymentIntentId);
       chargeId = id(paymentIntent.latest_charge);
       amountPaid = paymentIntent.amount_received || session.amount_total || undefined;
     }
@@ -280,6 +312,7 @@ export async function handleInvoiceStripeEvent(stripe: Stripe, event: Stripe.Eve
       stripeObjectId: session.id,
       invoiceId,
       outcome,
+      connectedAccountId,
       occurredAt,
       amountPaid,
       chargeId,
@@ -295,7 +328,7 @@ export async function handleInvoiceStripeEvent(stripe: Stripe, event: Stripe.Eve
       paymentIntentId: paymentIntent.id,
       chargeId: id(paymentIntent.latest_charge),
     });
-    if (!invoiceId) return { ok: false as const, error: "Invoice not found for PaymentIntent." };
+    if (!invoiceId) return { ok: true as const, ignored: true as const };
     const outcome: InvoicePaymentOutcome =
       event.type === "payment_intent.succeeded"
         ? "succeeded"
@@ -308,6 +341,7 @@ export async function handleInvoiceStripeEvent(stripe: Stripe, event: Stripe.Eve
       stripeObjectId: paymentIntent.id,
       invoiceId,
       outcome,
+      connectedAccountId,
       occurredAt,
       amountPaid: outcome === "succeeded" ? paymentIntent.amount_received : undefined,
       chargeId: id(paymentIntent.latest_charge),
@@ -325,13 +359,14 @@ export async function handleInvoiceStripeEvent(stripe: Stripe, event: Stripe.Eve
       paymentIntentId,
       chargeId: charge.id,
     });
-    if (!invoiceId) return { ok: false as const, error: "Invoice not found for refunded charge." };
+    if (!invoiceId) return { ok: true as const, ignored: true as const };
     return applyInvoicePaymentEvent({
       stripeEventId: event.id,
       stripeEventType: event.type,
       stripeObjectId: charge.id,
       invoiceId,
       outcome: charge.amount_refunded >= charge.amount ? "refunded" : "partially_refunded",
+      connectedAccountId,
       occurredAt,
       amountPaid: charge.amount,
       amountRefunded: charge.amount_refunded,
@@ -345,7 +380,7 @@ export async function handleInvoiceStripeEvent(stripe: Stripe, event: Stripe.Eve
     const chargeId = id(dispute.charge);
     const paymentIntentId = id(dispute.payment_intent);
     const invoiceId = await findInvoiceId(admin, { chargeId, paymentIntentId });
-    if (!invoiceId) return { ok: false as const, error: "Invoice not found for dispute." };
+    if (!invoiceId) return { ok: true as const, ignored: true as const };
     const outcome: InvoicePaymentOutcome =
       event.type === "charge.dispute.closed"
         ? dispute.status === "won"
@@ -358,6 +393,7 @@ export async function handleInvoiceStripeEvent(stripe: Stripe, event: Stripe.Eve
       stripeObjectId: dispute.id,
       invoiceId,
       outcome,
+      connectedAccountId,
       occurredAt,
       chargeId,
       disputeId: dispute.id,

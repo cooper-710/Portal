@@ -319,9 +319,9 @@ export function FreelancerBillingPage({
               Platform fee on client payments: {feeLabel}
             </p>
             <p className="mt-1 text-sm leading-relaxed text-blue-900/80">
-              When a client pays an invoice through Portal, about {feeLabel} goes
-              to the platform (plus Stripe’s processing fees). The rest is paid
-              to your connected Stripe account.
+              You accept the payment on your connected Stripe account. Portal
+              receives about {feeLabel}; Stripe deducts its processing fees from
+              your connected account, and the remaining balance is yours.
             </p>
           </div>
 

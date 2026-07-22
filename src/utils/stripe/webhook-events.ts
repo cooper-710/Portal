@@ -11,6 +11,7 @@ export async function claimStripeWebhookEvent(
   admin: SupabaseClient<Database>,
   eventId: string,
   eventType: string,
+  connectedAccountId: string | null = null,
 ): Promise<
   | { ok: true; claimed: boolean }
   | { ok: false; error: string }
@@ -18,6 +19,7 @@ export async function claimStripeWebhookEvent(
   const { error } = await admin.from("stripe_webhook_events").insert({
     id: eventId,
     type: eventType,
+    stripe_connected_account_id: connectedAccountId,
   });
 
   if (!error) {

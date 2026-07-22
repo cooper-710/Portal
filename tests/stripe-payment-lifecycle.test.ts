@@ -22,6 +22,7 @@ const invoice: Invoice = {
   recurrence_frequency: null,
   stripe_payment_intent_id: null,
   stripe_checkout_session_id: null,
+  stripe_connected_account_id: "acct_fixture_a",
   amount_paid: 0,
   amount_refunded: 0,
   stripe_charge_id: null,
@@ -43,6 +44,7 @@ function fixture(
     stripeObjectId: "pi_fixture",
     invoiceId: invoice.id,
     outcome,
+    connectedAccountId: "acct_fixture_a",
     occurredAt: 1_753_200_000,
     ...overrides,
   };
@@ -138,11 +140,15 @@ describe("Stripe invoice payment lifecycle fixtures", () => {
   });
 
   it("uses one stable key for concurrent Checkout requests and a new key after persistence", () => {
-    const first = invoiceCheckoutIdempotencyKey(invoice);
-    expect(invoiceCheckoutIdempotencyKey({ ...invoice })).toBe(first);
+    const first = invoiceCheckoutIdempotencyKey(invoice, "acct_fixture_a");
+    expect(invoiceCheckoutIdempotencyKey({ ...invoice }, "acct_fixture_a")).toBe(first);
     expect(
-      invoiceCheckoutIdempotencyKey({ ...invoice, updated_at: "2026-07-22T12:01:00.000Z" }),
+      invoiceCheckoutIdempotencyKey(
+        { ...invoice, updated_at: "2026-07-22T12:01:00.000Z" },
+        "acct_fixture_a",
+      ),
     ).not.toBe(first);
+    expect(invoiceCheckoutIdempotencyKey(invoice, "acct_fixture_b")).not.toBe(first);
   });
 
   it("models duplicate Stripe delivery as a single applied fixture", () => {

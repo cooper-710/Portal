@@ -3,6 +3,7 @@ import Stripe from "stripe";
 
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
+import { directChargeReadiness } from "@/utils/stripe/direct-charge";
 
 function getStripe() {
   const stripeSecret = process.env.STRIPE_SECRET_KEY;
@@ -88,13 +89,14 @@ export async function POST(request: Request) {
         },
       });
       accountId = account.id;
+      const readiness = directChargeReadiness(account);
 
       const admin = createAdminClient();
       const { error } = await admin
         .from("users")
         .update({
           stripe_account_id: accountId,
-          stripe_charges_enabled: account.charges_enabled ?? false,
+          stripe_charges_enabled: readiness.ready,
           stripe_details_submitted: account.details_submitted ?? false,
         })
         .eq("id", user.id);

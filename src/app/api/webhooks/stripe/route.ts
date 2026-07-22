@@ -3,6 +3,10 @@ import Stripe from "stripe";
 
 import { handleInvoiceStripeEvent } from "@/utils/stripe/invoice-payment-lifecycle";
 import {
+  directChargeReadiness,
+  eventConnectedAccountId,
+} from "@/utils/stripe/direct-charge";
+import {
   clearPlatformSubscription,
   syncPlatformSubscription,
 } from "@/utils/stripe/sync-subscription";
@@ -17,7 +21,8 @@ export const runtime = "nodejs";
 /**
  * Stripe webhook, client invoice payments, Connect accounts, and platform subscriptions.
  *
- * Requires STRIPE_WEBHOOK_SECRET (raw-body signature verification) and
+ * Requires STRIPE_WEBHOOK_SECRET for platform events,
+ * STRIPE_CONNECT_WEBHOOK_SECRET for connected-account events, and
  * SUPABASE_SERVICE_ROLE_KEY (server-only writes that bypass RLS). Misconfiguration
  * returns 5xx so Stripe retries and operators notice, never pretend payments synced.
  *
@@ -27,11 +32,12 @@ export const runtime = "nodejs";
  *
  * Local setup:
  *   stripe listen --forward-to localhost:3001/api/webhooks/stripe
- * Then put the printed whsec_... into STRIPE_WEBHOOK_SECRET.
+ *   stripe listen --forward-connect-to localhost:3001/api/webhooks/stripe
  */
 export async function POST(request: Request) {
   const stripeSecret = process.env.STRIPE_SECRET_KEY;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const connectWebhookSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!stripeSecret) {
@@ -78,9 +84,39 @@ export async function POST(request: Request) {
   try {
     event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Invalid signature";
-    console.error("[stripe webhook] signature verification failed:", message);
-    return NextResponse.json({ error: message }, { status: 400 });
+    if (!connectWebhookSecret) {
+      const message = error instanceof Error ? error.message : "Invalid signature";
+      console.error("[stripe webhook] signature verification failed:", message);
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
+    try {
+      event = stripe.webhooks.constructEvent(
+        payload,
+        signature,
+        connectWebhookSecret,
+      );
+    } catch (connectError) {
+      const message =
+        connectError instanceof Error ? connectError.message : "Invalid signature";
+      console.error("[stripe webhook] signature verification failed:", message);
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
+  }
+
+  const connectedAccountId = eventConnectedAccountId(event);
+  const isInvoicePaymentEvent =
+    event.type.startsWith("checkout.session.") ||
+    event.type.startsWith("payment_intent.") ||
+    event.type === "charge.refunded" ||
+    event.type.startsWith("charge.dispute.");
+  if (connectedAccountId && event.livemode && isInvoicePaymentEvent) {
+    console.error(
+      `[stripe webhook] refusing live connected-account event=${event.id} account=${connectedAccountId}`,
+    );
+    return NextResponse.json(
+      { received: true, handled: false, error: "Direct charges are test mode only." },
+      { status: 409 },
+    );
   }
 
   console.info(
@@ -88,7 +124,12 @@ export async function POST(request: Request) {
   );
 
   const admin = createAdminClient();
-  const claim = await claimStripeWebhookEvent(admin, event.id, event.type);
+  const claim = await claimStripeWebhookEvent(
+    admin,
+    event.id,
+    event.type,
+    connectedAccountId,
+  );
   if (!claim.ok) {
     console.error(
       `[stripe webhook] ${event.id} event claim failed:`,
@@ -180,7 +221,11 @@ export async function POST(request: Request) {
           });
         }
 
-        const result = await handleInvoiceStripeEvent(stripe, event);
+        const result = await handleInvoiceStripeEvent(
+          stripe,
+          event,
+          connectedAccountId,
+        );
 
         if (!result.ok) {
           console.error(
@@ -218,7 +263,11 @@ export async function POST(request: Request) {
       case "charge.dispute.created":
       case "charge.dispute.updated":
       case "charge.dispute.closed": {
-        const result = await handleInvoiceStripeEvent(stripe, event);
+        const result = await handleInvoiceStripeEvent(
+          stripe,
+          event,
+          connectedAccountId,
+        );
         if (!result.ok) {
           console.error(`[stripe webhook] ${event.id} invoice lifecycle sync failed:`, result.error);
           return fail(500, { received: true, handled: false, error: result.error });
@@ -290,10 +339,11 @@ export async function POST(request: Request) {
       }
       case "account.updated": {
         const account = event.data.object as Stripe.Account;
+        const readiness = directChargeReadiness(account);
         const { error } = await admin
           .from("users")
           .update({
-            stripe_charges_enabled: account.charges_enabled ?? false,
+            stripe_charges_enabled: readiness.ready,
             stripe_details_submitted: account.details_submitted ?? false,
           })
           .eq("stripe_account_id", account.id);
@@ -311,7 +361,7 @@ export async function POST(request: Request) {
         }
 
         console.info(
-          `[stripe webhook] ${event.id} connect account synced id=${account.id} charges=${account.charges_enabled}`,
+          `[stripe webhook] ${event.id} connect account synced id=${account.id} direct_charges=${readiness.ready}`,
         );
         return NextResponse.json({ received: true, handled: true });
       }

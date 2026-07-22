@@ -3,6 +3,7 @@ import Stripe from "stripe";
 
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
+import { directChargeReadiness } from "@/utils/stripe/direct-charge";
 
 function safeAppPath(value: string | null, fallback: string) {
   if (!value || !value.startsWith("/") || value.startsWith("//")) return fallback;
@@ -36,12 +37,13 @@ async function syncConnectStatus() {
 
   const stripe = new Stripe(stripeSecret);
   const account = await stripe.accounts.retrieve(profile.stripe_account_id);
+  const readiness = directChargeReadiness(account);
 
   const admin = createAdminClient();
   const { error } = await admin
     .from("users")
     .update({
-      stripe_charges_enabled: account.charges_enabled ?? false,
+      stripe_charges_enabled: readiness.ready,
       stripe_details_submitted: account.details_submitted ?? false,
     })
     .eq("id", user.id);
@@ -51,7 +53,7 @@ async function syncConnectStatus() {
   }
 
   return {
-    chargesEnabled: Boolean(account.charges_enabled),
+    chargesEnabled: readiness.ready,
     detailsSubmitted: Boolean(account.details_submitted),
   };
 }

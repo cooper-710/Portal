@@ -1,5 +1,5 @@
 /**
- * Platform application fee for Connect destination charges (client invoice payments).
+ * Portal application fee for connected-account direct charges (client invoices).
  *
  * Env:
  * - STRIPE_PLATFORM_FEE_PERCENT, percent of invoice (e.g. "1" = 1%). Default 1 when unset.

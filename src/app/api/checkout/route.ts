@@ -4,6 +4,12 @@ import Stripe from "stripe";
 import type { Invoice, Project, Profile } from "@/types/database";
 import { logEvent, requestContext } from "@/lib/monitoring";
 import { calculatePlatformApplicationFeeCents } from "@/utils/stripe/application-fee";
+import {
+  buildDirectChargeCheckoutSession,
+  connectedAccountRequestOptions,
+  directChargeReadiness,
+  requireTestModeDirectCharges,
+} from "@/utils/stripe/direct-charge";
 import { invoiceCheckoutIdempotencyKey } from "@/utils/stripe/invoice-payment-lifecycle";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
@@ -36,6 +42,15 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "STRIPE_SECRET_KEY looks invalid. Expected sk_test_... or sk_live_..." },
       { status: 503 },
+    );
+  }
+
+  try {
+    requireTestModeDirectCharges(stripeSecret);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Test mode is required." },
+      { status: 409 },
     );
   }
 
@@ -111,14 +126,11 @@ export async function POST(request: Request) {
     "id" | "stripe_account_id" | "stripe_charges_enabled" | "email" | "role"
   > | null;
 
-  if (
-    !freelancer?.stripe_account_id ||
-    !freelancer.stripe_charges_enabled
-  ) {
+  if (!freelancer?.stripe_account_id) {
     return NextResponse.json(
       {
         error:
-          "This workspace has not finished connecting Stripe payouts yet. Ask the owner to complete Stripe Connect from their Invoices page.",
+          "This workspace has not connected a Stripe payment account yet. Ask the owner to complete Stripe Connect from their Invoices page.",
       },
       { status: 400 },
     );
@@ -129,47 +141,41 @@ export async function POST(request: Request) {
   const stripe = new Stripe(stripeSecret);
 
   try {
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      customer_email: user.email ?? undefined,
-      line_items: [
+    const connectedAccountId = freelancer.stripe_account_id;
+    const connectedAccount = await stripe.accounts.retrieve(connectedAccountId);
+    const readiness = directChargeReadiness(connectedAccount);
+    if (!readiness.ready) {
+      return NextResponse.json(
         {
-          quantity: 1,
-          price_data: {
-            currency: (invoice.currency || "usd").toLowerCase(),
-            unit_amount: invoice.amount,
-            product_data: {
-              name: `Invoice, ${project.title}`,
-              description: `Portal invoice ${invoice.id.slice(0, 8)}`,
-            },
-          },
+          error:
+            readiness.reason ??
+            "This workspace must finish Stripe payment onboarding before accepting invoices.",
+          requiresOnboarding: readiness.requiresOnboarding,
         },
-      ],
-      metadata: {
-        invoice_id: invoice.id,
-        project_id: project.id,
-        client_id: user.id,
-        freelancer_id: project.freelancer_id,
-        application_fee_amount: String(applicationFeeAmount),
-      },
-      payment_intent_data: {
-        // Stripe requires a positive integer; omit when fee rounds/caps to 0.
-        ...(applicationFeeAmount > 0
-          ? { application_fee_amount: applicationFeeAmount }
-          : {}),
-        transfer_data: {
-          destination: freelancer.stripe_account_id,
-        },
-        metadata: {
-          invoice_id: invoice.id,
-          project_id: project.id,
-          freelancer_id: project.freelancer_id,
-          application_fee_amount: String(applicationFeeAmount),
-        },
-      },
-      success_url: `${appUrl}/dashboard/invoices?paid=1&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/dashboard/invoices?canceled=1`,
-    }, { idempotencyKey: invoiceCheckoutIdempotencyKey(invoice) });
+        { status: 409 },
+      );
+    }
+
+    const idempotencyKey = invoiceCheckoutIdempotencyKey(
+      invoice,
+      connectedAccountId,
+    );
+    const session = await stripe.checkout.sessions.create(
+      buildDirectChargeCheckoutSession({
+        invoiceId: invoice.id,
+        projectId: project.id,
+        projectTitle: project.title,
+        clientId: user.id,
+        freelancerId: project.freelancer_id,
+        clientEmail: user.email ?? undefined,
+        connectedAccountId,
+        amount: invoice.amount,
+        currency: invoice.currency || "usd",
+        applicationFeeAmount,
+        appUrl,
+      }),
+      connectedAccountRequestOptions(connectedAccountId, idempotencyKey),
+    );
 
     const paymentIntentId =
       typeof session.payment_intent === "string"
@@ -177,7 +183,13 @@ export async function POST(request: Request) {
         : session.payment_intent?.id ?? null;
 
     if (!session.url) {
-      if (session.status === "open") await stripe.checkout.sessions.expire(session.id);
+      if (session.status === "open") {
+        await stripe.checkout.sessions.expire(
+          session.id,
+          {},
+          connectedAccountRequestOptions(connectedAccountId),
+        );
+      }
       throw new Error("Stripe did not return a checkout URL.");
     }
 
@@ -188,6 +200,7 @@ export async function POST(request: Request) {
       .update({
         stripe_checkout_session_id: session.id,
         stripe_payment_intent_id: paymentIntentId,
+        stripe_connected_account_id: connectedAccountId,
         status: "processing",
         payment_status_updated_at: new Date(checkoutCreatedAt * 1000).toISOString(),
         last_payment_event_created_at: checkoutCreatedAt,
@@ -198,7 +211,13 @@ export async function POST(request: Request) {
 
     if (persistenceError || !persistedInvoice) {
       try {
-        if (session.status === "open") await stripe.checkout.sessions.expire(session.id);
+        if (session.status === "open") {
+          await stripe.checkout.sessions.expire(
+            session.id,
+            {},
+            connectedAccountRequestOptions(connectedAccountId),
+          );
+        }
       } catch (expireError) {
         console.error("[invoice checkout] failed to expire unpersisted session", expireError);
       }
@@ -218,14 +237,21 @@ export async function POST(request: Request) {
       amount_refunded: 0,
       stripe_charge_id: null,
       stripe_dispute_id: null,
+      stripe_connected_account_id: connectedAccountId,
       failure_code: null,
       failure_message: null,
       occurred_at: new Date(checkoutCreatedAt * 1000).toISOString(),
-      metadata: { idempotency_key: invoiceCheckoutIdempotencyKey(invoice) },
+      metadata: { idempotency_key: idempotencyKey, charge_model: "direct" },
     });
     if (attemptError && attemptError.code !== "23505") {
       try {
-        if (session.status === "open") await stripe.checkout.sessions.expire(session.id);
+        if (session.status === "open") {
+          await stripe.checkout.sessions.expire(
+            session.id,
+            {},
+            connectedAccountRequestOptions(connectedAccountId),
+          );
+        }
       } finally {
         await admin
           .from("invoices")
@@ -233,6 +259,7 @@ export async function POST(request: Request) {
             status: "pending",
             stripe_checkout_session_id: null,
             stripe_payment_intent_id: null,
+            stripe_connected_account_id: null,
             payment_status_updated_at: null,
             last_payment_event_created_at: null,
           })

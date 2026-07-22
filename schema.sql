@@ -144,6 +144,7 @@ create table public.invoices (
   recurrence_frequency public.recurrence_frequency,
   stripe_payment_intent_id text unique,
   stripe_checkout_session_id text unique,
+  stripe_connected_account_id text,
   amount_paid integer not null default 0 check (amount_paid >= 0),
   amount_refunded integer not null default 0 check (amount_refunded >= 0),
   stripe_charge_id text,
@@ -177,6 +178,7 @@ create table public.client_actions (
 create table public.stripe_webhook_events (
   id text primary key,
   type text not null,
+  stripe_connected_account_id text,
   processed_at timestamptz not null default now()
 );
 
@@ -192,6 +194,7 @@ create table public.invoice_payment_events (
   amount_refunded integer check (amount_refunded is null or amount_refunded >= 0),
   stripe_charge_id text,
   stripe_dispute_id text,
+  stripe_connected_account_id text,
   failure_code text,
   failure_message text,
   occurred_at timestamptz not null,
@@ -217,8 +220,13 @@ create index invoices_parent_invoice_id_idx on public.invoices (parent_invoice_i
 create index invoices_series_key_idx on public.invoices (series_key);
 create unique index invoices_stripe_charge_id_uidx on public.invoices (stripe_charge_id)
   where stripe_charge_id is not null;
+create index invoices_connected_account_idx on public.invoices (stripe_connected_account_id)
+  where stripe_connected_account_id is not null;
 create index invoice_payment_events_invoice_occurred_idx
   on public.invoice_payment_events (invoice_id, occurred_at desc);
+create index invoice_payment_events_connected_account_idx
+  on public.invoice_payment_events (stripe_connected_account_id, occurred_at desc)
+  where stripe_connected_account_id is not null;
 create index client_actions_client_id_idx on public.client_actions (client_id);
 create index client_actions_project_id_idx on public.client_actions (project_id);
 create index client_actions_status_idx on public.client_actions (status);
@@ -699,6 +707,7 @@ create policy "Freelancers can create invoices"
     status = 'pending'
     and stripe_payment_intent_id is null
     and stripe_checkout_session_id is null
+    and stripe_connected_account_id is null
     and amount_paid = 0
     and amount_refunded = 0
     and stripe_charge_id is null

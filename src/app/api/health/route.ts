@@ -31,6 +31,7 @@ export async function GET() {
         supabaseServiceRole: presence.SUPABASE_SERVICE_ROLE_KEY,
         stripeSecret: presence.STRIPE_SECRET_KEY,
         stripeWebhookSecret: presence.STRIPE_WEBHOOK_SECRET,
+        stripeConnectWebhookSecret: presence.STRIPE_CONNECT_WEBHOOK_SECRET,
         stripeSaasPrice: presence.STRIPE_SAAS_PRICE_ID,
         appUrl: presence.NEXT_PUBLIC_APP_URL,
         stripePublishable: presence.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,

@@ -72,6 +72,11 @@ export default function TermsPage() {
                 to Stripe Connect terms and payout schedules.
               </li>
               <li>
+                For client invoices, the workspace owner is the merchant of
+                record: the business the client is paying and the party
+                responsible for payment support, refunds, and disputes.
+              </li>
+              <li>
                 You can manage or cancel your Portal Pro subscription in the
                 Stripe customer portal linked from Billing.
               </li>

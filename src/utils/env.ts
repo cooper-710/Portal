@@ -70,6 +70,9 @@ export function envPresenceReport() {
   checks.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = Boolean(
     process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim(),
   );
+  checks.STRIPE_CONNECT_WEBHOOK_SECRET = Boolean(
+    process.env.STRIPE_CONNECT_WEBHOOK_SECRET?.trim(),
+  );
   checks.RESEND_API_KEY = Boolean(process.env.RESEND_API_KEY?.trim());
   return checks;
 }

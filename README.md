@@ -9,7 +9,7 @@ See **[PRODUCTION_PLAN.md](./PRODUCTION_PLAN.md)** for positioning, money path, 
 - Next.js 15 (App Router)
 - Supabase (Auth, Postgres, Storage) with `@supabase/ssr`
 - Tailwind CSS + shadcn/ui
-- Stripe Checkout + Connect (destination charges + application fees)
+- Stripe Checkout + Connect (test-mode direct charges + application fees)
 
 ## How to run (local)
 
@@ -49,6 +49,7 @@ Open [http://localhost:3001](http://localhost:3001).
 | `STRIPE_SECRET_KEY` | Checkout / Connect / SaaS |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Client Stripe.js (optional for redirect Checkout) |
 | `STRIPE_WEBHOOK_SECRET` | Verify webhook signatures |
+| `STRIPE_CONNECT_WEBHOOK_SECRET` | Verify test-mode direct-charge events from connected accounts |
 | `STRIPE_SAAS_PRICE_ID` | Portal Pro monthly Price ID |
 | `NEXT_PUBLIC_APP_URL` | Redirects / Checkout URLs (`http://localhost:3001` locally) |
 | `PORTAL_PRO_TRIAL_DAYS` | Trial length (default 14) |
@@ -64,11 +65,16 @@ Production notes are commented in `.env.example` (live keys, webhook endpoint UR
 
 ```bash
 stripe listen --forward-to localhost:3001/api/webhooks/stripe
+stripe listen --forward-connect-to localhost:3001/api/webhooks/stripe
 ```
 
-Copy the printed `whsec_...` into `STRIPE_WEBHOOK_SECRET`.
+Copy the platform listener secret into `STRIPE_WEBHOOK_SECRET` and the Connect
+listener secret into `STRIPE_CONNECT_WEBHOOK_SECRET`.
 
-On `checkout.session.completed`, `/api/webhooks/stripe` marks invoices paid and syncs Portal Pro subscriptions. Checkout return URLs also reconcile via `session_id` if the webhook is delayed.
+Platform events keep Portal Pro subscriptions in sync. Connected-account events
+drive direct client-invoice payments, refunds, disputes, expiration, and async
+payment outcomes. Checkout return URLs reconcile through the stored connected
+account if a webhook is delayed.
 
 Health check: [http://localhost:3001/api/health](http://localhost:3001/api/health).
 

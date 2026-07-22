@@ -200,6 +200,7 @@ export type Invoice = {
   recurrence_frequency: RecurrenceFrequency | null;
   stripe_payment_intent_id: string | null;
   stripe_checkout_session_id: string | null;
+  stripe_connected_account_id: string | null;
   amount_paid: number;
   amount_refunded: number;
   stripe_charge_id: string | null;
@@ -223,6 +224,7 @@ export type InvoicePaymentEvent = {
   amount_refunded: number | null;
   stripe_charge_id: string | null;
   stripe_dispute_id: string | null;
+  stripe_connected_account_id: string | null;
   failure_code: string | null;
   failure_message: string | null;
   occurred_at: string;
@@ -285,11 +287,13 @@ export type Database = {
         Row: {
           id: string;
           type: string;
+          stripe_connected_account_id: string | null;
           processed_at: string;
         };
         Insert: {
           id: string;
           type: string;
+          stripe_connected_account_id?: string | null;
           processed_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["stripe_webhook_events"]["Insert"]>;
@@ -353,6 +357,7 @@ export type Database = {
           recurrence_frequency?: RecurrenceFrequency | null;
           stripe_payment_intent_id?: string | null;
           stripe_checkout_session_id?: string | null;
+          stripe_connected_account_id?: string | null;
           amount_paid?: number;
           amount_refunded?: number;
           stripe_charge_id?: string | null;

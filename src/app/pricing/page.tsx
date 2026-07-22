@@ -31,7 +31,7 @@ const FEE_POINTS = [
   },
   {
     title: "Platform fee on invoices",
-    body: "When a client pays an invoice through Portal, we take about 1% as a platform fee on top of Stripe’s own processing fees. The rest goes to your connected account.",
+    body: "You accept invoice payments on your connected Stripe account as the merchant of record. Portal receives about 1%; Stripe separately deducts its processing fees from your account.",
   },
   {
     title: "No surprise add-ons",

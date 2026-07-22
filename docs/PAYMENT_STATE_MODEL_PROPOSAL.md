@@ -1,6 +1,9 @@
 # Minimum invoice payment-state proposal
 
-This is a proposal only; no payment-state schema change is included in the current security migration.
+> Historical design note: the lifecycle is now implemented by the forward
+> migrations `20260722204807_invoice_payment_lifecycle.sql` and
+> `20260722211959_direct_charge_account_ownership.sql`. The migrations and
+> current TypeScript types are authoritative where this early proposal differs.
 
 ## Minimal invoice fields
 
