@@ -2,19 +2,17 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import {
   ArrowUpRight,
   ChevronDown,
   CircleDollarSign,
   FolderKanban,
-  Loader2,
-  Plus,
   Receipt,
 } from "lucide-react";
 
 import { GettingStartedChecklist } from "@/components/dashboard/getting-started";
-import { createInvoice } from "@/app/actions";
+import { CreateInvoiceDialog } from "@/components/dashboard/create-invoice-dialog";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { NewProjectDialog } from "@/components/dashboard/new-project-dialog";
 import { ProjectPhaseSelector } from "@/components/dashboard/project-phase-selector";
@@ -22,9 +20,7 @@ import {
   InvoiceStatusBadge,
   ProjectStatusBadge,
 } from "@/components/dashboard/status-badge";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { buttonVariants } from "@/components/ui/button";
 import type { FreelancerProject, InvoiceWithProject } from "@/lib/dashboard-data";
 import { formatMoney, isCompletedProject, displayName, projectClientLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -42,11 +38,8 @@ export function FreelancerDashboard({
   invoices,
 }: FreelancerDashboardProps) {
   const router = useRouter();
-  const [showInvoiceForm, setShowInvoiceForm] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
 
   const pendingInvoices = invoices.filter((invoice) => invoice.status === "pending");
   const paidInvoices = invoices.filter((invoice) => invoice.status === "paid");
@@ -61,21 +54,6 @@ export function FreelancerDashboard({
 
   const previewPending = pendingInvoices.slice(0, 4);
   const previewActive = activeProjects.slice(0, 4);
-
-  function onCreateInvoice(formData: FormData) {
-    setMessage(null);
-    setError(null);
-    startTransition(async () => {
-      const result = await createInvoice(formData);
-      if (result?.error) {
-        setError(result.error);
-        return;
-      }
-      setMessage("Invoice created.");
-      setShowInvoiceForm(false);
-      router.refresh();
-    });
-  }
 
   const welcomeMessage = profile.welcome_message?.trim() || null;
 
@@ -92,14 +70,15 @@ export function FreelancerDashboard({
           <p className="text-sm text-zinc-500">{displayName(profile)}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button
-            variant="outline"
-            className="border-zinc-200 bg-white shadow-sm hover:border-zinc-300 hover:bg-zinc-50"
-            onClick={() => setShowInvoiceForm((value) => !value)}
-          >
-            <Plus className="size-4" />
-            New invoice
-          </Button>
+          <CreateInvoiceDialog
+            projects={projects.map((project) => ({
+              id: project.id,
+              title: project.title,
+            }))}
+            triggerVariant="outline"
+            triggerClassName="border-zinc-200 bg-white shadow-sm hover:border-zinc-300 hover:bg-zinc-50"
+            onCreated={setMessage}
+          />
           <NewProjectDialog
             onCreated={(result) => {
               setMessage(
@@ -122,11 +101,6 @@ export function FreelancerDashboard({
       {message ? (
         <p className="rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2.5 text-sm text-blue-900">
           {message}
-        </p>
-      ) : null}
-      {error ? (
-        <p className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-800">
-          {error}
         </p>
       ) : null}
 
@@ -187,57 +161,6 @@ export function FreelancerDashboard({
           </div>
 
           <div className="flex flex-1 flex-col gap-3 px-4 py-4 sm:px-5">
-            {showInvoiceForm ? (
-              <form
-                action={onCreateInvoice}
-                className="grid gap-3 rounded-xl border border-zinc-200 bg-white p-3.5 shadow-sm"
-              >
-                <div className="space-y-2">
-                  <Label htmlFor="projectId">Project</Label>
-                  <select
-                    id="projectId"
-                    name="projectId"
-                    required
-                    className="h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm shadow-sm outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
-                  >
-                    <option value="">Select a project</option>
-                    {projects.map((project) => (
-                      <option key={project.id} value={project.id}>
-                        {project.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Amount (USD)</Label>
-                  <Input
-                    id="amount"
-                    name="amount"
-                    type="number"
-                    min="1"
-                    step="0.01"
-                    required
-                    placeholder="1500"
-                    className="h-9 rounded-lg"
-                  />
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button type="submit" size="sm" disabled={pending}>
-                    {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-                    Create
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setShowInvoiceForm(false)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            ) : null}
-
             {previewPending.length === 0 ? (
               <EmptyState
                 icon={Receipt}
