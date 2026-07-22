@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Loader2, Wallet } from "lucide-react";
+import { Loader2, Wallet } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -84,22 +84,7 @@ export function StripeConnectBanner({
   }
 
   if (ready) {
-    return (
-      <div className="flex flex-col gap-2 rounded-2xl border border-emerald-200/80 bg-emerald-50/70 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-start gap-2.5">
-          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-700" />
-          <div>
-            <p className="text-sm font-semibold text-emerald-950">
-              Stripe payments ready
-            </p>
-            <p className="text-xs text-emerald-800/80">
-              You accept client payments on your connected Stripe account as
-              the merchant of record. Portal receives its disclosed platform fee.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
