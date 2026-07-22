@@ -8,7 +8,7 @@ import { PaymentDueCalendar } from "@/components/dashboard/payment-due-calendar"
 import { ProjectFilter } from "@/components/dashboard/project-filter";
 import { InvoiceStatusBadge } from "@/components/dashboard/status-badge";
 import { Button } from "@/components/ui/button";
-import type { InvoiceWithProject } from "@/lib/dashboard-data";
+import type { InvoiceWithProject } from "@/lib/client-home-scope";
 import { formatMoney, displayName } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/types/database";

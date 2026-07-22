@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import { NewProjectDialog } from "@/components/dashboard/new-project-dialog";
 import { ProjectPhaseSelector } from "@/components/dashboard/project-phase-selector";
 import { ProjectStatusBadge } from "@/components/dashboard/status-badge";
-import type { FreelancerProject } from "@/lib/dashboard-data";
+import type { FreelancerProject } from "@/lib/client-home-scope";
 import { isCompletedProject, displayName, projectClientLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/types/database";

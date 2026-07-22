@@ -12,7 +12,7 @@ import {
   ScrollPane,
 } from "@/components/dashboard/dashboard-card";
 import { Button } from "@/components/ui/button";
-import type { InvoiceWithProject } from "@/lib/dashboard-data";
+import type { InvoiceWithProject } from "@/lib/client-home-scope";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 

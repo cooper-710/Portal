@@ -35,7 +35,7 @@ import { buttonVariants } from "@/components/ui/button";
 import type {
   FreelancerProject,
   InvoiceWithProject,
-} from "@/lib/dashboard-data";
+} from "@/lib/client-home-scope";
 import { formatMoney, isCompletedProject, displayName, projectClientLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/types/database";

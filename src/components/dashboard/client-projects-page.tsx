@@ -6,7 +6,7 @@ import { ArrowUpRight, ChevronDown, FolderKanban } from "lucide-react";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { ProjectStatusBadge } from "@/components/dashboard/status-badge";
-import type { ClientProject } from "@/lib/dashboard-data";
+import type { ClientProject } from "@/lib/client-home-scope";
 import { isCompletedProject, displayName } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Profile, ProjectStatus } from "@/types/database";

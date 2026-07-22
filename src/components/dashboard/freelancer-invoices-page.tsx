@@ -21,7 +21,10 @@ import { StripeConnectBanner } from "@/components/dashboard/stripe-connect-banne
 import {
   InvoiceStatusBadge,
 } from "@/components/dashboard/status-badge";
-import type { FreelancerProject, InvoiceWithProject } from "@/lib/dashboard-data";
+import type {
+  FreelancerProject,
+  InvoiceWithProject,
+} from "@/lib/client-home-scope";
 import { formatMoney, displayName } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/types/database";

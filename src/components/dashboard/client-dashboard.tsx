@@ -20,7 +20,7 @@ import {
   ProjectStatusBadge,
 } from "@/components/dashboard/status-badge";
 import { Button, buttonVariants } from "@/components/ui/button";
-import type { ClientProject, InvoiceWithProject } from "@/lib/dashboard-data";
+import type { ClientProject, InvoiceWithProject } from "@/lib/client-home-scope";
 import { formatMoney, isCompletedProject, displayName } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Asset, Profile, ProjectStatus } from "@/types/database";

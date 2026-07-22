@@ -35,7 +35,7 @@ import { businessDisplayName } from "@/lib/branding";
 import {
   scopeClientHomeData,
   type ClientHomeData,
-} from "@/lib/dashboard-data";
+} from "@/lib/client-home-scope";
 import { displayName, formatMoney, isCompletedProject } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { PaymentKind, Profile, ProjectStatus } from "@/types/database";
