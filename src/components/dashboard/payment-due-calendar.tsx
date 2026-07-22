@@ -162,9 +162,7 @@ export function PaymentDueCalendar({
 
   const listItems =
     selectedItems ??
-    (monthItems.length > 0
-      ? monthItems
-      : [...overdue, ...upcoming].slice(0, 6));
+    (monthItems.length > 0 ? monthItems : [...overdue, ...upcoming]);
 
   const listHeading = selectedDay
     ? `${formatShortDate(selectedDay)} · ${selectedItems?.length ?? 0} due`

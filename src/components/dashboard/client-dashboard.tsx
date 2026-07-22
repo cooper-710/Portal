@@ -122,7 +122,6 @@ export function ClientDashboard({
   const pendingInvoices = invoices.filter((invoice) => invoice.status === "pending");
   const paidInvoices = invoices.filter((invoice) => invoice.status === "paid");
   const pendingTotal = pendingInvoices.reduce((sum, invoice) => sum + invoice.amount, 0);
-  const previewPending = pendingInvoices.slice(0, 4);
   const previewActive = activeProjects.slice(0, 4);
 
   async function payInvoice(invoiceId: string) {
@@ -288,8 +287,8 @@ export function ClientDashboard({
             </div>
           </div>
 
-          <div className="space-y-3 px-4 py-4 sm:px-5">
-            {previewPending.length === 0 ? (
+          <div className="max-h-[28rem] space-y-3 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">
+            {pendingInvoices.length === 0 ? (
               <EmptyState
                 icon={Receipt}
                 className="border-0 bg-transparent py-6"
@@ -298,7 +297,7 @@ export function ClientDashboard({
               />
             ) : (
               <ul className="grid gap-2.5">
-                {previewPending.map((invoice) => (
+                {pendingInvoices.map((invoice) => (
                   <li
                     key={invoice.id}
                     className="flex flex-col gap-3 rounded-xl border border-amber-200/70 bg-white p-3.5 shadow-sm transition-all hover:border-amber-300 hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
@@ -330,15 +329,6 @@ export function ClientDashboard({
                 ))}
               </ul>
             )}
-
-            {pendingInvoices.length > previewPending.length ? (
-              <Link
-                href="/dashboard/invoices"
-                className="block text-center text-xs font-medium text-blue-700 hover:underline"
-              >
-                +{pendingInvoices.length - previewPending.length} more on Invoices
-              </Link>
-            ) : null}
 
             {paidInvoices.length > 0 ? (
               <div className="border-t border-zinc-100 pt-3">

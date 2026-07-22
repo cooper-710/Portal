@@ -68,7 +68,6 @@ export function FreelancerDashboard({
     isCompletedProject(project.status),
   );
 
-  const previewPending = pendingInvoices.slice(0, 4);
   const previewActive = activeProjects.slice(0, 4);
 
   const welcomeMessage = profile.welcome_message?.trim() || null;
@@ -176,7 +175,7 @@ export function FreelancerDashboard({
           </DashboardCardHeader>
 
           <DashboardCardBody className="flex flex-col gap-3">
-            {previewPending.length === 0 ? (
+            {pendingInvoices.length === 0 ? (
               <EmptyState
                 icon={Receipt}
                 className="border-0 bg-transparent py-6"
@@ -185,7 +184,7 @@ export function FreelancerDashboard({
               />
             ) : (
               <ul className="grid gap-2.5">
-                {previewPending.map((invoice) => (
+                {pendingInvoices.map((invoice) => (
                   <li
                     key={invoice.id}
                     className="group flex w-full items-center justify-between gap-3 rounded-xl border border-amber-200/70 bg-white p-3.5 text-left shadow-sm transition-all hover:border-amber-300 hover:shadow-md"
@@ -218,15 +217,6 @@ export function FreelancerDashboard({
                 ))}
               </ul>
             )}
-
-            {pendingInvoices.length > previewPending.length ? (
-              <Link
-                href="/dashboard/invoices"
-                className="text-center text-xs font-medium text-blue-700 hover:underline"
-              >
-                +{pendingInvoices.length - previewPending.length} more on Invoices
-              </Link>
-            ) : null}
 
             {paidInvoices.length > 0 ? (
               <div className="mt-auto border-t border-zinc-100 pt-3">
