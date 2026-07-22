@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 import { setAccountPassword } from "@/app/actions";
+import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -84,7 +85,8 @@ export function SetPasswordForm({
   }
 
   return (
-    <main className="flex min-h-svh items-center justify-center bg-zinc-50 px-4 py-10">
+    <div className="flex min-h-svh flex-col bg-zinc-50">
+      <main className="flex flex-1 items-center justify-center px-4 py-10">
       <Card className="w-full max-w-md border-zinc-200 shadow-sm">
         <CardHeader>
           <CardTitle>Email confirmed: set your password</CardTitle>
@@ -156,6 +158,8 @@ export function SetPasswordForm({
           </form>
         </CardContent>
       </Card>
-    </main>
+      </main>
+      <SiteFooter compact />
+    </div>
   );
 }

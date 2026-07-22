@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { DashboardNav } from "@/components/dashboard/dashboard-nav";
+import { SiteFooter } from "@/components/site-footer";
 import {
   brandCssVariables,
   businessDisplayName,
@@ -93,7 +94,7 @@ export default async function DashboardLayout({
 
   return (
     <div
-      className="min-h-svh bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-100 via-zinc-50 to-zinc-50"
+      className="flex min-h-svh flex-col bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-100 via-zinc-50 to-zinc-50"
       style={brandStyle}
     >
       <DashboardNav
@@ -103,9 +104,10 @@ export default async function DashboardLayout({
         brandLabel={brandLabel}
         brandLogoUrl={brandLogo}
       />
-      <main className="mx-auto max-w-6xl px-4 py-7 sm:px-6 sm:py-10">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-7 sm:px-6 sm:py-10">
         {children}
       </main>
+      <SiteFooter variant="app" />
     </div>
   );
 }

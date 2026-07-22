@@ -133,13 +133,16 @@ async function FreelancerView({ profile }: { profile: Profile }) {
     );
   }
 
-  const { projects, invoices } = await loadFreelancerWorkspace(profile.id);
+  const { projects, invoices, deliverables } = await loadFreelancerWorkspace(
+    profile.id,
+  );
 
   return (
     <FreelancerDashboard
       profile={profile}
       projects={projects}
       invoices={invoices}
+      deliverables={deliverables}
     />
   );
 }

@@ -171,6 +171,21 @@ export async function loadFreelancerWorkspace(profileId: string) {
     invoices = (invoiceRows ?? []) as Invoice[];
   }
 
+  let deliverables: (Asset & { projectTitle: string })[] = [];
+  if (projectIds.length > 0) {
+    const { data: deliverableRows } = await supabase
+      .from("assets")
+      .select("*")
+      .in("project_id", projectIds)
+      .eq("visibility", "deliverable")
+      .order("created_at", { ascending: false })
+      .limit(12);
+    deliverables = ((deliverableRows ?? []) as Asset[]).map((asset) => ({
+      ...asset,
+      projectTitle: projectTitleById.get(asset.project_id) ?? "Project",
+    }));
+  }
+
   return {
     projects: projects.map((project) => ({
       ...project,
@@ -184,6 +199,7 @@ export async function loadFreelancerWorkspace(profileId: string) {
         ? { title: projectTitleById.get(invoice.project_id)! }
         : null,
     })) as InvoiceWithProject[],
+    deliverables,
   };
 }
 

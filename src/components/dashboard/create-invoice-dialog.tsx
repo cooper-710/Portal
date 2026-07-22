@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
+import { dateInputClassName } from "@/lib/form-controls";
 import type { PaymentKind } from "@/types/database";
 import { PAYMENT_KINDS } from "@/types/database";
 
@@ -125,12 +127,11 @@ export function CreateInvoiceDialog({
             {needsProjectSelect ? (
               <div className="space-y-2">
                 <Label htmlFor={`${fieldId}-project`}>Project</Label>
-                <select
+                <NativeSelect
                   id={`${fieldId}-project`}
                   name="projectId"
                   required
                   disabled={pending || projectOptions.length === 0}
-                  className="flex h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none ring-zinc-400 focus:ring-2 disabled:opacity-60"
                 >
                   <option value="">
                     {projectOptions.length === 0
@@ -142,7 +143,7 @@ export function CreateInvoiceDialog({
                       {project.title}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               </div>
             ) : (
               <input type="hidden" name="projectId" value={fixedProjectId} />
@@ -150,21 +151,20 @@ export function CreateInvoiceDialog({
 
             <div className="space-y-2">
               <Label htmlFor={`${fieldId}-kind`}>Type</Label>
-              <select
+              <NativeSelect
                 id={`${fieldId}-kind`}
                 value={paymentKind}
                 onChange={(event) =>
                   setPaymentKind(event.target.value as PaymentKind)
                 }
                 disabled={pending}
-                className="flex h-9 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none ring-zinc-400 focus:ring-2 disabled:opacity-60"
               >
                 {PAYMENT_KINDS.map((kind) => (
                   <option key={kind.value} value={kind.value}>
                     {kind.label}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
               <p className="text-xs text-zinc-500">
                 {PAYMENT_KINDS.find((kind) => kind.value === paymentKind)?.hint}
               </p>
@@ -211,7 +211,7 @@ export function CreateInvoiceDialog({
                 name="dueDate"
                 type="date"
                 required={needsSchedule}
-                className="h-9 bg-white"
+                className={dateInputClassName("bg-white")}
                 disabled={pending}
               />
             </div>

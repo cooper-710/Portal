@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { FreelancerBillingPage } from "@/components/dashboard/freelancer-billing-page";
 import { requireDashboardProfile } from "@/lib/dashboard-data";
+import { getPlatformFeePercent } from "@/utils/stripe/application-fee";
 import { PORTAL_PRO_TRIAL_DAYS } from "@/utils/stripe/subscription";
 import { syncPlatformCheckoutSessionById } from "@/utils/stripe/sync-subscription";
 
@@ -50,5 +51,11 @@ export default async function DashboardBillingPage({
 
   const { profile: freshProfile } = await requireDashboardProfile();
 
-  return <FreelancerBillingPage profile={freshProfile} notice={notice} />;
+  return (
+    <FreelancerBillingPage
+      profile={freshProfile}
+      notice={notice}
+      platformFeePercent={getPlatformFeePercent()}
+    />
+  );
 }

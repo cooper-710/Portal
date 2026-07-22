@@ -8,24 +8,37 @@
  * Fee is always at least 1¢ when the invoice is large enough, and never >= charge amount
  * (freelancer receives at least 1¢).
  */
+
+/** Default percent when STRIPE_PLATFORM_FEE_PERCENT is unset (and no flat-only mode). */
+export const DEFAULT_PLATFORM_FEE_PERCENT = 1;
+
+/**
+ * Effective percent used for Connect application fees (and Billing UI copy).
+ * Returns DEFAULT_PLATFORM_FEE_PERCENT when the env is unset and no flat fee is configured.
+ */
+export function getPlatformFeePercent(): number {
+  const percentRaw = process.env.STRIPE_PLATFORM_FEE_PERCENT;
+  const flatRaw = process.env.STRIPE_PLATFORM_FEE_FLAT_CENTS;
+
+  if (percentRaw === undefined || percentRaw === "") {
+    if (flatRaw !== undefined && flatRaw !== "") return 0;
+    return DEFAULT_PLATFORM_FEE_PERCENT;
+  }
+
+  const percent = Number(percentRaw);
+  return Number.isFinite(percent) && percent > 0 ? percent : 0;
+}
+
 export function calculatePlatformApplicationFeeCents(invoiceAmountCents: number) {
   if (!Number.isFinite(invoiceAmountCents) || invoiceAmountCents <= 0) {
     return 0;
   }
 
-  const percentRaw = process.env.STRIPE_PLATFORM_FEE_PERCENT;
   const flatRaw = process.env.STRIPE_PLATFORM_FEE_FLAT_CENTS;
-
-  const percent =
-    percentRaw === undefined || percentRaw === ""
-      ? flatRaw
-        ? 0
-        : 1
-      : Number(percentRaw);
   const flatCents =
     flatRaw === undefined || flatRaw === "" ? 0 : Number(flatRaw);
 
-  const safePercent = Number.isFinite(percent) && percent > 0 ? percent : 0;
+  const safePercent = getPlatformFeePercent();
   const safeFlat =
     Number.isFinite(flatCents) && flatCents > 0 ? Math.round(flatCents) : 0;
 

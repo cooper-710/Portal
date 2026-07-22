@@ -10,6 +10,7 @@ import {
 
 import { CreateInvoiceDialog } from "@/components/dashboard/create-invoice-dialog";
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { PaymentDueCalendar } from "@/components/dashboard/payment-due-calendar";
 import { StripeConnectBanner } from "@/components/dashboard/stripe-connect-banner";
 import {
   InvoiceStatusBadge,
@@ -74,6 +75,8 @@ export function FreelancerInvoicesPage({
           {message}
         </p>
       ) : null}
+
+      <PaymentDueCalendar invoices={invoices} linkMode="project" />
 
       <section
         className={cn(

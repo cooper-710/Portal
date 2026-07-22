@@ -40,7 +40,7 @@ export function MarketingShell({
   const solid = !transparentUntilScroll || scrolled;
 
   return (
-    <div className="landing-root min-h-svh text-foreground">
+    <div className="landing-root flex min-h-svh flex-col text-foreground">
       <header
         className={cn(
           "landing-header sticky top-0 z-40 transition-[background,border-color,box-shadow] duration-300",
@@ -97,7 +97,7 @@ export function MarketingShell({
         </div>
       </header>
 
-      {children}
+      <div className="flex-1">{children}</div>
 
       <SiteFooter />
     </div>

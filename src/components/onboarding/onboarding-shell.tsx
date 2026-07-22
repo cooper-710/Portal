@@ -9,6 +9,7 @@ import {
   completeOnboarding,
   skipOnboardingStep,
 } from "@/app/onboarding/actions";
+import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -157,6 +158,10 @@ export function OnboardingShell({
           </div>
         ) : null}
       </main>
+
+      <div className="relative z-10">
+        <SiteFooter compact />
+      </div>
     </div>
   );
 }

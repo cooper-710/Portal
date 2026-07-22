@@ -127,6 +127,33 @@
   html {
     @apply font-sans;
   }
+
+  /* Native form controls: match Portal zinc/blue inputs */
+  select:not([data-slot="native-select"]) {
+    @apply rounded-lg border border-zinc-200 bg-white text-sm text-zinc-900 shadow-sm outline-none;
+  }
+
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"],
+  input[type="month"] {
+    color-scheme: light;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator,
+  input[type="month"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.55;
+  }
+
+  input[type="date"]:hover::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]:hover::-webkit-calendar-picker-indicator,
+  input[type="time"]:hover::-webkit-calendar-picker-indicator,
+  input[type="month"]:hover::-webkit-calendar-picker-indicator {
+    opacity: 1;
+  }
 }
 
 /* Landing page: richer atmosphere on the app zinc + primary palette */

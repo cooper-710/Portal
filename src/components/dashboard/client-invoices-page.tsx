@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CircleDollarSign, Loader2, Receipt } from "lucide-react";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { PaymentDueCalendar } from "@/components/dashboard/payment-due-calendar";
 import { InvoiceStatusBadge } from "@/components/dashboard/status-badge";
 import { Button } from "@/components/ui/button";
 import type { InvoiceWithProject } from "@/lib/dashboard-data";
@@ -71,6 +72,8 @@ export function ClientInvoicesPage({
           {error}
         </p>
       ) : null}
+
+      <PaymentDueCalendar invoices={invoices} linkMode="invoices" />
 
       <section
         className={cn(

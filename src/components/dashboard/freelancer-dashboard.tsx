@@ -14,14 +14,22 @@ import {
 import { GettingStartedChecklist } from "@/components/dashboard/getting-started";
 import { CreateInvoiceDialog } from "@/components/dashboard/create-invoice-dialog";
 import { EmptyState } from "@/components/dashboard/empty-state";
+import {
+  LatestDeliverables,
+  type DeliverableListItem,
+} from "@/components/dashboard/latest-deliverables";
 import { NewProjectDialog } from "@/components/dashboard/new-project-dialog";
+import { PaymentDueCalendar } from "@/components/dashboard/payment-due-calendar";
 import { ProjectPhaseSelector } from "@/components/dashboard/project-phase-selector";
 import {
   InvoiceStatusBadge,
   ProjectStatusBadge,
 } from "@/components/dashboard/status-badge";
 import { buttonVariants } from "@/components/ui/button";
-import type { FreelancerProject, InvoiceWithProject } from "@/lib/dashboard-data";
+import type {
+  FreelancerProject,
+  InvoiceWithProject,
+} from "@/lib/dashboard-data";
 import { formatMoney, isCompletedProject, displayName, projectClientLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/types/database";
@@ -30,12 +38,14 @@ type FreelancerDashboardProps = {
   profile: Profile;
   projects: FreelancerProject[];
   invoices: InvoiceWithProject[];
+  deliverables: DeliverableListItem[];
 };
 
 export function FreelancerDashboard({
   profile,
   projects,
   invoices,
+  deliverables,
 }: FreelancerDashboardProps) {
   const router = useRouter();
   const [showCompleted, setShowCompleted] = useState(false);
@@ -424,6 +434,11 @@ export function FreelancerDashboard({
             )}
           </div>
         </section>
+      </div>
+
+      <div className="grid items-start gap-5 lg:grid-cols-2 lg:gap-6">
+        <PaymentDueCalendar invoices={invoices} linkMode="project" />
+        <LatestDeliverables items={deliverables} />
       </div>
     </div>
   );

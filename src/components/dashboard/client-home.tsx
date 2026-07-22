@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   CircleDollarSign,
   Clock3,
-  FileCheck2,
   FolderKanban,
   Loader2,
   MessageSquareWarning,
@@ -19,6 +18,8 @@ import {
 import { reviewDeliverable } from "@/app/actions";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { FileVault } from "@/components/dashboard/file-vault";
+import { LatestDeliverables } from "@/components/dashboard/latest-deliverables";
+import { PaymentDueCalendar } from "@/components/dashboard/payment-due-calendar";
 import {
   InvoiceStatusBadge,
   ProjectStatusBadge,
@@ -358,89 +359,12 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
       </div>
 
       <div className="grid items-start gap-5 lg:grid-cols-2 lg:gap-6">
-        {/* Latest deliverables */}
-        <section className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm sm:p-5">
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
-              <FileCheck2 className="size-4 text-[color:var(--brand-primary)]" />
-              Latest deliverables
-            </div>
-            <Link
-              href={`/dashboard/projects/${project.id}`}
-              className="text-xs font-medium text-[color:var(--brand-primary)] hover:underline"
-            >
-              All files
-            </Link>
-          </div>
-          {home.allDeliverables.length === 0 ? (
-            <EmptyState
-              icon={FileCheck2}
-              className="border-0 bg-transparent py-6"
-              title="No deliverables yet"
-              description="Shared files will appear here when they are marked as deliverables."
-            />
-          ) : (
-            <ul className="grid gap-2">
-              {home.allDeliverables.slice(0, 5).map((asset) => (
-                <li
-                  key={asset.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200/80 bg-zinc-50/50 px-3 py-2.5"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-zinc-900">
-                      {asset.file_name ?? "File"}
-                    </p>
-                    <p className="truncate text-[11px] text-zinc-500">
-                      {asset.projectTitle} · {formatShortDate(asset.created_at)}
-                      {asset.review_status
-                        ? ` · ${asset.review_status.replace("_", " ")}`
-                        : ""}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        {/* Upcoming dates */}
-        <section className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm sm:p-5">
-          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-900">
-            <Clock3 className="size-4 text-[color:var(--brand-accent)]" />
-            Upcoming
-          </div>
-          {home.upcoming.length === 0 ? (
-            <EmptyState
-              icon={CalendarDays}
-              className="border-0 bg-transparent py-6"
-              title="Nothing scheduled"
-              description="Invoice due dates and timed actions will show up here."
-            />
-          ) : (
-            <ul className="grid gap-2">
-              {home.upcoming.map((item) => (
-                <li
-                  key={item.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200/80 px-3 py-2.5"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-zinc-900">
-                      {item.label}
-                    </p>
-                    <p className="text-[11px] text-zinc-500">
-                      {item.kind === "invoice_due"
-                        ? "Payment due"
-                        : "Action due"}
-                    </p>
-                  </div>
-                  <span className="shrink-0 text-xs font-semibold text-zinc-700">
-                    {formatShortDate(item.date)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        <LatestDeliverables items={home.allDeliverables} />
+        <PaymentDueCalendar
+          invoices={home.invoices}
+          linkMode="invoices"
+          compact
+        />
       </div>
 
       {/* Deliverable reviews */}

@@ -26,6 +26,8 @@ import {
 type BillingPageProps = {
   profile: Profile;
   notice?: string | null;
+  /** Effective platform fee percent for invoice payments (from STRIPE_PLATFORM_FEE_PERCENT). */
+  platformFeePercent?: number;
 };
 
 const INCLUDED = [
@@ -51,11 +53,24 @@ const INCLUDED = [
   },
 ];
 
-export function FreelancerBillingPage({ profile, notice }: BillingPageProps) {
+export function FreelancerBillingPage({
+  profile,
+  notice,
+  platformFeePercent = 1,
+}: BillingPageProps) {
   const [loadingCheckout, setLoadingCheckout] = useState(false);
   const [loadingPortal, setLoadingPortal] = useState(false);
   const [loadingRefresh, setLoadingRefresh] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const feeLabel =
+    platformFeePercent > 0
+      ? `~${platformFeePercent}%`
+      : "a small";
+  const feeSentence =
+    platformFeePercent > 0
+      ? `Client invoice payments include an approximately ${platformFeePercent}% platform fee.`
+      : "Client invoice payments may include a platform fee configured for your deployment.";
 
   const active = isPlatformSubscriptionActive(profile.subscription_status);
   const isTrialing = profile.subscription_status === "trialing";
@@ -177,7 +192,7 @@ export function FreelancerBillingPage({ profile, notice }: BillingPageProps) {
                 <p className="max-w-sm text-sm leading-relaxed text-zinc-500">
                   Try the full workspace free for {PORTAL_PRO_TRIAL_DAYS} days.
                   After the trial, Portal Pro continues at $25/mo unless you
-                  cancel. Client invoices include a ~1% platform fee.
+                  cancel. {feeSentence}
                 </p>
               </div>
               <div className="flex w-full flex-col gap-2 sm:w-auto">
@@ -232,9 +247,8 @@ export function FreelancerBillingPage({ profile, notice }: BillingPageProps) {
           <div className="border-t border-zinc-100 bg-zinc-50/80 px-6 py-4 sm:px-8">
             <p className="text-xs text-zinc-500">
               You won’t be charged during the {PORTAL_PRO_TRIAL_DAYS}-day trial.
-              After that, billing is $25/mo. A ~1% platform fee applies to client
-              invoice payments. Cancel anytime in Stripe. By starting you agree
-              to our{" "}
+              After that, billing is $25/mo. {feeSentence} Cancel anytime in
+              Stripe. By starting you agree to our{" "}
               <Link href="/terms" className="underline underline-offset-2">
                 Terms
               </Link>{" "}
@@ -300,6 +314,17 @@ export function FreelancerBillingPage({ profile, notice }: BillingPageProps) {
             </div>
           </div>
 
+          <div className="border-t border-blue-100 bg-blue-50/70 px-6 py-4 sm:px-8">
+            <p className="text-sm font-semibold text-blue-950">
+              Platform fee on client payments: {feeLabel}
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-blue-900/80">
+              When a client pays an invoice through Portal, about {feeLabel} goes
+              to the platform (plus Stripe’s processing fees). The rest is paid
+              to your connected Stripe account.
+            </p>
+          </div>
+
           <ul className="grid gap-2 border-t border-zinc-100 px-6 py-5 sm:grid-cols-2 sm:px-8">
             {INCLUDED.map((item) => (
               <li key={item.title} className="flex items-start gap-2 text-sm text-zinc-600">
@@ -314,6 +339,18 @@ export function FreelancerBillingPage({ profile, notice }: BillingPageProps) {
           </ul>
         </section>
       )}
+
+      {!active ? (
+        <section className="rounded-2xl border border-blue-200/80 bg-blue-50/60 px-5 py-4 shadow-sm sm:px-6">
+          <p className="text-sm font-semibold text-blue-950">
+            Platform fee on client payments: {feeLabel}
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-blue-900/80">
+            Separate from the $25/mo Portal Pro subscription. {feeSentence} Funds
+            still go to your connected Stripe account after fees.
+          </p>
+        </section>
+      ) : null}
 
       {!active ? (
         <p className={cn("text-center text-xs text-zinc-400")}>

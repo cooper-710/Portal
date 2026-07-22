@@ -8,6 +8,7 @@ import { updateBusinessBranding } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
 import { logoPublicUrl } from "@/lib/branding";
 import type { BrandAppearance, Profile } from "@/types/database";
 
@@ -181,17 +182,17 @@ export function BrandingForm({ profile }: BrandingFormProps) {
 
       <div className="space-y-2">
         <Label htmlFor="appearance">Appearance</Label>
-        <select
+        <NativeSelect
           id="appearance"
           value={appearance}
           onChange={(event) =>
             setAppearance(event.target.value as BrandAppearance)
           }
-          className="flex h-9 w-full max-w-xs rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-900 outline-none ring-zinc-400 focus:ring-2"
+          className="max-w-xs"
         >
           <option value="light">Light</option>
           <option value="default">Default</option>
-        </select>
+        </NativeSelect>
       </div>
 
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
