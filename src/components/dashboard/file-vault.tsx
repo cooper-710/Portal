@@ -1,13 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Download,
   Eye,
-  File,
-  FileCode,
-  FileText,
   FileUp,
   Loader2,
   Trash2,
@@ -20,6 +17,10 @@ import {
   updateAssetVisibility,
   uploadAsset,
 } from "@/app/actions";
+import {
+  AssetThumb,
+  FileTypeIcon,
+} from "@/components/dashboard/asset-thumb";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -71,19 +72,6 @@ function TypeBadge({ kind }: { kind: PreviewKind }) {
       {previewLabel(kind)}
     </span>
   );
-}
-
-function FileTypeIcon({
-  kind,
-  className,
-}: {
-  kind: PreviewKind;
-  className?: string;
-}) {
-  const cls = cn("size-8 text-zinc-400", className);
-  if (kind === "pdf") return <FileText className={cls} />;
-  if (kind === "text") return <FileCode className={cls} />;
-  return <File className={cls} />;
 }
 
 function displayName(asset: Asset) {
@@ -585,7 +573,13 @@ function AssetTile({
         className="group relative block w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
       >
         <div className="relative flex aspect-[16/10] items-center justify-center bg-zinc-100">
-          <AssetPreviewThumb asset={asset} kind={kind} name={name} />
+          <AssetThumb
+            assetId={asset.id}
+            fileName={asset.file_name}
+            variant="tile"
+            label={name}
+            alt=""
+          />
           <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-2">
             <TypeBadge kind={kind} />
             {canManageVisibility ? (
@@ -659,64 +653,5 @@ function AssetTile({
         ) : null}
       </div>
     </li>
-  );
-}
-
-function AssetPreviewThumb({
-  asset,
-  kind,
-  name,
-}: {
-  asset: Asset;
-  kind: PreviewKind;
-  name: string;
-}) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    if (kind !== "image") return;
-
-    let cancelled = false;
-    void (async () => {
-      try {
-        const result = await getAssetDownloadUrl(asset.id);
-        if (cancelled) return;
-        if (result.error || !result.url) {
-          setFailed(true);
-          return;
-        }
-        setUrl(result.url);
-      } catch {
-        if (!cancelled) setFailed(true);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [asset.id, kind]);
-
-  if (kind === "image" && url && !failed) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={url}
-        alt=""
-        className="absolute inset-0 size-full object-cover"
-        onError={() => setFailed(true)}
-      />
-    );
-  }
-
-  if (kind === "image" && !failed && !url) {
-    return <Loader2 className="size-5 animate-spin text-zinc-400" />;
-  }
-
-  return (
-    <div className="flex flex-col items-center gap-2 px-4 text-center">
-      <FileTypeIcon kind={kind} />
-      <p className="line-clamp-2 text-xs text-zinc-500">{name}</p>
-    </div>
   );
 }

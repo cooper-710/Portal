@@ -56,6 +56,17 @@ function formatShortDate(value: string) {
   });
 }
 
+function formatDayAria(value: string) {
+  const date = parseDueDate(value);
+  if (!date) return value;
+  return date.toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 export function invoicesToPaymentDueItems(
   invoices: InvoiceWithProject[],
   linkMode: "project" | "invoices" = "project",
@@ -97,6 +108,7 @@ export function PaymentDueCalendar({
     year: today.getFullYear(),
     month: today.getMonth(),
   }));
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   const dueByDay = useMemo(() => {
     const map = new Map<string, PaymentDueItem[]>();
@@ -133,11 +145,30 @@ export function PaymentDueCalendar({
     return date && date < today;
   });
 
+  const selectedItems = selectedDay ? (dueByDay.get(selectedDay) ?? []) : null;
+
+  const listItems =
+    selectedItems ??
+    (monthItems.length > 0
+      ? monthItems
+      : [...overdue, ...upcoming].slice(0, 6));
+
+  const listHeading = selectedDay
+    ? `${formatShortDate(selectedDay)} · ${selectedItems?.length ?? 0} due`
+    : monthItems.length > 0
+      ? "This month"
+      : "Upcoming";
+
   function shiftMonth(delta: number) {
+    setSelectedDay(null);
     setCursor((current) => {
       const next = new Date(current.year, current.month + delta, 1);
       return { year: next.getFullYear(), month: next.getMonth() };
     });
+  }
+
+  function toggleDay(key: string) {
+    setSelectedDay((current) => (current === key ? null : key));
   }
 
   return (
@@ -164,7 +195,7 @@ export function PaymentDueCalendar({
             <button
               type="button"
               onClick={() => shiftMonth(-1)}
-              className="inline-flex size-8 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition-colors hover:bg-zinc-50"
+              className="inline-flex size-8 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
               aria-label="Previous month"
             >
               <ChevronLeft className="size-4" />
@@ -175,7 +206,7 @@ export function PaymentDueCalendar({
             <button
               type="button"
               onClick={() => shiftMonth(1)}
-              className="inline-flex size-8 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition-colors hover:bg-zinc-50"
+              className="inline-flex size-8 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition-colors hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
               aria-label="Next month"
             >
               <ChevronRight className="size-4" />
@@ -196,9 +227,9 @@ export function PaymentDueCalendar({
               <span key={day}>{day}</span>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-1" role="grid" aria-label="Payment due calendar">
             {Array.from({ length: firstWeekday }).map((_, index) => (
-              <div key={`pad-${index}`} className="aspect-square" />
+              <div key={`pad-${index}`} className="aspect-square" aria-hidden />
             ))}
             {Array.from({ length: daysInMonth }).map((_, index) => {
               const day = index + 1;
@@ -208,49 +239,90 @@ export function PaymentDueCalendar({
               const isToday = key === toIsoDay(today);
               const isPast = date < today;
               const hasDue = dayItems.length > 0;
+              const isSelected = selectedDay === key;
+
+              const cellClass = cn(
+                "relative flex aspect-square flex-col items-center justify-center rounded-lg border text-xs transition-colors",
+                hasDue
+                  ? isPast
+                    ? "border-amber-200 bg-amber-50 text-amber-950"
+                    : "border-blue-200 bg-blue-50 text-blue-950"
+                  : "border-transparent text-zinc-600",
+                isToday && !isSelected && "ring-2 ring-blue-500/40",
+                isSelected &&
+                  "ring-2 ring-blue-600 ring-offset-1 ring-offset-white",
+                hasDue &&
+                  "cursor-pointer hover:brightness-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
+              );
+
+              if (hasDue) {
+                const countLabel =
+                  dayItems.length === 1
+                    ? "1 payment due"
+                    : `${dayItems.length} payments due`;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    role="gridcell"
+                    aria-pressed={isSelected}
+                    aria-label={`${formatDayAria(key)}, ${countLabel}. ${
+                      isSelected ? "Selected. Activate to clear." : "Activate to show invoices."
+                    }`}
+                    onClick={() => toggleDay(key)}
+                    className={cellClass}
+                    title={dayItems
+                      .map(
+                        (item) =>
+                          `${formatMoney(item.amount, item.currency)} · ${item.projectTitle}`,
+                      )
+                      .join(", ")}
+                  >
+                    <span className="font-medium tabular-nums">{day}</span>
+                    <span
+                      className={cn(
+                        "mt-0.5 size-1.5 rounded-full",
+                        isPast ? "bg-amber-500" : "bg-blue-600",
+                      )}
+                    />
+                  </button>
+                );
+              }
 
               return (
                 <div
                   key={key}
-                  className={cn(
-                    "relative flex aspect-square flex-col items-center justify-center rounded-lg border text-xs transition-colors",
-                    hasDue
-                      ? isPast
-                        ? "border-amber-200 bg-amber-50 text-amber-950"
-                        : "border-blue-200 bg-blue-50 text-blue-950"
-                      : "border-transparent text-zinc-600",
-                    isToday && "ring-2 ring-blue-500/40",
-                  )}
-                  title={
-                    hasDue
-                      ? dayItems
-                          .map(
-                            (item) =>
-                              `${formatMoney(item.amount, item.currency)} · ${item.projectTitle}`,
-                          )
-                          .join(", ")
-                      : undefined
-                  }
+                  role="gridcell"
+                  className={cellClass}
+                  aria-label={formatDayAria(key)}
                 >
                   <span className="font-medium tabular-nums">{day}</span>
-                  {hasDue ? (
-                    <span
-                      className={cn(
-                        "mt-0.5 size-1 rounded-full",
-                        isPast ? "bg-amber-500" : "bg-blue-600",
-                      )}
-                    />
-                  ) : null}
                 </div>
               );
             })}
           </div>
+          {items.length > 0 ? (
+            <p className="mt-2 text-[11px] text-zinc-400">
+              Click a highlighted day to see due invoices.
+            </p>
+          ) : null}
         </div>
 
         <div className="min-w-0">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
-            {monthItems.length > 0 ? "This month" : "Upcoming"}
-          </p>
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
+              {listHeading}
+            </p>
+            {selectedDay ? (
+              <button
+                type="button"
+                onClick={() => setSelectedDay(null)}
+                className="text-[11px] font-medium text-blue-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
+              >
+                Show all
+              </button>
+            ) : null}
+          </div>
           {items.length === 0 ? (
             <EmptyState
               icon={CalendarDays}
@@ -258,15 +330,13 @@ export function PaymentDueCalendar({
               title="Nothing due"
               description="Unpaid invoices with due dates will appear on this calendar."
             />
-          ) : (monthItems.length > 0 ? monthItems : upcoming.slice(0, 6))
-              .length === 0 && overdue.length === 0 ? (
+          ) : listItems.length === 0 && !selectedDay && overdue.length === 0 ? (
             <p className="text-sm text-zinc-500">No payments due this month.</p>
+          ) : listItems.length === 0 && selectedDay ? (
+            <p className="text-sm text-zinc-500">No payments due on this day.</p>
           ) : (
             <ul className="grid gap-2">
-              {(monthItems.length > 0
-                ? monthItems
-                : [...overdue, ...upcoming].slice(0, 6)
-              ).map((item) => {
+              {listItems.map((item) => {
                 const date = parseDueDate(item.dueDate);
                 const isPast = Boolean(date && date < today);
                 return (
@@ -274,7 +344,7 @@ export function PaymentDueCalendar({
                     <Link
                       href={item.href}
                       className={cn(
-                        "group flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 transition-all hover:shadow-sm",
+                        "group flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 transition-all hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
                         isPast
                           ? "border-amber-200/80 bg-amber-50/50 hover:border-amber-300"
                           : "border-zinc-200/80 bg-zinc-50/40 hover:border-blue-200 hover:bg-white",
@@ -293,7 +363,7 @@ export function PaymentDueCalendar({
                           {isPast ? " · overdue" : ""}
                         </p>
                       </div>
-                      <span className="shrink-0 text-[11px] font-medium text-blue-700 opacity-0 transition-opacity group-hover:opacity-100">
+                      <span className="shrink-0 text-[11px] font-medium text-blue-700 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
                         Open
                       </span>
                     </Link>

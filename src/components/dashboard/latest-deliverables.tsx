@@ -2,17 +2,13 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import {
-  Download,
-  Eye,
-  File,
-  FileCheck2,
-  FileCode,
-  FileText,
-  Loader2,
-} from "lucide-react";
+import { Download, Eye, FileCheck2, Loader2 } from "lucide-react";
 
 import { getAssetDownloadUrl } from "@/app/actions";
+import {
+  AssetThumb,
+  FileTypeIcon,
+} from "@/components/dashboard/asset-thumb";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +23,6 @@ import {
   getPreviewKind,
   previewLabel,
   TEXT_PREVIEW_MAX_CHARS,
-  type PreviewKind,
 } from "@/lib/file-preview";
 import { cn } from "@/lib/utils";
 import type { Asset } from "@/types/database";
@@ -53,19 +48,6 @@ function formatShortDate(value: string) {
 
 function fileLabel(asset: Asset) {
   return asset.file_name?.trim() || asset.file_url.split("/").pop() || "File";
-}
-
-function FileTypeIcon({
-  kind,
-  className,
-}: {
-  kind: PreviewKind;
-  className?: string;
-}) {
-  const cls = cn("size-8 text-zinc-400", className);
-  if (kind === "pdf") return <FileText className={cls} />;
-  if (kind === "text") return <FileCode className={cls} />;
-  return <File className={cls} />;
 }
 
 export function LatestDeliverables({
@@ -181,16 +163,24 @@ export function LatestDeliverables({
                 key={asset.id}
                 className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200/80 bg-zinc-50/50 px-3 py-2.5"
               >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-zinc-900">
-                    {fileLabel(asset)}
-                  </p>
-                  <p className="truncate text-[11px] text-zinc-500">
-                    {asset.projectTitle} · {formatShortDate(asset.created_at)}
-                    {asset.review_status
-                      ? ` · ${asset.review_status.replaceAll("_", " ")}`
-                      : ""}
-                  </p>
+                <div className="flex min-w-0 items-center gap-3">
+                  <AssetThumb
+                    assetId={asset.id}
+                    fileName={asset.file_name}
+                    variant="list"
+                    alt=""
+                  />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-zinc-900">
+                      {fileLabel(asset)}
+                    </p>
+                    <p className="truncate text-[11px] text-zinc-500">
+                      {asset.projectTitle} · {formatShortDate(asset.created_at)}
+                      {asset.review_status
+                        ? ` · ${asset.review_status.replaceAll("_", " ")}`
+                        : ""}
+                    </p>
+                  </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5">
                   <Button
