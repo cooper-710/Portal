@@ -4,6 +4,7 @@ import { DashboardNav } from "@/components/dashboard/dashboard-nav";
 import {
   brandCssVariables,
   businessDisplayName,
+  hasWorkspaceBranding,
   logoPublicUrl,
 } from "@/lib/branding";
 import {
@@ -11,6 +12,7 @@ import {
   requireDashboardProfile,
 } from "@/lib/dashboard-data";
 import { displayName } from "@/lib/format";
+import type { BusinessBrand } from "@/types/database";
 import { freelancerCanCreate } from "@/utils/stripe/subscription";
 import { loadOnboardingContext } from "@/utils/onboarding/load-context";
 import {
@@ -18,6 +20,28 @@ import {
   onboardingPath,
   resolveResumeStep,
 } from "@/utils/onboarding/steps";
+
+function profileAsBrand(profile: {
+  email: string;
+  full_name: string | null;
+  business_name: string | null;
+  logo_url: string | null;
+  brand_primary: string | null;
+  brand_accent: string | null;
+  welcome_message: string | null;
+  appearance: BusinessBrand["appearance"];
+}): BusinessBrand {
+  return {
+    email: profile.email,
+    full_name: profile.full_name,
+    business_name: profile.business_name,
+    logo_url: profile.logo_url,
+    brand_primary: profile.brand_primary,
+    brand_accent: profile.brand_accent,
+    welcome_message: profile.welcome_message,
+    appearance: profile.appearance,
+  };
+}
 
 export default async function DashboardLayout({
   children,
@@ -47,19 +71,25 @@ export default async function DashboardLayout({
       .eq("id", profile.id);
   }
 
-  const clientBrand =
-    profile.role === "client" ? await loadClientBrand(profile.id) : null;
+  // Clients always inherit the owner's brand. Owners see their own brand in
+  // chrome once they have customized portal branding; otherwise default Portal.
+  const workspaceBrand =
+    profile.role === "client"
+      ? await loadClientBrand(profile.id)
+      : hasWorkspaceBranding(profile)
+        ? profileAsBrand(profile)
+        : null;
 
   const brandStyle =
-    profile.role === "client" ? brandCssVariables(clientBrand) : undefined;
+    workspaceBrand || profile.role === "client"
+      ? brandCssVariables(workspaceBrand)
+      : undefined;
 
-  const brandLabel =
-    profile.role === "client"
-      ? businessDisplayName(clientBrand, "Portal")
-      : "Portal";
+  const brandLabel = workspaceBrand
+    ? businessDisplayName(workspaceBrand, "Portal")
+    : "Portal";
 
-  const brandLogo =
-    profile.role === "client" ? logoPublicUrl(clientBrand?.logo_url) : null;
+  const brandLogo = logoPublicUrl(workspaceBrand?.logo_url);
 
   return (
     <div

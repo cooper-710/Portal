@@ -39,6 +39,24 @@ export function logoPublicUrl(logoPath: string | null | undefined) {
   return `${base.replace(/\/$/, "")}/storage/v1/object/public/business-logos/${logoPath}`;
 }
 
+export function hasWorkspaceBranding(
+  brand:
+    | Pick<
+        BusinessBrand,
+        "business_name" | "logo_url" | "brand_primary" | "brand_accent"
+      >
+    | null
+    | undefined,
+) {
+  if (!brand) return false;
+  return Boolean(
+    brand.business_name?.trim() ||
+      brand.logo_url ||
+      brand.brand_primary ||
+      brand.brand_accent,
+  );
+}
+
 export function brandCssVariables(brand: BusinessBrand | null | undefined): CSSProperties {
   const primary = normalizeHexColor(brand?.brand_primary, DEFAULT_BRAND_PRIMARY);
   const accent = normalizeHexColor(brand?.brand_accent, DEFAULT_BRAND_ACCENT);
@@ -48,6 +66,9 @@ export function brandCssVariables(brand: BusinessBrand | null | undefined): CSSP
     "--brand-accent": accent,
     "--brand-primary-soft": `${primary}14`,
     "--brand-accent-soft": `${accent}14`,
+    // Align shadcn primary buttons / focus rings with workspace brand.
+    "--primary": primary,
+    "--ring": primary,
   } as CSSProperties;
 }
 

@@ -41,7 +41,7 @@ type DashboardNavProps = {
   /** False when freelancer lacks trial/paid, nav stays open; product is locked. */
   canCreate?: boolean;
   displayLabel?: string;
-  /** Client-facing brand name (freelancer business name). */
+  /** Workspace brand name (owner business name for both roles). */
   brandLabel?: string;
   brandLogoUrl?: string | null;
 };
@@ -57,6 +57,10 @@ export function DashboardNav({
   const links = role === "freelancer" ? FREELANCER_LINKS : CLIENT_LINKS;
   const showUpgrade = role === "freelancer" && !canCreate;
   const homeLabel = role === "client" ? "Home" : "Overview";
+  // Falls back to zinc-900 when --brand-primary is unset (unbranded owner chrome).
+  const brandText = "text-[color:var(--brand-primary,#18181b)]";
+  const brandActive =
+    "bg-[color:var(--brand-primary,#18181b)] text-white shadow-sm";
 
   return (
     <header className="sticky top-0 z-20 border-b border-zinc-200/70 bg-white/85 backdrop-blur-md">
@@ -73,15 +77,7 @@ export function DashboardNav({
               className="h-7 w-auto max-w-[7rem] object-contain"
             />
           ) : null}
-          <span
-            className={
-              role === "client"
-                ? "text-[color:var(--brand-primary,#18181b)]"
-                : undefined
-            }
-          >
-            {brandLabel}
-          </span>
+          <span className={brandText}>{brandLabel}</span>
         </Link>
 
         <nav
@@ -102,9 +98,7 @@ export function DashboardNav({
                 className={cn(
                   "rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors",
                   active
-                    ? role === "client"
-                      ? "bg-[color:var(--brand-primary,#18181b)] text-white shadow-sm"
-                      : "bg-zinc-900 text-white shadow-sm"
+                    ? brandActive
                     : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900",
                 )}
               >

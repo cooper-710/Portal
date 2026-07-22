@@ -77,11 +77,13 @@ export function FreelancerDashboard({
     });
   }
 
+  const welcomeMessage = profile.welcome_message?.trim() || null;
+
   return (
     <div className="space-y-6 sm:space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--brand-primary,#71717a)]">
             Workspace
           </p>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
@@ -110,6 +112,12 @@ export function FreelancerDashboard({
           />
         </div>
       </div>
+
+      {welcomeMessage ? (
+        <p className="rounded-xl border border-[color:var(--brand-primary,#2563eb)]/25 bg-[color:var(--brand-primary-soft,#2563eb14)] px-3.5 py-2.5 text-sm text-zinc-800">
+          {welcomeMessage}
+        </p>
+      ) : null}
 
       {message ? (
         <p className="rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2.5 text-sm text-blue-900">
