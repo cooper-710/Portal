@@ -312,16 +312,16 @@ export function PaymentDueCalendar({
           </div>
         </div>
 
-        <ScrollPane className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain">
-          <div className="mb-2 flex shrink-0 items-center justify-between gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
+        <ScrollPane className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-contain">
+          <div className="mb-2 flex min-w-0 shrink-0 items-center justify-between gap-2">
+            <p className="min-w-0 truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
               {listHeading}
             </p>
             {selectedDay ? (
               <button
                 type="button"
                 onClick={() => setSelectedDay(null)}
-                className="text-[11px] font-medium text-blue-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
+                className="shrink-0 text-[11px] font-medium text-blue-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
               >
                 Show all
               </button>
@@ -344,12 +344,12 @@ export function PaymentDueCalendar({
           ) : listItems.length === 0 && !selectedDay && overdue.length === 0 ? (
             <p className="text-sm text-zinc-500">No payments due this month.</p>
           ) : (
-            <ul className="grid min-h-0 gap-2">
+            <ul className="grid min-h-0 min-w-0 gap-1.5 overflow-x-hidden">
               {listItems.map((item) => {
                 const date = parseDueDate(item.dueDate);
                 const isPast = Boolean(date && date < today);
                 const rowClass = cn(
-                  "flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 transition-all",
+                  "flex w-full min-w-0 max-w-full items-center justify-between gap-2 overflow-hidden rounded-lg border px-2.5 py-2 transition-all",
                   isPast
                     ? "border-amber-200/80 bg-amber-50/50"
                     : "border-zinc-200/80 bg-zinc-50/40",
@@ -358,15 +358,15 @@ export function PaymentDueCalendar({
                 if (onPayInvoice) {
                   return (
                     <li key={item.id} className={rowClass}>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-zinc-900">
+                      <div className="min-w-0 flex-1 overflow-hidden">
+                        <p className="truncate text-xs font-semibold text-zinc-900">
                           {formatMoney(item.amount, item.currency)}
                           <span className="font-medium text-zinc-500">
                             {" · "}
                             {item.label}
                           </span>
                         </p>
-                        <p className="truncate text-[11px] text-zinc-500">
+                        <p className="truncate text-[10px] text-zinc-500">
                           {item.projectTitle} · {formatShortDate(item.dueDate)}
                           {isPast ? " · overdue" : ""}
                         </p>
@@ -374,21 +374,21 @@ export function PaymentDueCalendar({
                       <Button
                         type="button"
                         size="sm"
-                        className="shrink-0 bg-[color:var(--brand-primary,#2563eb)] text-white shadow-sm hover:opacity-90"
+                        className="h-7 shrink-0 px-2.5 text-xs bg-[color:var(--brand-primary,#2563eb)] text-white shadow-sm hover:opacity-90"
                         disabled={payingId === item.id}
                         onClick={() => onPayInvoice(item.id)}
                       >
                         {payingId === item.id ? (
                           <Loader2 className="size-3.5 animate-spin" />
                         ) : null}
-                        Pay now
+                        Pay
                       </Button>
                     </li>
                   );
                 }
 
                 return (
-                  <li key={item.id}>
+                  <li key={item.id} className="min-w-0 max-w-full">
                     <Link
                       href={item.href}
                       className={cn(
@@ -399,20 +399,20 @@ export function PaymentDueCalendar({
                           : "hover:border-blue-200 hover:bg-white",
                       )}
                     >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-zinc-900">
+                      <div className="min-w-0 flex-1 overflow-hidden">
+                        <p className="truncate text-xs font-semibold text-zinc-900">
                           {formatMoney(item.amount, item.currency)}
                           <span className="font-medium text-zinc-500">
                             {" · "}
                             {item.label}
                           </span>
                         </p>
-                        <p className="truncate text-[11px] text-zinc-500">
+                        <p className="truncate text-[10px] text-zinc-500">
                           {item.projectTitle} · {formatShortDate(item.dueDate)}
                           {isPast ? " · overdue" : ""}
                         </p>
                       </div>
-                      <span className="shrink-0 text-[11px] font-medium text-blue-700 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                      <span className="shrink-0 text-[10px] font-medium text-blue-700 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
                         Open
                       </span>
                     </Link>

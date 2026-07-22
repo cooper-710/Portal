@@ -158,7 +158,7 @@ export function ScrollPane({ children, className }: ScrollPaneProps) {
     <div
       ref={ref}
       className={cn(
-        "min-h-0",
+        "min-h-0 overflow-x-hidden",
         needsScroll
           ? "overflow-y-auto overscroll-contain"
           : "overflow-y-hidden",
