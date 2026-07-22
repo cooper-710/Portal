@@ -919,6 +919,148 @@ export async function createInvoice(formData: FormData) {
   return { success: true as const };
 }
 
+export async function updateInvoice(formData: FormData) {
+  const invoiceId = String(formData.get("invoiceId") ?? "").trim();
+  const amountDollars = Number(formData.get("amount"));
+  const dueDateRaw = String(formData.get("dueDate") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+
+  if (!invoiceId) {
+    return { error: "Invoice not found." };
+  }
+
+  if (!Number.isFinite(amountDollars) || amountDollars <= 0) {
+    return { error: "Enter a valid amount." };
+  }
+
+  const dueDate =
+    dueDateRaw && /^\d{4}-\d{2}-\d{2}$/.test(dueDateRaw) ? dueDateRaw : null;
+  const amount = Math.round(amountDollars * 100);
+
+  const auth = await requireSubscribedFreelancer();
+  if ("error" in auth) {
+    return { error: auth.error };
+  }
+
+  const { supabase, user } = auth;
+
+  const { data: invoice } = await supabase
+    .from("invoices")
+    .select("id, project_id, status")
+    .eq("id", invoiceId)
+    .maybeSingle();
+
+  if (!invoice) {
+    return { error: "Invoice not found in your workspace." };
+  }
+
+  if (invoice.status !== "pending") {
+    return { error: "Only unpaid invoices can be edited." };
+  }
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("id, title, freelancer_id, client_id")
+    .eq("id", invoice.project_id)
+    .eq("freelancer_id", user.id)
+    .maybeSingle();
+
+  if (!project) {
+    return { error: "Invoice not found in your workspace." };
+  }
+
+  const { data: updated, error } = await supabase
+    .from("invoices")
+    .update({
+      amount,
+      due_date: dueDate,
+      title: title || null,
+    })
+    .eq("id", invoiceId)
+    .eq("status", "pending")
+    .select("id, amount, currency, payment_kind, due_date, title, project_id")
+    .maybeSingle();
+
+  if (error || !updated) {
+    return { error: error?.message ?? "Could not update invoice." };
+  }
+
+  await createPayInvoiceAction(supabase, {
+    project: {
+      id: project.id,
+      title: project.title,
+      freelancer_id: project.freelancer_id,
+      client_id: project.client_id,
+    },
+    invoiceId: updated.id,
+    amount: updated.amount,
+    currency: updated.currency,
+    paymentKind: updated.payment_kind,
+    dueDate: updated.due_date,
+    title: updated.title,
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/invoices");
+  revalidatePath(`/dashboard/projects/${updated.project_id}`);
+  return { success: true as const };
+}
+
+export async function deleteInvoice(formData: FormData) {
+  const invoiceId = String(formData.get("invoiceId") ?? "").trim();
+
+  if (!invoiceId) {
+    return { error: "Invoice not found." };
+  }
+
+  const auth = await requireSubscribedFreelancer();
+  if ("error" in auth) {
+    return { error: auth.error };
+  }
+
+  const { supabase, user } = auth;
+
+  const { data: invoice } = await supabase
+    .from("invoices")
+    .select("id, project_id, status")
+    .eq("id", invoiceId)
+    .maybeSingle();
+
+  if (!invoice) {
+    return { error: "Invoice not found in your workspace." };
+  }
+
+  if (invoice.status !== "pending") {
+    return { error: "Only unpaid invoices can be deleted." };
+  }
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("id", invoice.project_id)
+    .eq("freelancer_id", user.id)
+    .maybeSingle();
+
+  if (!project) {
+    return { error: "Invoice not found in your workspace." };
+  }
+
+  const { error } = await supabase
+    .from("invoices")
+    .delete()
+    .eq("id", invoiceId)
+    .eq("status", "pending");
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/invoices");
+  revalidatePath(`/dashboard/projects/${invoice.project_id}`);
+  return { success: true as const };
+}
+
 export async function updateProjectPhase(formData: FormData) {
   const projectId = String(formData.get("projectId") ?? "").trim();
   const status = String(formData.get("status") ?? "").trim();

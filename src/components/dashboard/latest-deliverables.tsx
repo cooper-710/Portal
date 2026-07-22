@@ -9,6 +9,11 @@ import {
   AssetThumb,
   FileTypeIcon,
 } from "@/components/dashboard/asset-thumb";
+import {
+  DashboardCard,
+  DashboardCardBody,
+  DashboardCardHeader,
+} from "@/components/dashboard/dashboard-card";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Button } from "@/components/ui/button";
 import {
@@ -128,77 +133,76 @@ export function LatestDeliverables({
 
   return (
     <>
-      <section
-        className={cn(
-          "rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm sm:p-5",
-          className,
-        )}
-      >
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
-            <FileCheck2 className="size-4 text-blue-600" />
-            Latest deliverables
-          </div>
-          {preview[0] ? (
-            <Link
-              href={`/dashboard/projects/${preview[0].project_id}`}
-              className="text-xs font-medium text-blue-700 hover:underline"
-            >
-              Open project
-            </Link>
-          ) : null}
-        </div>
-
-        {preview.length === 0 ? (
-          <EmptyState
-            icon={FileCheck2}
-            className="border-0 bg-transparent py-6"
-            title="No deliverables yet"
-            description="Shared files marked as deliverables will show up here."
-          />
-        ) : (
-          <ul className="grid gap-2">
-            {preview.map((asset) => (
-              <li
-                key={asset.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200/80 bg-zinc-50/50 px-3 py-2.5"
+      <DashboardCard className={cn("border-zinc-200/80 bg-white", className)}>
+        <DashboardCardHeader className="bg-white">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
+              <FileCheck2 className="size-4 text-blue-600" />
+              Latest deliverables
+            </div>
+            {preview[0] ? (
+              <Link
+                href={`/dashboard/projects/${preview[0].project_id}`}
+                className="text-xs font-medium text-blue-700 hover:underline"
               >
-                <div className="flex min-w-0 items-center gap-3">
-                  <AssetThumb
-                    assetId={asset.id}
-                    fileName={asset.file_name}
-                    variant="list"
-                    alt=""
-                  />
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-zinc-900">
-                      {fileLabel(asset)}
-                    </p>
-                    <p className="truncate text-[11px] text-zinc-500">
-                      {asset.projectTitle} · {formatShortDate(asset.created_at)}
-                      {asset.review_status
-                        ? ` · ${asset.review_status.replaceAll("_", " ")}`
-                        : ""}
-                    </p>
+                Open project
+              </Link>
+            ) : null}
+          </div>
+        </DashboardCardHeader>
+
+        <DashboardCardBody>
+          {preview.length === 0 ? (
+            <EmptyState
+              icon={FileCheck2}
+              className="border-0 bg-transparent py-6"
+              title="No deliverables yet"
+              description="Shared files marked as deliverables will show up here."
+            />
+          ) : (
+            <ul className="grid gap-2">
+              {preview.map((asset) => (
+                <li
+                  key={asset.id}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200/80 bg-zinc-50/50 px-3 py-2.5"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <AssetThumb
+                      assetId={asset.id}
+                      fileName={asset.file_name}
+                      variant="list"
+                      alt=""
+                    />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-zinc-900">
+                        {fileLabel(asset)}
+                      </p>
+                      <p className="truncate text-[11px] text-zinc-500">
+                        {asset.projectTitle} · {formatShortDate(asset.created_at)}
+                        {asset.review_status
+                          ? ` · ${asset.review_status.replaceAll("_", " ")}`
+                          : ""}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex shrink-0 items-center gap-1.5">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="h-8 border-zinc-200 bg-white shadow-sm"
-                    onClick={() => void openPreview(asset)}
-                  >
-                    <Eye className="size-3.5" />
-                    Preview
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 border-zinc-200 bg-white shadow-sm"
+                      onClick={() => void openPreview(asset)}
+                    >
+                      <Eye className="size-3.5" />
+                      Preview
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </DashboardCardBody>
+      </DashboardCard>
 
       <Dialog open={Boolean(viewing)} onOpenChange={closeViewer}>
         <DialogContent className="flex max-h-[min(90vh,720px)] w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">

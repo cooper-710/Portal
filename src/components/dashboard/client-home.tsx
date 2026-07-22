@@ -16,6 +16,11 @@ import {
 } from "lucide-react";
 
 import { reviewDeliverable } from "@/app/actions";
+import {
+  DashboardCard,
+  DashboardCardBody,
+  DashboardCardHeader,
+} from "@/components/dashboard/dashboard-card";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { FileVault } from "@/components/dashboard/file-vault";
 import { LatestDeliverables } from "@/components/dashboard/latest-deliverables";
@@ -358,14 +363,90 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
         </section>
       </div>
 
-      <div className="grid items-start gap-5 lg:grid-cols-2 lg:gap-6">
-        <LatestDeliverables items={home.allDeliverables} />
+      <div className="grid items-stretch gap-5 lg:grid-cols-2 lg:gap-6">
         <PaymentDueCalendar
           invoices={home.invoices}
           linkMode="invoices"
           compact
         />
+
+        <DashboardCard className="border-zinc-200/80 bg-white">
+          <DashboardCardHeader className="bg-white">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
+                <CircleDollarSign className="size-4 text-[color:var(--brand-primary)]" />
+                Unpaid invoices
+              </div>
+              <Link
+                href="/dashboard/invoices"
+                className="text-xs font-medium text-[color:var(--brand-primary)] hover:underline"
+              >
+                All invoices
+              </Link>
+            </div>
+            <p className="mt-1 text-xs text-zinc-500">
+              {pendingInvoices.length === 0
+                ? "Nothing outstanding"
+                : `${pendingInvoices.length} unpaid · ${formatMoney(home.amountDueCents)} due`}
+            </p>
+          </DashboardCardHeader>
+          <DashboardCardBody>
+            {pendingInvoices.length === 0 ? (
+              <EmptyState
+                icon={CircleDollarSign}
+                className="border-0 bg-transparent py-6"
+                title="No unpaid invoices"
+                description="When a payment is requested, it will show up here next to the calendar."
+              />
+            ) : (
+              <ul className="grid gap-2">
+                {pendingInvoices.map((invoice) => (
+                  <li
+                    key={invoice.id}
+                    className="flex flex-col gap-3 rounded-xl border border-zinc-200/80 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-semibold text-zinc-900">
+                          {formatMoney(invoice.amount, invoice.currency)}
+                        </p>
+                        <InvoiceStatusBadge status="pending" />
+                        {invoice.payment_kind &&
+                        invoice.payment_kind !== "standard" ? (
+                          <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600">
+                            {invoice.payment_kind}
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-0.5 truncate text-xs text-zinc-500">
+                        {invoice.title?.trim() ||
+                          invoice.project?.title ||
+                          "Invoice"}
+                        {invoice.due_date
+                          ? ` · due ${formatShortDate(invoice.due_date)}`
+                          : ""}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="bg-[color:var(--brand-primary)] text-white hover:opacity-90"
+                      disabled={payingId === invoice.id}
+                      onClick={() => void payInvoice(invoice.id)}
+                    >
+                      {payingId === invoice.id ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : null}
+                      Pay now
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </DashboardCardBody>
+        </DashboardCard>
       </div>
+
+      <LatestDeliverables items={home.allDeliverables} />
 
       {/* Deliverable reviews */}
       {openReviews.length > 0 ? (
@@ -466,65 +547,6 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
           </ul>
         )}
       </section>
-
-      {/* Pending invoices quick pay */}
-      {pendingInvoices.length > 0 ? (
-        <section className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm sm:p-5">
-          <div className="mb-3 flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-zinc-900">
-              Unpaid invoices
-            </h2>
-            <Link
-              href="/dashboard/invoices"
-              className="text-xs font-medium text-[color:var(--brand-primary)] hover:underline"
-            >
-              All invoices
-            </Link>
-          </div>
-          <ul className="grid gap-2">
-            {pendingInvoices.slice(0, 4).map((invoice) => (
-              <li
-                key={invoice.id}
-                className="flex flex-col gap-3 rounded-xl border border-zinc-200/80 px-3.5 py-3 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-semibold text-zinc-900">
-                      {formatMoney(invoice.amount, invoice.currency)}
-                    </p>
-                    <InvoiceStatusBadge status="pending" />
-                    {invoice.payment_kind &&
-                    invoice.payment_kind !== "standard" ? (
-                      <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600">
-                        {invoice.payment_kind}
-                      </span>
-                    ) : null}
-                  </div>
-                  <p className="mt-0.5 truncate text-xs text-zinc-500">
-                    {invoice.title?.trim() ||
-                      invoice.project?.title ||
-                      "Invoice"}
-                    {invoice.due_date
-                      ? ` · due ${formatShortDate(invoice.due_date)}`
-                      : ""}
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  className="bg-[color:var(--brand-primary)] text-white hover:opacity-90"
-                  disabled={payingId === invoice.id}
-                  onClick={() => void payInvoice(invoice.id)}
-                >
-                  {payingId === invoice.id ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : null}
-                  Pay now
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
 
       {/* File vault for selected project */}
       <section className="space-y-3">

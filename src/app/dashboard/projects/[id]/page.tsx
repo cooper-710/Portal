@@ -5,13 +5,12 @@ import { ChevronRight, FileText, Receipt, Upload } from "lucide-react";
 import { ClientEmailEditor } from "@/components/dashboard/client-email-editor";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { FileVault } from "@/components/dashboard/file-vault";
-import { ProjectInvoiceForm } from "@/components/dashboard/project-invoice-form";
+import { ProjectInvoicesPanel } from "@/components/dashboard/project-invoices-panel";
 import { ProjectPhaseSelector } from "@/components/dashboard/project-phase-selector";
 import {
   FreelancerLockedPreview,
 } from "@/components/dashboard/subscription-gate";
 import {
-  InvoiceStatusBadge,
   ProjectStatusBadge,
 } from "@/components/dashboard/status-badge";
 import {
@@ -21,14 +20,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { formatMoney, displayName, projectClientLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Asset, Invoice, Profile, Project } from "@/types/database";
@@ -324,44 +315,13 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               : "Invoices for this project"}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {isFreelancer ? <ProjectInvoiceForm projectId={project.id} /> : null}
-          {invoices.length === 0 ? (
-            <EmptyState
-              icon={Receipt}
-              title="No invoices yet"
-              description={
-                isFreelancer
-                  ? "Create an invoice above. Your client can pay it from their Invoices page."
-                  : "When an invoice is sent, it will show up here."
-              }
-            />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell className="font-medium">
-                      {formatMoney(invoice.amount, invoice.currency)}
-                    </TableCell>
-                    <TableCell>
-                      <InvoiceStatusBadge status={invoice.status} />
-                    </TableCell>
-                    <TableCell>
-                      {new Date(invoice.created_at).toLocaleDateString()}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+        <CardContent>
+          <ProjectInvoicesPanel
+            projectId={project.id}
+            projectTitle={project.title}
+            invoices={invoices}
+            canManage={isFreelancer}
+          />
         </CardContent>
       </Card>
     </div>

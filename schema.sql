@@ -421,7 +421,7 @@ grant update (
 
 grant select, insert, update, delete on table public.projects to authenticated;
 grant select, insert, update, delete on table public.assets to authenticated;
-grant select, insert, update on table public.invoices to authenticated;
+grant select, insert, update, delete on table public.invoices to authenticated;
 grant select, insert, update on table public.client_actions to authenticated;
 
 grant usage, select on all sequences in schema public to authenticated;
@@ -667,6 +667,20 @@ create policy "Freelancers can update invoices on their projects"
   )
   with check (
     exists (
+      select 1
+      from public.projects p
+      where p.id = project_id
+        and p.freelancer_id = (select auth.uid())
+    )
+  );
+
+create policy "Freelancers can delete pending invoices on their projects"
+  on public.invoices
+  for delete
+  to authenticated
+  using (
+    status = 'pending'
+    and exists (
       select 1
       from public.projects p
       where p.id = project_id

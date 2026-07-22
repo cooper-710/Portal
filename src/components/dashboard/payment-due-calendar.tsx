@@ -5,6 +5,11 @@ import { useMemo, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
+import {
+  DashboardCard,
+  DashboardCardBody,
+  DashboardCardHeader,
+} from "@/components/dashboard/dashboard-card";
 import type { InvoiceWithProject } from "@/lib/dashboard-data";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -172,13 +177,10 @@ export function PaymentDueCalendar({
   }
 
   return (
-    <section
-      className={cn(
-        "overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-sm",
-        className,
-      )}
+    <DashboardCard
+      className={cn("border-zinc-200/80 bg-white", className)}
     >
-      <div className="border-b border-zinc-200/60 px-4 py-4 sm:px-5">
+      <DashboardCardHeader className="bg-white">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200/80 bg-zinc-50 px-2.5 py-1 text-xs font-medium text-zinc-600">
@@ -213,11 +215,11 @@ export function PaymentDueCalendar({
             </button>
           </div>
         </div>
-      </div>
+      </DashboardCardHeader>
 
-      <div
+      <DashboardCardBody
         className={cn(
-          "grid gap-4 px-4 py-4 sm:px-5",
+          "grid gap-4",
           compact ? "" : "lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]",
         )}
       >
@@ -373,7 +375,7 @@ export function PaymentDueCalendar({
             </ul>
           )}
         </div>
-      </div>
-    </section>
+      </DashboardCardBody>
+    </DashboardCard>
   );
 }

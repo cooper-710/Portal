@@ -14,10 +14,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
-import { dateInputClassName } from "@/lib/form-controls";
 import type { PaymentKind } from "@/types/database";
 import { PAYMENT_KINDS } from "@/types/database";
 
@@ -49,6 +49,7 @@ export function CreateInvoiceDialog({
   const fieldId = useId();
   const [open, setOpen] = useState(false);
   const [paymentKind, setPaymentKind] = useState<PaymentKind>("standard");
+  const [dueDate, setDueDate] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -63,6 +64,7 @@ export function CreateInvoiceDialog({
 
   function resetFormState() {
     setPaymentKind("standard");
+    setDueDate(null);
     setError(null);
   }
 
@@ -72,6 +74,11 @@ export function CreateInvoiceDialog({
       formData.set("projectId", fixedProjectId);
     }
     formData.set("paymentKind", paymentKind);
+    if (dueDate) {
+      formData.set("dueDate", dueDate);
+    } else {
+      formData.set("dueDate", "");
+    }
 
     startTransition(async () => {
       const result = await createInvoice(formData);
@@ -206,13 +213,17 @@ export function CreateInvoiceDialog({
               <Label htmlFor={`${fieldId}-due`}>
                 {needsSchedule ? "First due date" : "Due date (optional)"}
               </Label>
-              <Input
+              <DatePicker
                 id={`${fieldId}-due`}
                 name="dueDate"
-                type="date"
+                value={dueDate}
+                onChange={setDueDate}
                 required={needsSchedule}
-                className={dateInputClassName("bg-white")}
+                allowClear={!needsSchedule}
                 disabled={pending}
+                placeholder={
+                  needsSchedule ? "Pick first due date" : "No due date"
+                }
               />
             </div>
 

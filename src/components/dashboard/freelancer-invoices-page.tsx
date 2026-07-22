@@ -8,8 +8,14 @@ import {
   Receipt,
 } from "lucide-react";
 
+import {
+  DashboardCard,
+  DashboardCardBody,
+  DashboardCardHeader,
+} from "@/components/dashboard/dashboard-card";
 import { CreateInvoiceDialog } from "@/components/dashboard/create-invoice-dialog";
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { InvoiceOwnerActions } from "@/components/dashboard/invoice-owner-actions";
 import { PaymentDueCalendar } from "@/components/dashboard/payment-due-calendar";
 import { StripeConnectBanner } from "@/components/dashboard/stripe-connect-banner";
 import {
@@ -78,15 +84,16 @@ export function FreelancerInvoicesPage({
 
       <PaymentDueCalendar invoices={invoices} linkMode="project" />
 
-      <section
+      <DashboardCard
+        fillHeight={false}
         className={cn(
-          "overflow-hidden rounded-2xl border shadow-sm",
           pendingInvoices.length > 0
             ? "border-amber-200/80 bg-gradient-to-br from-amber-50 via-white to-white"
             : "border-zinc-200/80 bg-gradient-to-br from-white via-white to-zinc-50",
+          "max-h-[40rem]",
         )}
       >
-        <div className="border-b border-zinc-200/60 px-4 py-4 sm:px-5">
+        <DashboardCardHeader className="bg-inherit">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200/80 bg-white/80 px-2.5 py-1 text-xs font-medium text-zinc-600 shadow-sm">
@@ -115,9 +122,9 @@ export function FreelancerInvoicesPage({
               </div>
             </div>
           </div>
-        </div>
+        </DashboardCardHeader>
 
-        <div className="space-y-6 px-4 py-4 sm:px-5">
+        <DashboardCardBody className="space-y-6">
           <div className="space-y-3">
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
               Pending
@@ -132,28 +139,43 @@ export function FreelancerInvoicesPage({
             ) : (
               <ul className="grid gap-2.5">
                 {pendingInvoices.map((invoice) => (
-                  <li key={invoice.id}>
+                  <li
+                    key={invoice.id}
+                    className="flex w-full items-center justify-between gap-3 rounded-xl border border-amber-200/70 bg-white p-3.5 text-left shadow-sm"
+                  >
                     <button
                       type="button"
                       onClick={() =>
                         router.push(`/dashboard/projects/${invoice.project_id}`)
                       }
-                      className="group flex w-full items-center justify-between gap-3 rounded-xl border border-amber-200/70 bg-white p-3.5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md"
+                      className="group min-w-0 flex-1 space-y-1 text-left"
                     >
-                      <div className="min-w-0 space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="truncate text-sm font-semibold text-zinc-900">
-                            {formatMoney(invoice.amount, invoice.currency)}
-                          </p>
-                          <InvoiceStatusBadge status="pending" />
-                        </div>
-                        <p className="truncate text-xs text-zinc-500">
-                          {invoice.project?.title ?? "Untitled project"} ·{" "}
-                          {new Date(invoice.created_at).toLocaleDateString()}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate text-sm font-semibold text-zinc-900">
+                          {formatMoney(invoice.amount, invoice.currency)}
                         </p>
+                        <InvoiceStatusBadge status="pending" />
                       </div>
-                      <ArrowUpRight className="size-4 shrink-0 text-amber-700 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                      <p className="truncate text-xs text-zinc-500">
+                        {invoice.title?.trim()
+                          ? `${invoice.title.trim()} · `
+                          : ""}
+                        {invoice.project?.title ?? "Untitled project"} ·{" "}
+                        {new Date(invoice.created_at).toLocaleDateString()}
+                        {invoice.due_date
+                          ? ` · due ${new Date(`${invoice.due_date}T12:00:00`).toLocaleDateString()}`
+                          : ""}
+                      </p>
                     </button>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <InvoiceOwnerActions
+                        invoice={invoice}
+                        projectTitle={invoice.project?.title}
+                        onMessage={setMessage}
+                        compact
+                      />
+                      <ArrowUpRight className="size-4 shrink-0 text-amber-700" />
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -198,8 +220,8 @@ export function FreelancerInvoicesPage({
               </ul>
             )}
           </div>
-        </div>
-      </section>
+        </DashboardCardBody>
+      </DashboardCard>
     </div>
   );
 }
