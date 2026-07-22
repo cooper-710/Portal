@@ -23,6 +23,25 @@ test.describe("authenticated client", () => {
   test("can reach deliverables, approvals, and invoice documents", async ({ page }) => {
     await page.goto("/dashboard");
     await expect(page.getByRole("heading", { name: "Home" })).toBeVisible();
+
+    const reviewButton = page
+      .getByRole("button", { name: "Preview & review" })
+      .first();
+    if (await reviewButton.count()) {
+      await reviewButton.click();
+      await expect(page.getByRole("dialog")).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Review this deliverable" }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Approve deliverable" }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Request changes" }),
+      ).toBeVisible();
+      await page.getByRole("button", { name: "Close" }).click();
+    }
+
     await page.goto("/dashboard/invoices");
     await expect(page.getByRole("heading", { name: "Invoices" })).toBeVisible();
     const pdf = page.getByRole("link", { name: "Download invoice PDF" }).first();

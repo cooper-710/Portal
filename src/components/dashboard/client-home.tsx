@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
   CalendarDays,
-  CheckCircle2,
   CircleDollarSign,
   Clock3,
   FolderKanban,
@@ -15,7 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import { reviewDeliverable } from "@/app/actions";
+import { AssetThumb } from "@/components/dashboard/asset-thumb";
 import {
   DashboardCard,
   DashboardCardBody,
@@ -23,6 +22,7 @@ import {
   ScrollPane,
 } from "@/components/dashboard/dashboard-card";
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { DeliverableReviewControls } from "@/components/dashboard/deliverable-review-controls";
 import { FileVault } from "@/components/dashboard/file-vault";
 import { LatestDeliverables } from "@/components/dashboard/latest-deliverables";
 import { PaymentDueCalendar } from "@/components/dashboard/payment-due-calendar";
@@ -82,8 +82,6 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
   );
   const [error, setError] = useState<string | null>(null);
   const [payingId, setPayingId] = useState<string | null>(null);
-  const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
-  const [pending, startTransition] = useTransition();
 
   useEffect(() => {
     setProjects(home.projects);
@@ -180,28 +178,6 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
       setError(friendlyCheckoutError(null));
       setPayingId(null);
     }
-  }
-
-  function submitReview(
-    actionId: string,
-    decision: "approved" | "changes_requested",
-  ) {
-    setError(null);
-    const formData = new FormData();
-    formData.set("actionId", actionId);
-    formData.set("decision", decision);
-    if (decision === "changes_requested") {
-      formData.set("note", reviewNotes[actionId] ?? "");
-    }
-    startTransition(async () => {
-      const result = await reviewDeliverable(formData);
-      if (result?.error) {
-        setError(result.error);
-        return;
-      }
-      setReviewNotes((current) => ({ ...current, [actionId]: "" }));
-      router.refresh();
-    });
   }
 
   if (projects.length === 0 || !project) {
@@ -496,7 +472,7 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
         </DashboardCardBody>
       </DashboardCard>
 
-      <LatestDeliverables items={allDeliverables} />
+      <LatestDeliverables items={allDeliverables} reviewActions={openReviews} />
 
       {openReviews.length > 0 ? (
         <section
@@ -511,59 +487,39 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
             {openReviews.map((action) => (
               <li
                 key={action.id}
-                className="rounded-xl border border-amber-200/70 bg-white p-4 shadow-sm"
+                className="overflow-hidden rounded-xl border border-amber-200/70 bg-white shadow-sm"
               >
-                <p className="text-sm font-semibold text-zinc-900">
-                  {action.title}
-                </p>
-                <p className="mt-0.5 text-xs text-zinc-500">
-                  {action.project?.title ?? "Project"}
-                  {action.asset?.file_name
-                    ? ` · ${action.asset.file_name}`
-                    : ""}
-                </p>
-                <label className="mt-3 block space-y-1.5">
-                  <span className="text-xs font-medium text-zinc-500">
-                    Change request details (required when requesting changes)
-                  </span>
-                  <textarea
-                    value={reviewNotes[action.id] ?? ""}
-                    onChange={(event) =>
-                      setReviewNotes((current) => ({
-                        ...current,
-                        [action.id]: event.target.value,
-                      }))
-                    }
-                    rows={2}
-                    maxLength={1000}
-                    placeholder="What should change?"
-                    className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-[color:var(--brand-primary)] focus:ring-2"
-                  />
-                </label>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    className="bg-emerald-600 text-white hover:bg-emerald-700"
-                    disabled={pending}
-                    onClick={() => submitReview(action.id, "approved")}
-                  >
-                    {pending ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <CheckCircle2 className="size-4" />
-                    )}
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={pending}
-                    onClick={() =>
-                      submitReview(action.id, "changes_requested")
-                    }
-                  >
-                    Request changes
-                  </Button>
+                <div className="grid gap-4 p-4 sm:grid-cols-[10rem_1fr]">
+                  {action.asset_id ? (
+                    <Link
+                      href={`/dashboard/projects/${action.project_id}?review=${action.asset_id}`}
+                      className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    >
+                      <AssetThumb
+                        assetId={action.asset_id}
+                        fileName={action.asset?.file_name ?? null}
+                        variant="tile"
+                        label={action.asset?.file_name ?? "Deliverable"}
+                        alt=""
+                      />
+                      <span className="block px-2 py-1.5 text-center text-xs font-medium text-blue-700">
+                        Preview file
+                      </span>
+                    </Link>
+                  ) : null}
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-zinc-900">
+                      {action.asset?.file_name ?? action.title}
+                    </p>
+                    <p className="mt-0.5 text-xs text-zinc-500">
+                      {action.project?.title ?? "Project"}
+                    </p>
+                    <DeliverableReviewControls
+                      actionId={action.id}
+                      fileName={action.asset?.file_name ?? "this deliverable"}
+                      className="mt-3"
+                    />
+                  </div>
                 </div>
               </li>
             ))}
@@ -618,7 +574,11 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
           </p>
         </div>
         <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm sm:p-5">
-          <FileVault projectId={project.id} assets={vaultAssets} />
+          <FileVault
+            projectId={project.id}
+            assets={vaultAssets}
+            reviewActions={openReviews}
+          />
         </div>
       </section>
     </div>

@@ -30,10 +30,11 @@ import { createClient } from "@/utils/supabase/server";
 
 type ProjectPageProps = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ review?: string }>;
 };
 
-export default async function ProjectPage({ params }: ProjectPageProps) {
-  const { id } = await params;
+export default async function ProjectPage({ params, searchParams }: ProjectPageProps) {
+  const [{ id }, { review }] = await Promise.all([params, searchParams]);
   const supabase = await createClient();
   const {
     data: { user },
@@ -87,7 +88,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     notFound();
   }
 
-  const [{ data: assetRows }, { data: invoiceRows }, { data: approvalRows }] = await Promise.all([
+  const [
+    { data: assetRows },
+    { data: invoiceRows },
+    { data: approvalRows },
+    { data: deliverableReviewRows },
+  ] = await Promise.all([
     supabase
       .from("assets")
       .select("*")
@@ -104,11 +110,18 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       .eq("project_id", project.id)
       .eq("action_type", "review_project")
       .order("created_at", { ascending: false }),
+    supabase
+      .from("client_actions")
+      .select("*")
+      .eq("project_id", project.id)
+      .eq("action_type", "review_deliverable")
+      .order("created_at", { ascending: false }),
   ]);
 
   const assets = (assetRows ?? []) as Asset[];
   const invoices = (invoiceRows ?? []) as Invoice[];
   const approvalActions = (approvalRows ?? []) as ClientAction[];
+  const deliverableReviewActions = (deliverableReviewRows ?? []) as ClientAction[];
   const pendingInvoiceCount = invoices.filter(
     (invoice) => invoice.status === "pending",
   ).length;
@@ -276,7 +289,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             <CardDescription>
               {isFreelancer
                 ? "Tag files as internal reference or client deliverables. Clients can view and download deliverables only."
-                : "View and download approved deliverables shared with you."}
+                : "Preview shared deliverables here, then approve them or request changes in context."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -284,6 +297,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               projectId={project.id}
               assets={assets}
               canManageVisibility={isFreelancer}
+              reviewActions={isClient ? deliverableReviewActions : []}
+              initialReviewAssetId={isClient ? review ?? null : null}
             />
           </CardContent>
         </Card>

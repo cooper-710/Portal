@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Download,
@@ -21,6 +21,7 @@ import {
   AssetThumb,
   FileTypeIcon,
 } from "@/components/dashboard/asset-thumb";
+import { DeliverableReviewControls } from "@/components/dashboard/deliverable-review-controls";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,7 +40,7 @@ import {
   type PreviewKind,
 } from "@/lib/file-preview";
 import { cn } from "@/lib/utils";
-import type { Asset, AssetVisibility } from "@/types/database";
+import type { Asset, AssetVisibility, ClientAction } from "@/types/database";
 
 type FileVaultProps = {
   projectId: string;
@@ -49,6 +50,8 @@ type FileVaultProps = {
    * Clients only see deliverables (via RLS) and cannot upload or delete.
    */
   canManageVisibility?: boolean;
+  reviewActions?: ClientAction[];
+  initialReviewAssetId?: string | null;
 };
 
 function VisibilityBadge({ visibility }: { visibility: AssetVisibility }) {
@@ -105,9 +108,12 @@ export function FileVault({
   projectId,
   assets,
   canManageVisibility = false,
+  reviewActions = [],
+  initialReviewAssetId = null,
 }: FileVaultProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const openedFromLinkRef = useRef(false);
   const canUpload = canManageVisibility;
   const [dragging, setDragging] = useState(false);
   const [visibility, setVisibility] = useState<AssetVisibility>("internal");
@@ -122,6 +128,45 @@ export function FileVault({
   const [viewText, setViewText] = useState<string | null>(null);
   const [viewLoading, setViewLoading] = useState(false);
   const [viewError, setViewError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!initialReviewAssetId || openedFromLinkRef.current) return;
+    const asset = assets.find((item) => item.id === initialReviewAssetId);
+    if (!asset) return;
+
+    openedFromLinkRef.current = true;
+    setViewingAsset(asset);
+    setViewUrl(null);
+    setViewText(null);
+    setViewError(null);
+    setViewLoading(true);
+
+    void (async () => {
+      const result = await getAssetDownloadUrl(asset.id);
+      if (result.error || !result.url) {
+        setViewError(result.error ?? "Unable to open file.");
+        setViewLoading(false);
+        return;
+      }
+
+      setViewUrl(result.url);
+      if (getPreviewKind(asset.file_name) === "text") {
+        try {
+          const response = await fetch(result.url);
+          if (!response.ok) throw new Error();
+          const text = await response.text();
+          setViewText(
+            text.length > TEXT_PREVIEW_MAX_CHARS
+              ? `${text.slice(0, TEXT_PREVIEW_MAX_CHARS)}\n\n… Preview truncated. Download the full file to see the rest.`
+              : text,
+          );
+        } catch {
+          setViewError("Unable to load file preview.");
+        }
+      }
+      setViewLoading(false);
+    })();
+  }, [assets, initialReviewAssetId]);
 
   function handleFiles(files: FileList | null) {
     if (!canUpload) return;
@@ -284,6 +329,14 @@ export function FileVault({
   const viewingKind = viewingAsset
     ? getPreviewKind(viewingAsset.file_name)
     : null;
+  const viewingReviewAction = viewingAsset
+    ? reviewActions.find(
+        (action) =>
+          action.asset_id === viewingAsset.id &&
+          action.action_type === "review_deliverable" &&
+          action.status === "open",
+      )
+    : null;
 
   return (
     <div className="space-y-4">
@@ -414,6 +467,7 @@ export function FileVault({
           onDownload={downloadAsset}
           onToggleVisibility={toggleVisibility}
           onDelete={handleDelete}
+          reviewActions={reviewActions}
         />
       )}
 
@@ -470,6 +524,27 @@ export function FileVault({
                 </p>
               </div>
             )}
+
+            {viewingAsset && viewingReviewAction ? (
+              <DeliverableReviewControls
+                actionId={viewingReviewAction.id}
+                fileName={displayName(viewingAsset)}
+                className="mt-4 bg-white"
+              />
+            ) : viewingAsset?.review_status === "approved" ? (
+              <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
+                You approved this deliverable.
+              </p>
+            ) : viewingAsset?.review_status === "changes_requested" ? (
+              <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                <p className="font-medium">Changes requested</p>
+                {viewingAsset.review_note ? (
+                  <p className="mt-1 text-xs leading-relaxed">
+                    {viewingAsset.review_note}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
           <DialogFooter className="mx-0 mb-0 shrink-0 rounded-none border-zinc-200 bg-white sm:justify-between">
@@ -526,6 +601,7 @@ function AssetSection({
   onDownload,
   onToggleVisibility,
   onDelete,
+  reviewActions = [],
 }: {
   title: string;
   empty: string;
@@ -538,6 +614,7 @@ function AssetSection({
   onDownload: (asset: Asset) => void;
   onToggleVisibility: (asset: Asset) => void;
   onDelete: (asset: Asset) => void;
+  reviewActions?: ClientAction[];
 }) {
   return (
     <div>
@@ -554,6 +631,9 @@ function AssetSection({
               downloading={downloadingId === asset.id}
               updating={updatingId === asset.id}
               deleting={deletingId === asset.id}
+              awaitingReview={reviewActions.some(
+                (action) => action.asset_id === asset.id && action.status === "open",
+              )}
               onView={() => void onView(asset)}
               onDownload={() => void onDownload(asset)}
               onToggleVisibility={() => onToggleVisibility(asset)}
@@ -572,6 +652,7 @@ function AssetTile({
   downloading,
   updating,
   deleting,
+  awaitingReview,
   onView,
   onDownload,
   onToggleVisibility,
@@ -582,6 +663,7 @@ function AssetTile({
   downloading: boolean;
   updating: boolean;
   deleting: boolean;
+  awaitingReview: boolean;
   onView: () => void;
   onDownload: () => void;
   onToggleVisibility: () => void;
@@ -637,9 +719,15 @@ function AssetTile({
       </button>
 
       <div className="flex flex-wrap items-center gap-2 border-t border-zinc-100 px-3 py-2">
-        <Button type="button" size="sm" variant="outline" onClick={onView}>
+        <Button
+          type="button"
+          size="sm"
+          variant={awaitingReview ? "default" : "outline"}
+          className={awaitingReview ? "bg-blue-600 text-white hover:bg-blue-700" : undefined}
+          onClick={onView}
+        >
           <Eye className="size-4" />
-          View
+          {awaitingReview ? "Preview & review" : "View"}
         </Button>
         <Button
           type="button"

@@ -9,6 +9,7 @@ import {
   AssetThumb,
   FileTypeIcon,
 } from "@/components/dashboard/asset-thumb";
+import { DeliverableReviewControls } from "@/components/dashboard/deliverable-review-controls";
 import {
   DashboardCard,
   DashboardCardBody,
@@ -30,7 +31,7 @@ import {
   TEXT_PREVIEW_MAX_CHARS,
 } from "@/lib/file-preview";
 import { cn } from "@/lib/utils";
-import type { Asset } from "@/types/database";
+import type { Asset, ClientAction } from "@/types/database";
 
 export type DeliverableListItem = Asset & {
   projectTitle: string;
@@ -40,6 +41,7 @@ type LatestDeliverablesProps = {
   items: DeliverableListItem[];
   className?: string;
   limit?: number;
+  reviewActions?: ClientAction[];
 };
 
 function formatShortDate(value: string) {
@@ -59,6 +61,7 @@ export function LatestDeliverables({
   items,
   className,
   limit = 5,
+  reviewActions = [],
 }: LatestDeliverablesProps) {
   const preview = items.slice(0, limit);
   const [viewing, setViewing] = useState<DeliverableListItem | null>(null);
@@ -130,6 +133,11 @@ export function LatestDeliverables({
   }
 
   const viewingKind = viewing ? getPreviewKind(viewing.file_name) : null;
+  const viewingReviewAction = viewing
+    ? reviewActions.find(
+        (action) => action.asset_id === viewing.id && action.status === "open",
+      )
+    : null;
 
   return (
     <>
@@ -194,7 +202,12 @@ export function LatestDeliverables({
                       onClick={() => void openPreview(asset)}
                     >
                       <Eye className="size-3.5" />
-                      Preview
+                      {reviewActions.some(
+                        (action) =>
+                          action.asset_id === asset.id && action.status === "open",
+                      )
+                        ? "Preview & review"
+                        : "Preview"}
                     </Button>
                   </div>
                 </li>
@@ -258,6 +271,27 @@ export function LatestDeliverables({
                 </p>
               </div>
             )}
+
+            {viewing && viewingReviewAction ? (
+              <DeliverableReviewControls
+                actionId={viewingReviewAction.id}
+                fileName={fileLabel(viewing)}
+                className="mt-4 bg-white"
+              />
+            ) : viewing?.review_status === "approved" ? (
+              <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
+                You approved this deliverable.
+              </p>
+            ) : viewing?.review_status === "changes_requested" ? (
+              <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                <p className="font-medium">Changes requested</p>
+                {viewing.review_note ? (
+                  <p className="mt-1 text-xs leading-relaxed">
+                    {viewing.review_note}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
           <DialogFooter className="mx-0 mb-0 shrink-0 rounded-none border-zinc-200 bg-white sm:justify-between">
