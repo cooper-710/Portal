@@ -235,14 +235,18 @@ export async function loadClientWorkspace(
     };
   }
 
-  const activeId =
-    (selectedProjectId &&
+  const filterProjectId =
+    selectedProjectId &&
     projects.some((project) => project.id === selectedProjectId)
       ? selectedProjectId
-      : projects[0].id) ?? null;
+      : null;
 
-  const activeProjectRow =
-    projects.find((project) => project.id === activeId) ?? projects[0];
+  const vaultProjectRow =
+    (filterProjectId
+      ? projects.find((project) => project.id === filterProjectId)
+      : null) ??
+    projects.find((project) => !isCompletedProject(project.status)) ??
+    projects[0];
 
   const freelancerIds = [
     ...new Set(projects.map((project) => project.freelancer_id)),
@@ -265,6 +269,8 @@ export async function loadClientWorkspace(
     projects.map((project) => [project.id, project.title]),
   );
 
+  const scopedProjectIds = filterProjectId ? [filterProjectId] : projectIds;
+
   const [
     { data: assetRows },
     { data: allAssetRows },
@@ -274,24 +280,25 @@ export async function loadClientWorkspace(
     supabase
       .from("assets")
       .select("*")
-      .eq("project_id", activeProjectRow.id)
+      .eq("project_id", vaultProjectRow.id)
       .order("created_at", { ascending: false }),
     supabase
       .from("assets")
       .select("*")
-      .in("project_id", projectIds)
+      .in("project_id", scopedProjectIds)
       .eq("visibility", "deliverable")
       .order("created_at", { ascending: false })
       .limit(12),
     supabase
       .from("invoices")
       .select("*")
-      .in("project_id", projectIds)
+      .in("project_id", scopedProjectIds)
       .order("created_at", { ascending: false }),
     supabase
       .from("client_actions")
       .select("*")
       .eq("client_id", profileId)
+      .in("project_id", scopedProjectIds)
       .order("created_at", { ascending: false })
       .limit(40),
   ]);
@@ -358,7 +365,9 @@ export async function loadClientWorkspace(
       label: `${invoice.title?.trim() || "Payment"} · ${formatMoney(invoice.amount, invoice.currency)}`,
       date: invoice.due_date!,
       kind: "invoice_due",
-      href: "/dashboard/invoices",
+      href: filterProjectId
+        ? `/dashboard/invoices?project=${filterProjectId}`
+        : "/dashboard/invoices",
     });
   }
   for (const action of actionsWithLinks.filter(
@@ -369,10 +378,16 @@ export async function loadClientWorkspace(
       label: action.title,
       date: action.due_at!.slice(0, 10),
       kind: "action_due",
-      href: "/dashboard",
+      href: filterProjectId
+        ? `/dashboard?project=${filterProjectId}`
+        : "/dashboard",
     });
   }
   upcoming.sort((a, b) => a.date.localeCompare(b.date));
+
+  const activityProjects = filterProjectId
+    ? projects.filter((project) => project.id === filterProjectId)
+    : projects;
 
   const activity: ClientActivityItem[] = [];
   for (const invoice of invoices.slice(0, 10)) {
@@ -405,7 +420,7 @@ export async function loadClientWorkspace(
       projectTitle: projectTitleById.get(asset.project_id) ?? null,
     });
   }
-  for (const project of projects) {
+  for (const project of activityProjects) {
     if (project.status === "review" || project.status === "in_progress") {
       activity.push({
         id: `phase-${project.id}-${project.updated_at}`,
@@ -437,11 +452,11 @@ export async function loadClientWorkspace(
   })) as ClientProject[];
 
   const activeProject =
-    clientProjects.find((project) => project.id === activeProjectRow.id) ??
+    clientProjects.find((project) => project.id === vaultProjectRow.id) ??
     clientProjects[0] ??
     null;
 
-  // Prefer brand from active project; fall back to most recent project's freelancer.
+  // Prefer brand from filtered/vault project; fall back to most recent active.
   const brand =
     activeProject?.freelancer ??
     clientProjects.find((project) => !isCompletedProject(project.status))
@@ -451,7 +466,7 @@ export async function loadClientWorkspace(
 
   return {
     projects: clientProjects,
-    selectedProjectId: activeProjectRow.id,
+    selectedProjectId: filterProjectId,
     assets: (assetRows ?? []) as Asset[],
     allDeliverables: assetsAll.map((asset) => ({
       ...asset,

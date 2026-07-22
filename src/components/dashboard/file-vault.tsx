@@ -31,7 +31,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
+import { Select } from "@/components/ui/select";
 import {
   getPreviewKind,
   previewLabel,
@@ -297,17 +297,19 @@ export function FileVault({
             >
               Upload as
             </Label>
-            <NativeSelect
+            <Select
               id="upload-visibility"
               value={visibility}
-              onChange={(event) =>
-                setVisibility(event.target.value as AssetVisibility)
+              onChange={(next) =>
+                setVisibility(next as AssetVisibility)
               }
-              className="h-8 w-auto min-w-[12rem]"
-            >
-              <option value="internal">Internal reference</option>
-              <option value="deliverable">Client deliverable</option>
-            </NativeSelect>
+              className="w-auto min-w-[12rem]"
+              triggerClassName="h-8"
+              options={[
+                { value: "internal", label: "Internal reference" },
+                { value: "deliverable", label: "Client deliverable" },
+              ]}
+            />
           </div>
 
           <Button

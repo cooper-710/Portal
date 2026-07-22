@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
+import { Select } from "@/components/ui/select";
 
 type ProjectOption = {
   id: string;
@@ -100,19 +100,17 @@ export function InviteStepForm({ projects }: { projects: ProjectOption[] }) {
       {projects.length > 1 ? (
         <div className="space-y-2">
           <Label htmlFor="inviteProject">Project</Label>
-          <NativeSelect
+          <Select
             id="inviteProject"
             value={projectId}
-            onChange={(event) => setProjectId(event.target.value)}
-            className="h-10"
+            onChange={setProjectId}
+            triggerClassName="h-10"
             disabled={pending}
-          >
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.title}
-              </option>
-            ))}
-          </NativeSelect>
+            options={projects.map((project) => ({
+              value: project.id,
+              label: project.title,
+            }))}
+          />
         </div>
       ) : (
         <p className="text-sm text-zinc-500">

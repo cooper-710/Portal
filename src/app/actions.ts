@@ -24,7 +24,7 @@ import {
   dismissOpenDeliverableActions,
 } from "@/lib/client-actions";
 import { displayName } from "@/lib/format";
-import type { PaymentKind } from "@/types/database";
+import type { PaymentKind, RecurrenceFrequency } from "@/types/database";
 
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
 const PAYMENT_KINDS = new Set<PaymentKind>([
@@ -35,6 +35,18 @@ const PAYMENT_KINDS = new Set<PaymentKind>([
   "recurring",
   "standalone",
 ]);
+const RECURRENCE_FREQUENCIES = new Set<RecurrenceFrequency>([
+  "weekly",
+  "monthly",
+  "yearly",
+]);
+
+/** Collapse legacy create kinds into the simplified UX set. */
+function normalizeCreatePaymentKind(raw: PaymentKind): PaymentKind {
+  if (raw === "standalone") return "standard";
+  if (raw === "retainer") return "recurring";
+  return raw;
+}
 
 export async function signOut() {
   const supabase = await createClient();
@@ -727,6 +739,23 @@ function addMonthsIso(dateIso: string, months: number) {
   return date.toISOString().slice(0, 10);
 }
 
+function addFrequencyIso(
+  dateIso: string,
+  index: number,
+  frequency: RecurrenceFrequency,
+) {
+  if (index === 0) return dateIso;
+  const date = new Date(`${dateIso}T12:00:00.000Z`);
+  if (frequency === "weekly") {
+    date.setUTCDate(date.getUTCDate() + 7 * index);
+  } else if (frequency === "yearly") {
+    date.setUTCFullYear(date.getUTCFullYear() + index);
+  } else {
+    date.setUTCMonth(date.getUTCMonth() + index);
+  }
+  return date.toISOString().slice(0, 10);
+}
+
 export async function createInvoice(formData: FormData) {
   const projectId = String(formData.get("projectId") ?? "");
   const amountDollars = Number(formData.get("amount"));
@@ -735,16 +764,25 @@ export async function createInvoice(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const installmentCount = Number(formData.get("installmentCount") ?? "1");
   const seriesCount = Number(formData.get("seriesCount") ?? "1");
+  const frequencyRaw = String(
+    formData.get("recurrenceFrequency") ?? "monthly",
+  ).trim();
 
   if (!projectId || !Number.isFinite(amountDollars) || amountDollars <= 0) {
     return { error: "Enter a valid project and amount." };
   }
 
-  const paymentKind = (
-    PAYMENT_KINDS.has(paymentKindRaw as PaymentKind)
+  const paymentKind = normalizeCreatePaymentKind(
+    (PAYMENT_KINDS.has(paymentKindRaw as PaymentKind)
       ? paymentKindRaw
-      : "standard"
-  ) as PaymentKind;
+      : "standard") as PaymentKind,
+  );
+
+  const recurrenceFrequency = (
+    RECURRENCE_FREQUENCIES.has(frequencyRaw as RecurrenceFrequency)
+      ? frequencyRaw
+      : "monthly"
+  ) as RecurrenceFrequency;
 
   const dueDate =
     dueDateRaw && /^\d{4}-\d{2}-\d{2}$/.test(dueDateRaw) ? dueDateRaw : null;
@@ -775,15 +813,15 @@ export async function createInvoice(formData: FormData) {
     client_id: project.client_id,
   };
 
-  // Recurring / retainer MVP: create a dated series of discrete invoices.
+  // Recurring MVP: dated series of discrete invoices (not Stripe autopay yet).
   if (
-    (paymentKind === "recurring" || paymentKind === "retainer") &&
+    paymentKind === "recurring" &&
     Number.isFinite(seriesCount) &&
     seriesCount > 1
   ) {
     if (!dueDate) {
       return {
-        error: "Pick a first due date for recurring or retainer payments.",
+        error: "Pick a first due date for recurring payments.",
       };
     }
     if (seriesCount > 24) {
@@ -795,13 +833,12 @@ export async function createInvoice(formData: FormData) {
       project_id: projectId,
       amount,
       status: "pending" as const,
-      payment_kind: paymentKind,
-      due_date: addMonthsIso(dueDate, index),
+      payment_kind: "recurring" as const,
+      due_date: addFrequencyIso(dueDate, index, recurrenceFrequency),
       installment_number: index + 1,
-      title:
-        title ||
-        `${paymentKind === "retainer" ? "Retainer" : "Recurring"} ${index + 1}/${seriesCount}`,
+      title: title || `Recurring ${index + 1}/${seriesCount}`,
       series_key: seriesKey,
+      recurrence_frequency: recurrenceFrequency,
     }));
 
     const { data: created, error } = await supabase
@@ -831,7 +868,7 @@ export async function createInvoice(formData: FormData) {
     return { success: true as const, createdCount: created?.length ?? 0 };
   }
 
-  // Installments: split total into N equal dated invoices.
+  // Installments: split total into N equal dated invoices (monthly steps).
   if (
     paymentKind === "installment" &&
     Number.isFinite(installmentCount) &&
@@ -856,6 +893,7 @@ export async function createInvoice(formData: FormData) {
       installment_number: index + 1,
       title: title || `Installment ${index + 1}/${installmentCount}`,
       series_key: seriesKey,
+      recurrence_frequency: "monthly" as const,
     }));
 
     const { data: created, error } = await supabase
@@ -895,6 +933,7 @@ export async function createInvoice(formData: FormData) {
       due_date: dueDate,
       title: title || null,
       installment_number: paymentKind === "installment" ? 1 : null,
+      recurrence_frequency: null,
     })
     .select("id, amount, currency, payment_kind, due_date, title")
     .single();

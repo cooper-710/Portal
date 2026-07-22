@@ -20,15 +20,14 @@ function paymentKindLabel(kind: PaymentKind) {
     case "deposit":
       return "Deposit";
     case "installment":
-      return "Installment";
+      return "Payment plan";
     case "retainer":
-      return "Retainer";
     case "recurring":
-      return "Recurring payment";
+      return "Recurring";
     case "standalone":
-      return "Payment request";
+    case "standard":
     default:
-      return "Invoice";
+      return "One-off";
   }
 }
 

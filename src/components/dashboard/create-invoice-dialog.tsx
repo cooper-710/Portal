@@ -17,9 +17,9 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
-import type { PaymentKind } from "@/types/database";
-import { PAYMENT_KINDS } from "@/types/database";
+import { Select } from "@/components/ui/select";
+import type { InvoiceCreateKind, RecurrenceFrequency } from "@/types/database";
+import { PAYMENT_KINDS, RECURRENCE_FREQUENCIES } from "@/types/database";
 
 type ProjectOption = {
   id: string;
@@ -48,7 +48,9 @@ export function CreateInvoiceDialog({
   const router = useRouter();
   const fieldId = useId();
   const [open, setOpen] = useState(false);
-  const [paymentKind, setPaymentKind] = useState<PaymentKind>("standard");
+  const [paymentKind, setPaymentKind] = useState<InvoiceCreateKind>("standard");
+  const [frequency, setFrequency] = useState<RecurrenceFrequency>("monthly");
+  const [projectValue, setProjectValue] = useState("");
   const [dueDate, setDueDate] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -58,12 +60,12 @@ export function CreateInvoiceDialog({
   const needsProjectSelect = !fixedProjectId;
 
   const needsSchedule =
-    paymentKind === "installment" ||
-    paymentKind === "retainer" ||
-    paymentKind === "recurring";
+    paymentKind === "installment" || paymentKind === "recurring";
 
   function resetFormState() {
     setPaymentKind("standard");
+    setFrequency("monthly");
+    setProjectValue("");
     setDueDate(null);
     setError(null);
   }
@@ -72,8 +74,11 @@ export function CreateInvoiceDialog({
     setError(null);
     if (fixedProjectId) {
       formData.set("projectId", fixedProjectId);
+    } else if (projectValue) {
+      formData.set("projectId", projectValue);
     }
     formData.set("paymentKind", paymentKind);
+    formData.set("recurrenceFrequency", frequency);
     if (dueDate) {
       formData.set("dueDate", dueDate);
     } else {
@@ -134,23 +139,23 @@ export function CreateInvoiceDialog({
             {needsProjectSelect ? (
               <div className="space-y-2">
                 <Label htmlFor={`${fieldId}-project`}>Project</Label>
-                <NativeSelect
+                <Select
                   id={`${fieldId}-project`}
                   name="projectId"
+                  value={projectValue}
+                  onChange={setProjectValue}
                   required
                   disabled={pending || projectOptions.length === 0}
-                >
-                  <option value="">
-                    {projectOptions.length === 0
+                  placeholder={
+                    projectOptions.length === 0
                       ? "No projects yet"
-                      : "Select a project"}
-                  </option>
-                  {projectOptions.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.title}
-                    </option>
-                  ))}
-                </NativeSelect>
+                      : "Select a project"
+                  }
+                  options={projectOptions.map((project) => ({
+                    value: project.id,
+                    label: project.title,
+                  }))}
+                />
               </div>
             ) : (
               <input type="hidden" name="projectId" value={fixedProjectId} />
@@ -158,24 +163,44 @@ export function CreateInvoiceDialog({
 
             <div className="space-y-2">
               <Label htmlFor={`${fieldId}-kind`}>Type</Label>
-              <NativeSelect
+              <Select
                 id={`${fieldId}-kind`}
                 value={paymentKind}
-                onChange={(event) =>
-                  setPaymentKind(event.target.value as PaymentKind)
-                }
+                onChange={(next) => setPaymentKind(next as InvoiceCreateKind)}
                 disabled={pending}
-              >
-                {PAYMENT_KINDS.map((kind) => (
-                  <option key={kind.value} value={kind.value}>
-                    {kind.label}
-                  </option>
-                ))}
-              </NativeSelect>
+                options={PAYMENT_KINDS.map((kind) => ({
+                  value: kind.value,
+                  label: kind.label,
+                  description: kind.hint,
+                }))}
+              />
               <p className="text-xs text-zinc-500">
                 {PAYMENT_KINDS.find((kind) => kind.value === paymentKind)?.hint}
               </p>
             </div>
+
+            {paymentKind === "recurring" ? (
+              <div className="space-y-2">
+                <Label htmlFor={`${fieldId}-frequency`}>Frequency</Label>
+                <Select
+                  id={`${fieldId}-frequency`}
+                  name="recurrenceFrequency"
+                  value={frequency}
+                  onChange={(next) =>
+                    setFrequency(next as RecurrenceFrequency)
+                  }
+                  disabled={pending}
+                  options={RECURRENCE_FREQUENCIES.map((item) => ({
+                    value: item.value,
+                    label: item.label,
+                  }))}
+                />
+                <p className="rounded-lg border border-amber-200/80 bg-amber-50/70 px-3 py-2 text-xs text-amber-950">
+                  Creates scheduled invoices. Autopay comes next / not
+                  auto-charged yet.
+                </p>
+              </div>
+            ) : null}
 
             <div className="space-y-2">
               <Label htmlFor={`${fieldId}-title`}>Label (optional)</Label>
@@ -248,7 +273,7 @@ export function CreateInvoiceDialog({
               </div>
             ) : null}
 
-            {paymentKind === "retainer" || paymentKind === "recurring" ? (
+            {paymentKind === "recurring" ? (
               <div className="space-y-2">
                 <Label htmlFor={`${fieldId}-series`}>Payments in series</Label>
                 <Input
@@ -261,11 +286,6 @@ export function CreateInvoiceDialog({
                   className="h-9 bg-white"
                   disabled={pending}
                 />
-                <p className="rounded-lg border border-amber-200/80 bg-amber-50/70 px-3 py-2 text-xs text-amber-950">
-                  Billed as scheduled invoices (monthly due dates). Clients pay
-                  each invoice separately. This is not an automatic Stripe
-                  subscription.
-                </p>
               </div>
             ) : null}
 
@@ -286,7 +306,11 @@ export function CreateInvoiceDialog({
               </Button>
               <Button
                 type="submit"
-                disabled={pending || (needsProjectSelect && projectOptions.length === 0)}
+                disabled={
+                  pending ||
+                  (needsProjectSelect &&
+                    (projectOptions.length === 0 || !projectValue))
+                }
               >
                 {pending ? <Loader2 className="size-4 animate-spin" /> : null}
                 Create invoice

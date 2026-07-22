@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 
 import { updateProjectPhase } from "@/app/actions";
 import { Label } from "@/components/ui/label";
-import { NativeSelect } from "@/components/ui/native-select";
+import { Select } from "@/components/ui/select";
 import { PROJECT_PHASES, type ProjectPhase, type ProjectStatus } from "@/types/database";
 
 function toPhase(status: ProjectStatus): ProjectPhase {
@@ -72,21 +72,19 @@ export function ProjectPhaseSelector({
         Project phase
       </Label>
       <div className="relative">
-        <NativeSelect
+        <Select
           id={`project-phase-${projectId}`}
           value={value}
           disabled={pending}
-          onChange={(event) => onChange(event.target.value as ProjectPhase)}
-          className="h-10 font-medium"
-        >
-          {PROJECT_PHASES.map((phase) => (
-            <option key={phase.value} value={phase.value}>
-              {phase.label}
-            </option>
-          ))}
-        </NativeSelect>
+          onChange={(next) => onChange(next as ProjectPhase)}
+          options={PROJECT_PHASES.map((phase) => ({
+            value: phase.value,
+            label: phase.label,
+          }))}
+          triggerClassName="h-10 font-medium"
+        />
         {pending ? (
-          <Loader2 className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-zinc-400" />
+          <Loader2 className="pointer-events-none absolute right-8 top-1/2 size-4 -translate-y-1/2 animate-spin text-zinc-400" />
         ) : null}
       </div>
       {error ? <p className="text-xs text-red-600">{error}</p> : null}

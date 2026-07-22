@@ -31,6 +31,11 @@ create type public.payment_kind as enum (
   'recurring',
   'standalone'
 );
+create type public.recurrence_frequency as enum (
+  'weekly',
+  'monthly',
+  'yearly'
+);
 create type public.client_action_type as enum (
   'pay_invoice',
   'review_deliverable',
@@ -133,6 +138,7 @@ create table public.invoices (
   parent_invoice_id uuid references public.invoices (id) on delete set null,
   title text,
   series_key text,
+  recurrence_frequency public.recurrence_frequency,
   stripe_payment_intent_id text unique,
   stripe_checkout_session_id text unique,
   created_at timestamptz not null default now(),

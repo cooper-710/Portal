@@ -25,6 +25,7 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import { FileVault } from "@/components/dashboard/file-vault";
 import { LatestDeliverables } from "@/components/dashboard/latest-deliverables";
 import { PaymentDueCalendar } from "@/components/dashboard/payment-due-calendar";
+import { ProjectFilter } from "@/components/dashboard/project-filter";
 import {
   InvoiceStatusBadge,
   ProjectStatusBadge,
@@ -34,7 +35,7 @@ import { businessDisplayName } from "@/lib/branding";
 import type { ClientHomeData } from "@/lib/dashboard-data";
 import { displayName, formatMoney, isCompletedProject } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Profile, ProjectStatus } from "@/types/database";
+import type { PaymentKind, Profile, ProjectStatus } from "@/types/database";
 import { friendlyCheckoutError } from "@/utils/billing-errors";
 import { createClient } from "@/utils/supabase/client";
 
@@ -52,6 +53,21 @@ function formatShortDate(value: string) {
     month: "short",
     day: "numeric",
   });
+}
+
+function paymentKindBadge(kind: PaymentKind | null | undefined) {
+  if (!kind || kind === "standard" || kind === "standalone") return null;
+  switch (kind) {
+    case "deposit":
+      return "Deposit";
+    case "installment":
+      return "Payment plan";
+    case "retainer":
+    case "recurring":
+      return "Recurring";
+    default:
+      return kind;
+  }
 }
 
 export function ClientHome({ profile, home }: ClientHomeProps) {
@@ -106,13 +122,18 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
   const activeProjects = projects.filter(
     (item) => !isCompletedProject(item.status),
   );
+  const filterProjectId = home.selectedProjectId;
   const project =
-    (home.selectedProjectId
-      ? projects.find((item) => item.id === home.selectedProjectId)
+    (filterProjectId
+      ? projects.find((item) => item.id === filterProjectId)
       : null) ??
+    home.activeProject ??
     activeProjects[0] ??
     projects[0] ??
     null;
+  const invoicesHref = filterProjectId
+    ? `/dashboard/invoices?project=${filterProjectId}`
+    : "/dashboard/invoices";
 
   const pendingInvoices = home.invoices.filter(
     (invoice) => invoice.status === "pending",
@@ -205,11 +226,17 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
           </h1>
           <p className="max-w-xl text-sm text-zinc-500">{welcome}</p>
         </div>
-        <div className="flex flex-col items-start gap-1.5 sm:items-end">
-          <ProjectStatusBadge status={project.status} />
-          <p className="max-w-[16rem] truncate text-sm font-semibold text-zinc-900">
-            {project.title}
-          </p>
+        <div className="flex flex-col items-start gap-2 sm:items-end">
+          {projects.length > 0 ? (
+            <ProjectFilter
+              projects={projects.map((item) => ({
+                id: item.id,
+                title: item.title,
+              }))}
+              value={filterProjectId}
+              basePath="/dashboard"
+            />
+          ) : null}
           <p className="text-xs text-zinc-500">
             {activeProjects.length} active · {projects.length} total
           </p>
@@ -313,7 +340,7 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
             {pendingInvoices.length === 1 ? "" : "s"}
           </p>
           <Link
-            href="/dashboard/invoices"
+            href={invoicesHref}
             className="mt-3 inline-flex text-xs font-medium text-[color:var(--brand-primary)] hover:underline"
           >
             View invoices
@@ -342,22 +369,34 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
         <section className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm sm:p-5">
           <div className="flex items-center gap-2 text-xs font-medium text-zinc-500">
             <FolderKanban className="size-3.5 text-[color:var(--brand-primary)]" />
-            Current project
+            {filterProjectId ? "Current project" : "Focus project"}
           </div>
           <p className="mt-2 truncate text-lg font-semibold text-zinc-900">
-            {project.title}
+            {filterProjectId
+              ? project.title
+              : activeProjects.length > 1
+                ? `${activeProjects.length} active projects`
+                : project.title}
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <ProjectStatusBadge status={project.status} />
+            {filterProjectId || activeProjects.length <= 1 ? (
+              <ProjectStatusBadge status={project.status} />
+            ) : null}
             <span className="text-xs text-zinc-500">
-              {businessDisplayName(project.freelancer, "Workspace")}
+              {filterProjectId
+                ? businessDisplayName(project.freelancer, "Workspace")
+                : "Showing all projects"}
             </span>
           </div>
           <Link
-            href={`/dashboard/projects/${project.id}`}
+            href={
+              filterProjectId
+                ? `/dashboard/projects/${project.id}`
+                : "/dashboard/projects"
+            }
             className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-[color:var(--brand-primary)] hover:underline"
           >
-            Open workspace
+            {filterProjectId ? "Open workspace" : "View projects"}
             <ArrowUpRight className="size-3" />
           </Link>
         </section>
@@ -379,7 +418,7 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
               Unpaid invoices
             </div>
             <Link
-              href="/dashboard/invoices"
+              href={invoicesHref}
               className="text-xs font-medium text-[color:var(--brand-primary)] hover:underline"
             >
               All invoices
@@ -412,10 +451,9 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
                         {formatMoney(invoice.amount, invoice.currency)}
                       </p>
                       <InvoiceStatusBadge status="pending" />
-                      {invoice.payment_kind &&
-                      invoice.payment_kind !== "standard" ? (
+                      {paymentKindBadge(invoice.payment_kind) ? (
                         <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600">
-                          {invoice.payment_kind}
+                          {paymentKindBadge(invoice.payment_kind)}
                         </span>
                       ) : null}
                     </div>
@@ -548,41 +586,19 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
         )}
       </section>
 
-      {/* File vault for selected project */}
+      {/* File vault for focus / filtered project */}
       <section className="space-y-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight text-zinc-900">
-              Shared files
-            </h2>
-            <p className="mt-1 text-sm text-zinc-500">
-              Deliverables for{" "}
-              <span className="font-medium text-zinc-800">{project.title}</span>
-            </p>
-          </div>
-          {activeProjects.length > 1 ? (
-            <div className="flex flex-wrap gap-1.5">
-              {activeProjects.slice(0, 4).map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() =>
-                    router.push(`/dashboard?project=${item.id}`, {
-                      scroll: false,
-                    })
-                  }
-                  className={cn(
-                    "rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors",
-                    item.id === project.id
-                      ? "border-[color:var(--brand-primary)] bg-[color:var(--brand-primary-soft)] text-zinc-900"
-                      : "border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50",
-                  )}
-                >
-                  {item.title}
-                </button>
-              ))}
-            </div>
-          ) : null}
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight text-zinc-900">
+            Shared files
+          </h2>
+          <p className="mt-1 text-sm text-zinc-500">
+            Deliverables for{" "}
+            <span className="font-medium text-zinc-800">{project.title}</span>
+            {!filterProjectId && activeProjects.length > 1
+              ? " (pick a project above to switch)"
+              : ""}
+          </p>
         </div>
         <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm sm:p-5">
           <FileVault projectId={project.id} assets={home.assets} />

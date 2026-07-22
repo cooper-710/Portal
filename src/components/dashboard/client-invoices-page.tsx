@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { CircleDollarSign, Loader2, Receipt } from "lucide-react";
+import { CircleDollarSign, CreditCard, Loader2, Receipt } from "lucide-react";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { PaymentDueCalendar } from "@/components/dashboard/payment-due-calendar";
+import { ProjectFilter } from "@/components/dashboard/project-filter";
 import { InvoiceStatusBadge } from "@/components/dashboard/status-badge";
 import { Button } from "@/components/ui/button";
 import type { InvoiceWithProject } from "@/lib/dashboard-data";
@@ -13,14 +14,23 @@ import { cn } from "@/lib/utils";
 import type { Profile } from "@/types/database";
 import { friendlyCheckoutError } from "@/utils/billing-errors";
 
+type ProjectOption = {
+  id: string;
+  title: string;
+};
+
 type ClientInvoicesPageProps = {
   profile: Profile;
   invoices: InvoiceWithProject[];
+  projects: ProjectOption[];
+  selectedProjectId: string | null;
 };
 
 export function ClientInvoicesPage({
   profile,
   invoices,
+  projects,
+  selectedProjectId,
 }: ClientInvoicesPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [payingId, setPayingId] = useState<string | null>(null);
@@ -57,15 +67,32 @@ export function ClientInvoicesPage({
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
-          Client portal
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
-          Invoices
-        </h1>
-        <p className="text-sm text-zinc-500">{displayName(profile)}</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            Client portal
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
+            Invoices
+          </h1>
+          <p className="text-sm text-zinc-500">{displayName(profile)}</p>
+        </div>
+        {projects.length > 0 ? (
+          <ProjectFilter
+            projects={projects}
+            value={selectedProjectId}
+            basePath="/dashboard/invoices"
+          />
+        ) : null}
       </div>
+
+      <p className="flex items-start gap-2 rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-3.5 py-2.5 text-xs text-zinc-600">
+        <CreditCard className="mt-0.5 size-3.5 shrink-0 text-zinc-400" aria-hidden />
+        <span>
+          Autopay (save a card): coming soon. For now, pay each invoice with
+          Checkout when it is due.
+        </span>
+      </p>
 
       {error ? (
         <p className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-800">

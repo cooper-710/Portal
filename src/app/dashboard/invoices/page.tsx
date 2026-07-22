@@ -19,6 +19,7 @@ type InvoicesPageProps = {
     canceled?: string;
     session_id?: string;
     connect?: string;
+    project?: string;
   }>;
 };
 
@@ -51,7 +52,10 @@ export default async function DashboardInvoicesPage({
           connectStatus={params.connect ?? null}
         />
       ) : (
-        <ClientInvoicesView profile={profile} />
+        <ClientInvoicesView
+          profile={profile}
+          selectedProjectId={params.project ?? null}
+        />
       )}
     </>
   );
@@ -85,7 +89,24 @@ async function FreelancerInvoicesView({
   );
 }
 
-async function ClientInvoicesView({ profile }: { profile: Profile }) {
-  const { invoices } = await loadClientWorkspace(profile.id);
-  return <ClientInvoicesPage profile={profile} invoices={invoices} />;
+async function ClientInvoicesView({
+  profile,
+  selectedProjectId,
+}: {
+  profile: Profile;
+  selectedProjectId: string | null;
+}) {
+  const { invoices, projects, selectedProjectId: filterId } =
+    await loadClientWorkspace(profile.id, selectedProjectId);
+  return (
+    <ClientInvoicesPage
+      profile={profile}
+      invoices={invoices}
+      projects={projects.map((project) => ({
+        id: project.id,
+        title: project.title,
+      }))}
+      selectedProjectId={filterId}
+    />
+  );
 }

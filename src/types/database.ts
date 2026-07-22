@@ -31,6 +31,15 @@ export type PaymentKind =
   | "recurring"
   | "standalone";
 
+/** Create-invoice UX kinds (legacy retainer/standalone still valid in DB). */
+export type InvoiceCreateKind =
+  | "standard"
+  | "deposit"
+  | "installment"
+  | "recurring";
+
+export type RecurrenceFrequency = "weekly" | "monthly" | "yearly";
+
 export type ClientActionType =
   | "pay_invoice"
   | "review_deliverable"
@@ -58,39 +67,42 @@ export const PROJECT_PHASES: { value: ProjectPhase; label: string }[] = [
   { value: "completed", label: "Completed" },
 ];
 
-export const PAYMENT_KINDS: { value: PaymentKind; label: string; hint: string }[] =
-  [
-    {
-      value: "standard",
-      label: "Standard invoice",
-      hint: "One-off project invoice",
-    },
-    {
-      value: "deposit",
-      label: "Deposit",
-      hint: "Upfront payment to start work",
-    },
-    {
-      value: "installment",
-      label: "Installment",
-      hint: "Part of a payment schedule",
-    },
-    {
-      value: "standalone",
-      label: "Payment request",
-      hint: "Standalone request outside a schedule",
-    },
-    {
-      value: "retainer",
-      label: "Retainer (scheduled invoices)",
-      hint: "Creates a series of dated invoices, billed as scheduled invoices, not a Stripe subscription",
-    },
-    {
-      value: "recurring",
-      label: "Recurring (scheduled invoices)",
-      hint: "Creates a series of dated invoices, billed as scheduled invoices, not auto-charged",
-    },
-  ];
+export const RECURRENCE_FREQUENCIES: {
+  value: RecurrenceFrequency;
+  label: string;
+}[] = [
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "yearly", label: "Yearly" },
+];
+
+/** Top-level options in create-invoice. Retainer maps to recurring; payment request → one-off. */
+export const PAYMENT_KINDS: {
+  value: InvoiceCreateKind;
+  label: string;
+  hint: string;
+}[] = [
+  {
+    value: "standard",
+    label: "One-off",
+    hint: "Single invoice for this project",
+  },
+  {
+    value: "deposit",
+    label: "Deposit",
+    hint: "Upfront payment to start work",
+  },
+  {
+    value: "installment",
+    label: "Payment plan",
+    hint: "Split the total into equal dated invoices",
+  },
+  {
+    value: "recurring",
+    label: "Recurring",
+    hint: "Creates scheduled invoices. Autopay comes next / not auto-charged yet",
+  },
+];
 
 export type Profile = {
   id: string;
@@ -168,6 +180,7 @@ export type Invoice = {
   parent_invoice_id: string | null;
   title: string | null;
   series_key: string | null;
+  recurrence_frequency: RecurrenceFrequency | null;
   stripe_payment_intent_id: string | null;
   stripe_checkout_session_id: string | null;
   created_at: string;
@@ -285,6 +298,7 @@ export type Database = {
           parent_invoice_id?: string | null;
           title?: string | null;
           series_key?: string | null;
+          recurrence_frequency?: RecurrenceFrequency | null;
           stripe_payment_intent_id?: string | null;
           stripe_checkout_session_id?: string | null;
           created_at?: string;
