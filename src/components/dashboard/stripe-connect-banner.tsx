@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, Wallet } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -19,8 +20,48 @@ export function StripeConnectBanner({
   hasAccount,
   connectStatus,
 }: StripeConnectBannerProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ready, setReady] = useState(chargesEnabled);
+
+  useEffect(() => {
+    setReady(chargesEnabled);
+  }, [chargesEnabled]);
+
+  useEffect(() => {
+    if (ready || !hasAccount) return;
+
+    const controller = new AbortController();
+
+    async function refreshStatus() {
+      try {
+        const response = await fetch("/api/stripe/connect/status", {
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        const data = (await response.json()) as {
+          ready?: boolean;
+        };
+
+        if (response.ok && data.ready) {
+          setReady(true);
+          router.refresh();
+        }
+      } catch (refreshError) {
+        if (
+          refreshError instanceof DOMException &&
+          refreshError.name === "AbortError"
+        ) {
+          return;
+        }
+        // Keep onboarding available when a background refresh cannot complete.
+      }
+    }
+
+    void refreshStatus();
+    return () => controller.abort();
+  }, [hasAccount, ready, router]);
 
   async function startConnect() {
     setLoading(true);
@@ -42,7 +83,7 @@ export function StripeConnectBanner({
     }
   }
 
-  if (chargesEnabled) {
+  if (ready) {
     return (
       <div className="flex flex-col gap-2 rounded-2xl border border-emerald-200/80 bg-emerald-50/70 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-2.5">
