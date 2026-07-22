@@ -352,6 +352,22 @@ export type Database = {
         };
         Returns: boolean;
       };
+      submit_deliverable_review: {
+        Args: {
+          p_action_id: string;
+          p_decision: AssetReviewStatus;
+          p_note?: string | null;
+        };
+        Returns: string;
+      };
+      submit_project_review: {
+        Args: {
+          p_action_id: string;
+          p_decision: "approved" | "changes_requested";
+          p_note?: string | null;
+        };
+        Returns: string;
+      };
     };
     Enums: {
       user_role: UserRole;

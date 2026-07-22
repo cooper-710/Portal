@@ -56,7 +56,7 @@ Open [http://localhost:3001](http://localhost:3001).
 | `RESEND_API_KEY` | Project invite emails (recommended) |
 | `RESEND_FROM_EMAIL` | Invite From address (needs verified domain for real clients) |
 
-**Auth email / rate limits:** see **[docs/AUTH_EMAIL.md](./docs/AUTH_EMAIL.md)**. Disable Confirm email to unblock signup without a domain; later wire Resend SMTP for branded Auth mail.
+**Google authentication:** configure Supabase and Google Cloud using **[docs/GOOGLE_AUTH.md](./docs/GOOGLE_AUTH.md)**. Resend is used for project invitations, not primary sign-in.
 
 Production notes are commented in `.env.example` (live keys, webhook endpoint URL, `NEXT_PUBLIC_APP_URL` = your domain).
 
@@ -122,9 +122,9 @@ When you create a project with a client email, Portal emails a portal link:
 
 Project creation still succeeds if email is not configured.
 
-## Auth email / password signup
+## Authentication
 
-Signup is **name + email + password**. With Supabase **Confirm email** off (recommended until you have a verified domain + Resend SMTP), accounts work immediately. Full click-by-click guide: **[docs/AUTH_EMAIL.md](./docs/AUTH_EMAIL.md)**.
+Signup and sign-in are Google-only in the current UI. Configure the Google provider and callback URLs using **[docs/GOOGLE_AUTH.md](./docs/GOOGLE_AUTH.md)**. Password-setting and confirmation routes remain for legacy and recovery compatibility, but they are not the primary acquisition path.
 
 ### Confirmation links / email prefetching
 
@@ -156,3 +156,21 @@ npm run lint
 ```
 
 CI (GitHub Actions) runs `npm ci`, `tsc --noEmit`, and `npm run build` on push/PR.
+
+### End-to-end tests
+
+Install the browser once, then run the desktop and mobile suite:
+
+```bash
+npx playwright install chromium
+npm run test:e2e
+```
+
+Public marketing, auth-gate, health, and security checks always run. Authenticated
+owner/client journeys run when `E2E_OWNER_STORAGE_STATE` and
+`E2E_CLIENT_STORAGE_STATE` point to Playwright storage-state files for dedicated
+test accounts. Never use production account state in CI.
+
+For an existing Supabase project, apply
+`migrations/20260722_atomic_reviews.sql` before deploying the strengthened
+approval actions. New projects receive the functions from `schema.sql`.

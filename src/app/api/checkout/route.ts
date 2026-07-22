@@ -2,10 +2,14 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
 import type { Invoice, Project, Profile } from "@/types/database";
+import { logEvent, requestContext } from "@/lib/monitoring";
 import { calculatePlatformApplicationFeeCents } from "@/utils/stripe/application-fee";
 import { createClient } from "@/utils/supabase/server";
 
 export async function POST(request: Request) {
+  const started = Date.now();
+  const { requestId } = requestContext(request);
+  logEvent("info", "invoice_checkout_started", { requestId });
   const stripeSecret = process.env.STRIPE_SECRET_KEY;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
 
@@ -175,6 +179,12 @@ export async function POST(request: Request) {
       );
     }
 
+    logEvent("info", "invoice_checkout_created", {
+      requestId,
+      invoiceId: invoice.id,
+      sessionId: session.id,
+      durationMs: Date.now() - started,
+    });
     return NextResponse.json({
       url: session.url,
       sessionId: session.id,
@@ -183,7 +193,11 @@ export async function POST(request: Request) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unable to start checkout.";
-    console.error("[checkout]", message);
+    logEvent("error", "invoice_checkout_failed", {
+      requestId,
+      message,
+      durationMs: Date.now() - started,
+    });
     return NextResponse.json(
       {
         error:

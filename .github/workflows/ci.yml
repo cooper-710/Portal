@@ -9,7 +9,7 @@ jobs:
   smoke:
     name: Typecheck, test & build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     env:
       # Dummy values so Next.js can compile server modules that read env at build time.
@@ -43,6 +43,12 @@ jobs:
 
       - name: Unit tests
         run: npm test
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: End-to-end tests
+        run: npm run test:e2e
 
       - name: Build
         run: npm run build

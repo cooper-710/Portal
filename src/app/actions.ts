@@ -477,7 +477,10 @@ export async function reviewDeliverable(formData: FormData) {
   if (!actionId || (decision !== "approved" && decision !== "changes_requested")) {
     return { error: "Choose approve or request changes." };
   }
-  if (decision === "changes_requested" && note.length > 1000) {
+  if (decision === "changes_requested" && !note) {
+    return { error: "Tell the owner what needs to change." };
+  }
+  if (note.length > 1000) {
     return { error: "Note must be 1000 characters or fewer." };
   }
 
@@ -503,39 +506,59 @@ export async function reviewDeliverable(formData: FormData) {
     return { error: "Review action not found." };
   }
 
-  const { error: assetError } = await supabase
-    .from("assets")
-    .update({
-      review_status: decision,
-      review_note: decision === "changes_requested" ? note || null : null,
-      reviewed_at: new Date().toISOString(),
-    })
-    .eq("id", action.asset_id);
+  const { error: reviewError } = await supabase.rpc("submit_deliverable_review", {
+    p_action_id: action.id,
+    p_decision: decision,
+    p_note: note || null,
+  });
 
-  if (assetError) {
-    return { error: assetError.message };
-  }
-
-  const { error: actionError } = await supabase
-    .from("client_actions")
-    .update({
-      status: "completed",
-      completed_at: new Date().toISOString(),
-      metadata: {
-        ...(typeof action.metadata === "object" && action.metadata
-          ? action.metadata
-          : {}),
-        decision,
-        review_note: note || null,
-      },
-    })
-    .eq("id", action.id);
-
-  if (actionError) {
-    return { error: actionError.message };
-  }
+  if (reviewError) return { error: reviewError.message };
 
   revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/projects/${action.project_id}`);
+  return { success: true as const };
+}
+
+export async function reviewProject(formData: FormData) {
+  const actionId = String(formData.get("actionId") ?? "").trim();
+  const decision = String(formData.get("decision") ?? "").trim();
+  const note = String(formData.get("note") ?? "").trim();
+
+  if (!actionId || (decision !== "approved" && decision !== "changes_requested")) {
+    return { error: "Choose approve or request changes." };
+  }
+  if (decision === "changes_requested" && !note) {
+    return { error: "Tell the owner what needs to change." };
+  }
+  if (note.length > 2000) {
+    return { error: "Feedback must be 2000 characters or fewer." };
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "You must be signed in." };
+
+  const { data: action } = await supabase
+    .from("client_actions")
+    .select("*")
+    .eq("id", actionId)
+    .eq("client_id", user.id)
+    .eq("action_type", "review_project")
+    .eq("status", "open")
+    .maybeSingle();
+
+  if (!action) return { error: "Project approval request not found." };
+
+  const { error: reviewError } = await supabase.rpc("submit_project_review", {
+    p_action_id: action.id,
+    p_decision: decision,
+    p_note: note || null,
+  });
+
+  if (reviewError) return { error: reviewError.message };
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/projects");
   revalidatePath(`/dashboard/projects/${action.project_id}`);
   return { success: true as const };
 }

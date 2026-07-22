@@ -82,7 +82,7 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
   );
   const [error, setError] = useState<string | null>(null);
   const [payingId, setPayingId] = useState<string | null>(null);
-  const [reviewNote, setReviewNote] = useState("");
+  const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -191,7 +191,7 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
     formData.set("actionId", actionId);
     formData.set("decision", decision);
     if (decision === "changes_requested") {
-      formData.set("note", reviewNote);
+      formData.set("note", reviewNotes[actionId] ?? "");
     }
     startTransition(async () => {
       const result = await reviewDeliverable(formData);
@@ -199,7 +199,7 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
         setError(result.error);
         return;
       }
-      setReviewNote("");
+      setReviewNotes((current) => ({ ...current, [actionId]: "" }));
       router.refresh();
     });
   }
@@ -524,12 +524,18 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
                 </p>
                 <label className="mt-3 block space-y-1.5">
                   <span className="text-xs font-medium text-zinc-500">
-                    Note (optional for changes)
+                    Change request details (required when requesting changes)
                   </span>
                   <textarea
-                    value={reviewNote}
-                    onChange={(event) => setReviewNote(event.target.value)}
+                    value={reviewNotes[action.id] ?? ""}
+                    onChange={(event) =>
+                      setReviewNotes((current) => ({
+                        ...current,
+                        [action.id]: event.target.value,
+                      }))
+                    }
                     rows={2}
+                    maxLength={1000}
                     placeholder="What should change?"
                     className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-[color:var(--brand-primary)] focus:ring-2"
                   />

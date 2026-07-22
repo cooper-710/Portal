@@ -20,7 +20,7 @@ const STEPS = [
   {
     number: "01",
     title: "Create your account",
-    body: "Sign up with Google. Portal opens a workspace for you in minutes, with no setup checklist to fight through.",
+    body: "Continue with Google, then follow a short guided setup for your trial, payouts, brand, first project, and client invite.",
   },
   {
     number: "02",
@@ -50,7 +50,7 @@ const STEPS = [
   {
     number: "07",
     title: "Share work and get paid",
-    body: "Release deliverables from the vault when ready. Send a Stripe invoice from the same space. Your client pays in place.",
+    body: "Release deliverables for approval, respond to change requests, and send a Stripe payment request from the same space. Your client pays through Stripe Checkout.",
   },
 ] as const;
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { CircleDollarSign, CreditCard, Loader2, Receipt } from "lucide-react";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { InvoicePdfLink } from "@/components/dashboard/invoice-pdf-link";
 import { PaymentDueCalendar } from "@/components/dashboard/payment-due-calendar";
 import {
   ProjectFilter,
@@ -236,17 +237,20 @@ export function ClientInvoicesPage({
                           {new Date(invoice.created_at).toLocaleDateString()}
                         </p>
                       </div>
-                      <Button
-                        size="sm"
-                        className="w-full bg-amber-600 text-white shadow-sm hover:bg-amber-700 sm:w-auto"
-                        disabled={payingId === invoice.id}
-                        onClick={() => void payInvoice(invoice.id)}
-                      >
-                        {payingId === invoice.id ? (
-                          <Loader2 className="size-4 animate-spin" />
-                        ) : null}
-                        Pay now
-                      </Button>
+                      <div className="flex w-full items-center gap-2 sm:w-auto">
+                        <InvoicePdfLink invoiceId={invoice.id} />
+                        <Button
+                          size="sm"
+                          className="flex-1 bg-amber-600 text-white shadow-sm hover:bg-amber-700 sm:flex-none"
+                          disabled={payingId === invoice.id}
+                          onClick={() => void payInvoice(invoice.id)}
+                        >
+                          {payingId === invoice.id ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : null}
+                          Pay now
+                        </Button>
+                      </div>
                     </li>
                   );
                 })}
@@ -288,6 +292,7 @@ export function ClientInvoicesPage({
                           {new Date(invoice.created_at).toLocaleDateString()}
                         </p>
                       </div>
+                      <InvoicePdfLink invoiceId={invoice.id} compact />
                       <InvoiceStatusBadge status="paid" />
                     </li>
                   );

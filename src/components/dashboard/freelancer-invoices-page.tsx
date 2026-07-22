@@ -16,6 +16,7 @@ import {
 import { CreateInvoiceDialog } from "@/components/dashboard/create-invoice-dialog";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { InvoiceOwnerActions } from "@/components/dashboard/invoice-owner-actions";
+import { InvoicePdfLink } from "@/components/dashboard/invoice-pdf-link";
 import { PaymentDueCalendar } from "@/components/dashboard/payment-due-calendar";
 import {
   ProjectFilter,
@@ -235,6 +236,7 @@ export function FreelancerInvoicesPage({
                         </button>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
+                        <InvoicePdfLink invoiceId={invoice.id} compact />
                         <InvoiceOwnerActions
                           invoice={invoice}
                           projectTitle={projectTitle}

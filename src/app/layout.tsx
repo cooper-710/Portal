@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { isProductionRuntime, validateCriticalEnv } from "@/utils/env";
 
@@ -81,6 +83,8 @@ export default function RootLayout({
       >
         <ProductionEnvBanner />
         {children}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

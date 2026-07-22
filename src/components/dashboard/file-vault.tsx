@@ -74,6 +74,29 @@ function TypeBadge({ kind }: { kind: PreviewKind }) {
   );
 }
 
+function ReviewBadge({ status }: { status: Asset["review_status"] }) {
+  const label =
+    status === "approved"
+      ? "Client approved"
+      : status === "changes_requested"
+        ? "Changes requested"
+        : "Awaiting review";
+  return (
+    <span
+      className={cn(
+        "inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold",
+        status === "approved"
+          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+          : status === "changes_requested"
+            ? "border-amber-200 bg-amber-50 text-amber-800"
+            : "border-blue-200 bg-blue-50 text-blue-700",
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
 function displayName(asset: Asset) {
   return asset.file_name?.trim() || asset.file_url.split("/").pop() || "File";
 }
@@ -380,7 +403,7 @@ export function FileVault({
         </>
       ) : (
         <AssetSection
-          title="Approved deliverables"
+          title="Shared deliverables"
           empty="No deliverables available yet."
           assets={assets}
           canManageVisibility={false}
@@ -596,10 +619,20 @@ function AssetTile({
           </div>
         </div>
         <div className="space-y-0.5 border-t border-zinc-100 px-3 py-2.5">
-          <p className="truncate text-sm font-medium text-zinc-900">{name}</p>
+          <div className="flex items-start justify-between gap-2">
+            <p className="min-w-0 truncate text-sm font-medium text-zinc-900">{name}</p>
+            {asset.visibility === "deliverable" ? (
+              <ReviewBadge status={asset.review_status} />
+            ) : null}
+          </div>
           <p className="text-xs text-muted-foreground">
             {new Date(asset.created_at).toLocaleString()}
           </p>
+          {asset.review_status === "changes_requested" && asset.review_note ? (
+            <p className="line-clamp-3 pt-1 text-xs leading-relaxed text-amber-800">
+              “{asset.review_note}”
+            </p>
+          ) : null}
         </div>
       </button>
 

@@ -280,7 +280,7 @@ export function PaymentDueCalendar({
                   key={key}
                   type="button"
                   role="gridcell"
-                  aria-pressed={isSelected}
+                  aria-selected={isSelected}
                   aria-label={`${formatDayAria(key)}, ${countLabel}. ${
                     isSelected ? "Selected. Activate to clear." : "Activate to show invoices."
                   }`}

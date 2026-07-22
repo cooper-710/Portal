@@ -98,7 +98,7 @@ function useOverflowNeedsScroll(
     }
 
     return () => observer.disconnect();
-  }, [measure]);
+  }, [measure, ref]);
 
   return { needsScroll, measure };
 }

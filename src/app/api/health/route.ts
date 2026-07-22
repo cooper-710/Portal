@@ -35,6 +35,12 @@ export async function GET() {
         appUrl: presence.NEXT_PUBLIC_APP_URL,
         stripePublishable: presence.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
         resend: presence.RESEND_API_KEY,
+        distributedRateLimit: Boolean(
+          (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) ||
+            (process.env.UPSTASH_REDIS_REST_URL &&
+              process.env.UPSTASH_REDIS_REST_TOKEN),
+        ),
+        vercelTelemetry: true,
       },
       ...(ok
         ? {}

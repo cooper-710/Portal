@@ -19,6 +19,11 @@ Legend: **DONE in repo** = no action for this item. **USER-MUST-DO** = requires 
 - [x] Dashboard loading + error boundaries
 - [x] OG / Twitter metadata basics
 - [x] CI: typecheck + vitest + build; `npm run verify`
+- [x] Structured runtime error logs + Vercel Web Analytics / Speed Insights
+- [x] API/auth rate limiter with Vercel KV/Upstash support
+- [x] Playwright public, security, owner, and client journeys
+- [x] Deliverable decisions + recorded final project approval
+- [x] Branded invoice PDF downloads for owners and clients
 - [x] `.gitignore` covers `.env*`
 
 ---
@@ -32,9 +37,10 @@ Legend: **DONE in repo** = no action for this item. **USER-MUST-DO** = requires 
 - [ ] Stripe **Live** mode: Product/Price $25/mo → `STRIPE_SAAS_PRICE_ID`
 - [ ] Stripe Connect Express enabled (live)
 - [ ] Stripe Customer Portal enabled (live)
-- [ ] Auth email: Confirm email OFF until domain+SMTP, OR Confirm ON after Resend SMTP (see docs/AUTH_EMAIL.md)
+- [ ] Google OAuth provider, consent screen, and production redirect URI configured (see docs/GOOGLE_AUTH.md)
 - [ ] Resend domain verified (required to email arbitrary clients; without it invites/confirms only reach your Resend account email)
 - [ ] All env vars from `.env.example` set in Vercel (live keys only in prod project)
+- [ ] Vercel KV or Upstash Redis connected for distributed production rate limiting
 - [ ] `NEXT_PUBLIC_APP_URL` = `https://YOUR_DOMAIN` (no trailing slash)
 - [ ] Rotated `SUPABASE_SERVICE_ROLE_KEY` if it was ever exposed
 
@@ -44,11 +50,12 @@ Legend: **DONE in repo** = no action for this item. **USER-MUST-DO** = requires 
 - [ ] `GET https://YOUR_DOMAIN/api/health` returns `"ok": true`
 - [ ] Stripe live webhook → `https://YOUR_DOMAIN/api/webhooks/stripe` (events listed in PRODUCTION_PLAN)
 - [ ] Webhook signing secret matches Vercel `STRIPE_WEBHOOK_SECRET`
-- [ ] Workspace signup → email confirm → set password → start trial → customize or skip → dashboard
+- [ ] Continue with Google → start trial → guided onboarding → dashboard
 - [ ] Billing shows trialing; workspace unlocks
 - [ ] Connect Stripe Express completes (`charges_enabled`)
 - [ ] Create project, invite client, upload deliverable
 - [ ] Client pays invoice; status becomes `paid` (webhook or return sync)
+- [ ] Client reviews a deliverable, submits final project approval, and downloads an invoice PDF
 - [ ] `/privacy` and `/terms` reachable; linked from landing
 
 ## First 48 hours

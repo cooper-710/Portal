@@ -30,7 +30,7 @@ A workspace owner can sign up → set password → start trial → customize por
 ## 2. Current state
 
 ### Already working in this codebase
-- **Auth:** Password signup (name + email + password); email+password sign-in; optional email confirmation via SMTP; prefetch-safe `/auth/confirm`; PKCE `/auth/callback`. See `docs/AUTH_EMAIL.md`.
+- **Auth:** Google-only signup and sign-in through Supabase OAuth with PKCE `/auth/callback`; invited clients join with Google. Legacy password and confirmation routes remain for recovery compatibility.
 - **Roles:** `freelancer` / `client` in `public.users` (not JWT `user_metadata` for authz).
 - **Onboarding path:** password → Portal Pro trial (if needed) → customize portal (save or skip) → dashboard with getting-started checklist.
 - **Projects & invites:** Create project, invite by email (Resend + Supabase invite fallback).
@@ -48,8 +48,8 @@ A workspace owner can sign up → set password → start trial → customize por
 
 ### Known gaps (not launch-blockers if documented)
 - True Connect **recurring** client retainers (product path is dated invoice series; UI labels this clearly).
-- No production monitoring/alerting beyond logs (Sentry optional via env later).
-- No rate limiting middleware yet (note only; auth is Supabase-hosted).
+- Runtime errors and business events are structured in Vercel logs; Web Analytics and Speed Insights are enabled. Alert routing/log drains still require Vercel project configuration.
+- Auth and app APIs are rate limited. Production should connect Vercel KV or Upstash for distributed enforcement; local and preview deployments fall back to per-instance limits.
 - Supabase advisors (WARN only as of last audit): enable leaked-password protection in Auth dashboard; SECURITY DEFINER helpers are intentional for RLS.
 
 ---
@@ -78,15 +78,14 @@ A workspace owner can sign up → set password → start trial → customize por
 ### P1: Soon after launch
 - [ ] True Connect recurring / retainer subscriptions for clients (schema already has `payment_kind`; UI currently schedules invoices)
 - [ ] Stripe Dashboard alerts + dead-letter review for failed webhooks
-- [ ] Optional Sentry (`SENTRY_DSN`) or equivalent error tracking
-- [ ] Soft rate limiting on auth-adjacent API routes
+- [ ] Configure Vercel log drain/alerts for error-level events and failed webhooks
 - [ ] Email deliverability (custom Resend domain, SPF/DKIM)
 - [ ] Customer support inbox + refund/cancel playbook
 - [ ] Richer OG image asset (basic OG/Twitter metadata done)
 
 ### P2: Growth / hardening
 - [ ] Multi-seat studios / team roles
-- [ ] Invoice PDF export, tax fields, multi-currency UX
+- [ ] Tax fields and richer multi-currency UX
 - [ ] Usage analytics (activation → paid conversion)
 - [ ] Automated E2E (Playwright) against staging
 - [ ] SOC2-lite: audit log of admin/service-role writes

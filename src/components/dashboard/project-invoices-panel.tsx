@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { CreateInvoiceDialog } from "@/components/dashboard/create-invoice-dialog";
 import { InvoiceOwnerActions } from "@/components/dashboard/invoice-owner-actions";
+import { InvoicePdfLink } from "@/components/dashboard/invoice-pdf-link";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { InvoiceStatusBadge } from "@/components/dashboard/status-badge";
 import {
@@ -70,7 +71,7 @@ export function ProjectInvoicesPanel({
               <TableHead>Due</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Created</TableHead>
-              {canManage ? <TableHead className="text-right">Actions</TableHead> : null}
+              <TableHead className="text-right">Document{canManage ? " / actions" : ""}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -93,18 +94,18 @@ export function ProjectInvoicesPanel({
                 <TableCell>
                   {new Date(invoice.created_at).toLocaleDateString()}
                 </TableCell>
-                {canManage ? (
-                  <TableCell className="text-right">
-                    <div className="flex justify-end">
+                <TableCell className="text-right">
+                    <div className="flex justify-end gap-1.5">
+                      <InvoicePdfLink invoiceId={invoice.id} compact />
+                      {canManage ? (
                       <InvoiceOwnerActions
                         invoice={invoice}
                         projectTitle={projectTitle}
                         onMessage={setMessage}
                         compact
-                      />
+                      />) : null}
                     </div>
                   </TableCell>
-                ) : null}
               </TableRow>
             ))}
           </TableBody>

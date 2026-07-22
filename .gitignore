@@ -36,6 +36,9 @@ vercel-env-paste.txt
 
 # vercel
 .vercel
+playwright-report/
+test-results/
+tmp/
 
 # typescript
 *.tsbuildinfo

@@ -64,11 +64,11 @@ const FEATURE_GROUPS = [
   },
   {
     title: "Reviews and feedback loops",
-    body: "Keep approval and comments close to the work. When a version is ready, the client can respond without hunting through inboxes.",
+    body: "Request a decision on each deliverable and on the finished project. Clients can approve or request changes with written feedback, and both sides can see the outcome in the workspace.",
     points: [
-      "Feedback stays attached to the project",
-      "Fewer lost threads between versions",
-      "A cleaner path from draft to approved delivery",
+      "Per-deliverable approval and change requests",
+      "Written feedback stays attached to the reviewed work",
+      "Final project acceptance closes the review loop",
     ],
   },
 ] as const;

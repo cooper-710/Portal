@@ -8,6 +8,7 @@ import {
 } from "@/utils/stripe/subscription";
 import { createClient } from "@/utils/supabase/server";
 import { validateCriticalEnv } from "@/utils/env";
+import { logEvent, requestContext } from "@/lib/monitoring";
 
 /**
  * Create a Stripe Checkout Session for Portal Pro (14-day trial, then monthly).
@@ -24,9 +25,15 @@ function safeAppPath(value: unknown, fallback: string) {
 }
 
 export async function POST(request: Request) {
+  const started = Date.now();
+  const { requestId } = requestContext(request);
+  logEvent("info", "subscription_checkout_started", { requestId });
   const envCheck = validateCriticalEnv();
   if (!envCheck.ok) {
-    console.error("[saas-checkout] missing env:", envCheck.missing.join(", "));
+    logEvent("error", "subscription_checkout_misconfigured", {
+      requestId,
+      missing: envCheck.missing.join(","),
+    });
     return NextResponse.json(
       { error: "Billing is temporarily unavailable. Please try again later." },
       { status: 503 },
@@ -157,11 +164,21 @@ export async function POST(request: Request) {
       );
     }
 
+    logEvent("info", "subscription_checkout_created", {
+      requestId,
+      userId: user.id,
+      sessionId: session.id,
+      durationMs: Date.now() - started,
+    });
     return NextResponse.json({ url: session.url, sessionId: session.id });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unable to start subscription checkout.";
-    console.error("[saas-checkout]", message);
+    logEvent("error", "subscription_checkout_failed", {
+      requestId,
+      message,
+      durationMs: Date.now() - started,
+    });
     return NextResponse.json(
       {
         error:

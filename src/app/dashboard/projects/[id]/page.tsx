@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import { FileVault } from "@/components/dashboard/file-vault";
 import { ProjectInvoicesPanel } from "@/components/dashboard/project-invoices-panel";
 import { ProjectOwnerActions } from "@/components/dashboard/project-owner-actions";
+import { ProjectApprovalPanel } from "@/components/dashboard/project-approval-panel";
 import { ProjectPhaseSelector } from "@/components/dashboard/project-phase-selector";
 import {
   FreelancerLockedPreview,
@@ -23,7 +24,7 @@ import {
 } from "@/components/ui/card";
 import { formatMoney, displayName, projectClientLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Asset, Invoice, Profile, Project } from "@/types/database";
+import type { Asset, ClientAction, Invoice, Profile, Project } from "@/types/database";
 import { freelancerHasWorkspaceAccess } from "@/utils/stripe/subscription";
 import { createClient } from "@/utils/supabase/server";
 
@@ -86,7 +87,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     notFound();
   }
 
-  const [{ data: assetRows }, { data: invoiceRows }] = await Promise.all([
+  const [{ data: assetRows }, { data: invoiceRows }, { data: approvalRows }] = await Promise.all([
     supabase
       .from("assets")
       .select("*")
@@ -97,10 +98,17 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       .select("*")
       .eq("project_id", project.id)
       .order("created_at", { ascending: false }),
+    supabase
+      .from("client_actions")
+      .select("*")
+      .eq("project_id", project.id)
+      .eq("action_type", "review_project")
+      .order("created_at", { ascending: false }),
   ]);
 
   const assets = (assetRows ?? []) as Asset[];
   const invoices = (invoiceRows ?? []) as Invoice[];
+  const approvalActions = (approvalRows ?? []) as ClientAction[];
   const pendingInvoiceCount = invoices.filter(
     (invoice) => invoice.status === "pending",
   ).length;
@@ -316,6 +324,18 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="border-zinc-200/80 shadow-sm">
+        <CardHeader>
+          <CardTitle>Project approval</CardTitle>
+          <CardDescription>
+            Final acceptance and change requests stay recorded with the project.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ProjectApprovalPanel actions={approvalActions} isClient={isClient} />
+        </CardContent>
+      </Card>
 
       <Card className="border-zinc-200/80 shadow-sm">
         <CardHeader>
