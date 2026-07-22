@@ -54,8 +54,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </CardTitle>
           <CardDescription>
             {signupRole === "client"
-              ? "Join the project you were invited to. Returning clients sign in with email and password."
-              : "Sign up with name and email, confirm via magic link, set a password, then start your 14-day free trial ($25/mo after). Returning freelancers sign in with email and password."}
+              ? "Join the project you were invited to. Continue with Google, or use email and password."
+              : "Continue with Google to start your 14-day free trial ($25/mo after). Email and password still work as a fallback."}
           </CardDescription>
         </CardHeader>
         <CardContent>

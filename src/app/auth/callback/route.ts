@@ -10,10 +10,10 @@ import { resolvePostAuthPath } from "@/utils/supabase/post-auth";
 import { createClient } from "@/utils/supabase/server";
 
 /**
- * Server callback for magic-link / OTP redirects.
+ * Server callback for OAuth / magic-link / OTP redirects.
  *
  * Supports:
- * - PKCE `?code=` → exchangeCodeForSession
+ * - PKCE `?code=` → exchangeCodeForSession (Google OAuth + email confirms)
  * - `?token_hash=&type=` → verifyOtp (custom email templates)
  *
  * Prefetch-safe confirmations (button click) live at `/auth/confirm`.
@@ -29,6 +29,8 @@ export async function GET(request: Request) {
     searchParams.get("error_description");
   const next = searchParams.get("next") ?? "/dashboard";
   const safeNext = next.startsWith("/") ? next : "/dashboard";
+  const preferredRole =
+    searchParams.get("role") === "client" ? ("client" as const) : null;
 
   if (errorParam) {
     const normalized =
@@ -44,7 +46,7 @@ export async function GET(request: Request) {
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      const destination = await resolvePostAuthPath(safeNext);
+      const destination = await resolvePostAuthPath(safeNext, { preferredRole });
       return NextResponse.redirect(`${origin}${destination}`);
     }
     return NextResponse.redirect(
@@ -59,7 +61,7 @@ export async function GET(request: Request) {
     });
 
     if (!error) {
-      const destination = await resolvePostAuthPath(safeNext);
+      const destination = await resolvePostAuthPath(safeNext, { preferredRole });
       return NextResponse.redirect(`${origin}${destination}`);
     }
 

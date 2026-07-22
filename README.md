@@ -54,6 +54,9 @@ Open [http://localhost:3001](http://localhost:3001).
 | `PORTAL_PRO_TRIAL_DAYS` | Trial length (default 14) |
 | `STRIPE_PLATFORM_FEE_PERCENT` | Application fee % on client invoices (default 1) |
 | `RESEND_API_KEY` | Project invite emails (recommended) |
+| `RESEND_FROM_EMAIL` | Invite From address (needs verified domain for real clients) |
+
+**Auth email / rate limits:** see **[docs/AUTH_EMAIL.md](./docs/AUTH_EMAIL.md)** — disable Confirm email to unblock signup without a domain; later wire Resend SMTP for branded Auth mail.
 
 Production notes are commented in `.env.example` (live keys, webhook endpoint URL, `NEXT_PUBLIC_APP_URL` = your domain).
 
@@ -104,11 +107,13 @@ When you create a project with a client email, Portal emails a portal link:
 
 Project creation still succeeds if email is not configured.
 
-## Magic link / email prefetching
+## Auth email / password signup
 
-Email scanners can consume one-time links (`otp_expired`). Signup uses a confirmation magic link; returning users use email + password.
+Signup is **name + email + password**. With Supabase **Confirm email** off (recommended until you have a verified domain + Resend SMTP), accounts work immediately. Full click-by-click guide: **[docs/AUTH_EMAIL.md](./docs/AUTH_EMAIL.md)**.
 
-Optional prefetch-safe template (Supabase → Authentication → Email Templates):
+### Confirmation links / email prefetching
+
+Email scanners can consume one-time confirmation links (`otp_expired`). Prefer password sign-in after the first confirmation. Optional prefetch-safe template (Supabase → Authentication → Email Templates):
 
 ```html
 <h2>Confirm your email</h2>

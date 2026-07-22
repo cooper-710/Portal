@@ -36,7 +36,7 @@ export async function sendProjectInvite(
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
       const from =
-        process.env.RESEND_FROM_EMAIL ?? "Portal <onboarding@resend.dev>";
+        process.env.RESEND_FROM_EMAIL ?? "Portal <beth.t@example.com>";
 
       const { error } = await resend.emails.send({
         from,

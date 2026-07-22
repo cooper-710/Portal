@@ -32,7 +32,8 @@ Legend: **DONE in repo** = no action for this item. **USER-MUST-DO** = requires 
 - [ ] Stripe **Live** mode: Product/Price $25/mo → `STRIPE_SAAS_PRICE_ID`
 - [ ] Stripe Connect Express enabled (live)
 - [ ] Stripe Customer Portal enabled (live)
-- [ ] Resend domain verified (or accept invite email limitations)
+- [ ] Auth email: Confirm email OFF until domain+SMTP, OR Confirm ON after Resend SMTP (see docs/AUTH_EMAIL.md)
+- [ ] Resend domain verified (required to email arbitrary clients; without it invites/confirms only reach your Resend account email)
 - [ ] All env vars from `.env.example` set in Vercel (live keys only in prod project)
 - [ ] `NEXT_PUBLIC_APP_URL` = `https://YOUR_DOMAIN` (no trailing slash)
 - [ ] Rotated `SUPABASE_SERVICE_ROLE_KEY` if it was ever exposed

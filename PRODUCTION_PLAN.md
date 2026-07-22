@@ -30,7 +30,7 @@ A freelancer can sign up → set password → start trial → customize portal (
 ## 2. Current state
 
 ### Already working in this codebase
-- **Auth:** Magic-link signup + password set; email+password sign-in; prefetch-safe `/auth/confirm`; PKCE `/auth/callback`.
+- **Auth:** Password signup (name + email + password); email+password sign-in; optional email confirmation via SMTP; prefetch-safe `/auth/confirm`; PKCE `/auth/callback`. See `docs/AUTH_EMAIL.md`.
 - **Roles:** `freelancer` / `client` in `public.users` (not JWT `user_metadata` for authz).
 - **Onboarding path:** password → Portal Pro trial (if needed) → customize portal (save or skip) → dashboard with getting-started checklist.
 - **Projects & invites:** Create project, invite by email (Resend + Supabase invite fallback).

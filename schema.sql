@@ -227,22 +227,43 @@ set search_path = public
 as $$
 declare
   selected_role public.user_role;
+  selected_full_name text;
+  selected_password_set boolean;
+  auth_provider text;
 begin
   selected_role := case
     when (new.raw_user_meta_data ->> 'role') = 'client' then 'client'::public.user_role
     else 'freelancer'::public.user_role
   end;
 
-  insert into public.users (id, email, full_name, role)
+  -- Email/password signup sends full_name; Google OAuth sends full_name and/or name.
+  selected_full_name := nullif(
+    trim(
+      coalesce(
+        new.raw_user_meta_data ->> 'full_name',
+        new.raw_user_meta_data ->> 'name',
+        ''
+      )
+    ),
+    ''
+  );
+
+  -- OAuth users never set a local password — skip /onboarding/password.
+  auth_provider := coalesce(new.raw_app_meta_data ->> 'provider', 'email');
+  selected_password_set := auth_provider is distinct from 'email';
+
+  insert into public.users (id, email, full_name, role, password_set)
   values (
     new.id,
     new.email,
-    nullif(trim(coalesce(new.raw_user_meta_data ->> 'full_name', '')), ''),
-    selected_role
+    selected_full_name,
+    selected_role,
+    selected_password_set
   )
   on conflict (id) do update
     set email = excluded.email,
-        full_name = coalesce(excluded.full_name, public.users.full_name);
+        full_name = coalesce(excluded.full_name, public.users.full_name),
+        password_set = public.users.password_set or excluded.password_set;
 
   update public.projects
   set client_id = new.id,
