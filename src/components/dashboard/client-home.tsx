@@ -407,7 +407,7 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
         linkMode="invoices"
         onPayInvoice={(invoiceId) => void payInvoice(invoiceId)}
         payingId={payingId}
-        className="w-full max-h-[32rem]"
+        className="w-full"
       />
 
       <DashboardCard className="border-zinc-200/80 bg-white" fillHeight={false}>

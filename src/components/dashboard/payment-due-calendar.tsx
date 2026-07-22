@@ -184,7 +184,12 @@ export function PaymentDueCalendar({
 
   return (
     <DashboardCard
-      className={cn("border-zinc-200/80 bg-white", className)}
+      fillHeight={false}
+      className={cn(
+        // Fixed height so the calendar column stays stable; only the side list scrolls.
+        "h-[28rem] border-zinc-200/80 bg-white",
+        className,
+      )}
     >
       <DashboardCardHeader className="bg-white">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -225,7 +230,7 @@ export function PaymentDueCalendar({
 
       <DashboardCardBody
         scrollable={false}
-        className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row lg:items-stretch"
+        className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden lg:flex-row lg:items-stretch"
       >
         <div className="flex min-h-0 flex-1 flex-col justify-center lg:min-w-0 lg:flex-[1.1]">
           <div className="mb-2 grid grid-cols-7 gap-1 text-center text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
@@ -307,7 +312,7 @@ export function PaymentDueCalendar({
           </div>
         </div>
 
-        <ScrollPane className="flex min-h-0 min-w-0 flex-1 flex-col lg:max-h-full">
+        <ScrollPane className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overscroll-contain">
           <div className="mb-2 flex shrink-0 items-center justify-between gap-2">
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
               {listHeading}
@@ -339,7 +344,7 @@ export function PaymentDueCalendar({
           ) : listItems.length === 0 && !selectedDay && overdue.length === 0 ? (
             <p className="text-sm text-zinc-500">No payments due this month.</p>
           ) : (
-            <ul className="grid gap-2">
+            <ul className="grid min-h-0 gap-2">
               {listItems.map((item) => {
                 const date = parseDueDate(item.dueDate);
                 const isPast = Boolean(date && date < today);
