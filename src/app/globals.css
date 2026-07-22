@@ -129,37 +129,36 @@
   }
 }
 
-/* Landing page: teal ink atmosphere (not purple / cream clichés) */
+/* Landing page: richer atmosphere on the app zinc + primary palette */
 .landing-root {
-  --landing-ink: #0c1f1c;
-  --landing-muted: #5b6e69;
-  --landing-accent: #0f766e;
-  --landing-accent-hover: #0d5f59;
-  --landing-line: color-mix(in oklab, #0c1f1c 12%, transparent);
-  --landing-surface: #f7faf8;
-  --landing-wash: #eef5f2;
+  --landing-ink: var(--foreground);
+  --landing-muted: var(--muted-foreground);
+  --landing-accent: var(--primary);
+  --landing-line: color-mix(in oklab, var(--foreground) 10%, transparent);
+  --landing-surface: oklch(0.985 0 0);
+  --landing-wash: oklch(0.97 0 0);
   background:
-    radial-gradient(ellipse 90% 60% at 10% -10%, #d8efe8 0%, transparent 55%),
-    radial-gradient(ellipse 70% 50% at 95% 5%, #fde68a55 0%, transparent 45%),
-    linear-gradient(180deg, #f4faf7 0%, #eef5f2 40%, #f7faf8 100%);
+    radial-gradient(ellipse 90% 60% at 10% -10%, color-mix(in oklab, var(--primary) 14%, white) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 95% 5%, color-mix(in oklab, var(--primary) 8%, white) 0%, transparent 45%),
+    linear-gradient(180deg, oklch(0.985 0 0) 0%, oklch(0.97 0 0) 40%, oklch(0.985 0 0) 100%);
   color: var(--landing-ink);
 }
 
 .landing-hero-atmosphere {
   background:
-    radial-gradient(ellipse 80% 70% at 70% 40%, #99f6e455 0%, transparent 55%),
-    radial-gradient(ellipse 55% 45% at 15% 80%, #fbbf2440 0%, transparent 50%),
-    linear-gradient(135deg, #f4faf7 0%, #e7f3ef 48%, #f8faf9 100%);
+    radial-gradient(ellipse 80% 70% at 70% 40%, color-mix(in oklab, var(--primary) 18%, transparent) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 15% 80%, color-mix(in oklab, var(--primary) 10%, transparent) 0%, transparent 50%),
+    radial-gradient(ellipse at top, oklch(0.96 0 0) 0%, oklch(0.985 0 0) 45%, oklch(0.97 0 0) 100%);
   animation: landing-atmosphere-shift 18s ease-in-out infinite alternate;
 }
 
 .landing-hero-grid {
   background-image:
-    linear-gradient(color-mix(in oklab, #0c1f1c 5%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in oklab, #0c1f1c 5%, transparent) 1px, transparent 1px);
+    linear-gradient(color-mix(in oklab, var(--foreground) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--foreground) 5%, transparent) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 75%);
-  opacity: 0.55;
+  opacity: 0.45;
 }
 
 @keyframes landing-atmosphere-shift {

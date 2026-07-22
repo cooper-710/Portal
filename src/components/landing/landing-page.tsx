@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 export function LandingPage() {
   return (
-    <div className="landing-root min-h-svh text-[var(--landing-ink)]">
+    <div className="landing-root min-h-svh text-foreground">
       <Suspense fallback={null}>
         <AuthModal />
       </Suspense>
@@ -28,7 +28,7 @@ export function LandingPage() {
               href={authHref("signin")}
               className={cn(
                 buttonVariants({ variant: "outline", size: "sm" }),
-                "landing-fade-up landing-delay-1 border-[var(--landing-line)] bg-white/70 text-[var(--landing-ink)] shadow-none backdrop-blur-sm hover:bg-white",
+                "landing-fade-up landing-delay-1 border-zinc-200/80 bg-white/80 text-zinc-900 shadow-none backdrop-blur-sm hover:bg-white",
               )}
             >
               Sign in
@@ -38,13 +38,13 @@ export function LandingPage() {
 
         <div className="relative z-10 mx-auto flex min-h-[calc(100svh-3.5rem)] w-full max-w-6xl flex-col justify-center px-4 pb-20 pt-6 sm:px-6 sm:pb-24">
           <div className="max-w-2xl">
-            <p className="landing-brand font-[family-name:var(--font-display)] text-[clamp(3.5rem,12vw,7.5rem)] leading-[0.9] tracking-[-0.04em] text-[var(--landing-ink)]">
+            <p className="landing-brand font-[family-name:var(--font-display)] text-[clamp(3.5rem,12vw,7.5rem)] leading-[0.9] tracking-[-0.04em] text-zinc-900">
               Portal
             </p>
-            <h1 className="landing-fade-up landing-delay-1 mt-6 max-w-xl text-2xl font-medium tracking-tight text-[var(--landing-ink)] sm:text-3xl lg:text-[2.15rem] lg:leading-snug">
+            <h1 className="landing-fade-up landing-delay-1 mt-6 max-w-xl text-2xl font-medium tracking-tight text-zinc-900 sm:text-3xl lg:text-[2.15rem] lg:leading-snug">
               The client workspace your business actually runs on.
             </h1>
-            <p className="landing-fade-up landing-delay-2 mt-4 max-w-md text-base leading-relaxed text-[var(--landing-muted)] sm:text-lg">
+            <p className="landing-fade-up landing-delay-2 mt-4 max-w-md text-base leading-relaxed text-zinc-500 sm:text-lg">
               Invite clients, share deliverables, and collect payment in one
               private space per project.
             </p>
@@ -53,7 +53,7 @@ export function LandingPage() {
                 href={authHref("signup")}
                 className={cn(
                   buttonVariants({ size: "lg" }),
-                  "gap-2 border-transparent bg-[var(--landing-accent)] text-white shadow-none hover:bg-[var(--landing-accent-hover)]",
+                  "gap-2 shadow-none",
                 )}
               >
                 Start 14-day free trial
@@ -63,7 +63,7 @@ export function LandingPage() {
                 href={authHref("signin")}
                 className={cn(
                   buttonVariants({ variant: "outline", size: "lg" }),
-                  "border-[var(--landing-line)] bg-white/60 text-[var(--landing-ink)] shadow-none backdrop-blur-sm hover:bg-white",
+                  "border-zinc-200/80 bg-white/70 text-zinc-900 shadow-none backdrop-blur-sm hover:bg-white",
                 )}
               >
                 I already have an account
@@ -74,12 +74,12 @@ export function LandingPage() {
       </section>
 
       {/* Workflow */}
-      <section className="border-t border-[var(--landing-line)] bg-[var(--landing-surface)]">
+      <section className="border-t border-zinc-200/80 bg-[var(--landing-surface)]">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--landing-accent)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
             Workflow
           </p>
-          <h2 className="mt-3 max-w-xl font-[family-name:var(--font-display)] text-3xl tracking-tight text-[var(--landing-ink)] sm:text-4xl">
+          <h2 className="mt-3 max-w-xl font-[family-name:var(--font-display)] text-3xl tracking-tight text-zinc-900 sm:text-4xl">
             From invite to paid without the inbox chaos.
           </h2>
           <ol className="mt-12 grid gap-10 sm:grid-cols-3 sm:gap-8">
@@ -103,17 +103,17 @@ export function LandingPage() {
       </section>
 
       {/* Positioning */}
-      <section className="border-t border-[var(--landing-line)] bg-[var(--landing-wash)]">
+      <section className="border-t border-zinc-200/80 bg-[var(--landing-wash)]">
         <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-[1.1fr_0.9fr] lg:items-end lg:gap-16">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--landing-accent)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
               Built for pros and studios
             </p>
-            <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl tracking-tight text-[var(--landing-ink)] sm:text-4xl">
+            <h2 className="mt-3 font-[family-name:var(--font-display)] text-3xl tracking-tight text-zinc-900 sm:text-4xl">
               A portal that feels like yours, not another spreadsheet.
             </h2>
           </div>
-          <p className="text-base leading-relaxed text-[var(--landing-muted)] sm:text-lg">
+          <p className="text-base leading-relaxed text-zinc-500 sm:text-lg">
             Portal keeps billing visible, projects organized, and files
             permissioned so clients always know where to look, and you always
             know what is shared.
@@ -122,25 +122,25 @@ export function LandingPage() {
       </section>
 
       {/* Pricing */}
-      <section className="border-t border-[var(--landing-line)] bg-[var(--landing-surface)]">
+      <section className="border-t border-zinc-200/80 bg-[var(--landing-surface)]">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--landing-accent)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
             Pricing
           </p>
-          <h2 className="mt-3 max-w-xl font-[family-name:var(--font-display)] text-3xl tracking-tight text-[var(--landing-ink)] sm:text-4xl">
+          <h2 className="mt-3 max-w-xl font-[family-name:var(--font-display)] text-3xl tracking-tight text-zinc-900 sm:text-4xl">
             Simple pricing that pays for itself on the first invoice.
           </h2>
-          <div className="mt-10 max-w-md border-t border-[var(--landing-line)] pt-8">
-            <p className="font-[family-name:var(--font-display)] text-sm tracking-wide text-[var(--landing-accent)]">
+          <div className="mt-10 max-w-md border-t border-zinc-200/80 pt-8">
+            <p className="font-[family-name:var(--font-display)] text-sm tracking-wide text-primary">
               Portal Pro
             </p>
             <p className="mt-3 flex items-baseline gap-2">
-              <span className="font-[family-name:var(--font-display)] text-5xl tracking-tight text-[var(--landing-ink)]">
+              <span className="font-[family-name:var(--font-display)] text-5xl tracking-tight text-zinc-900">
                 $25
               </span>
-              <span className="text-[var(--landing-muted)]">/ month</span>
+              <span className="text-zinc-500">/ month</span>
             </p>
-            <p className="mt-4 text-sm leading-relaxed text-[var(--landing-muted)]">
+            <p className="mt-4 text-sm leading-relaxed text-zinc-500">
               14-day free trial, then $25/mo. Plus a ~1% platform fee on client
               invoice payments processed through Portal.
             </p>
@@ -148,7 +148,7 @@ export function LandingPage() {
               href={authHref("signup")}
               className={cn(
                 buttonVariants({ size: "lg" }),
-                "mt-7 inline-flex gap-2 border-transparent bg-[var(--landing-accent)] text-white shadow-none hover:bg-[var(--landing-accent-hover)]",
+                "mt-7 inline-flex gap-2 shadow-none",
               )}
             >
               Start free trial
@@ -159,13 +159,13 @@ export function LandingPage() {
       </section>
 
       {/* Closing CTA */}
-      <section className="border-t border-[var(--landing-line)] bg-[var(--landing-wash)]">
+      <section className="border-t border-zinc-200/80 bg-[var(--landing-wash)]">
         <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
           <div className="max-w-xl">
-            <h2 className="font-[family-name:var(--font-display)] text-3xl tracking-tight text-[var(--landing-ink)] sm:text-4xl">
+            <h2 className="font-[family-name:var(--font-display)] text-3xl tracking-tight text-zinc-900 sm:text-4xl">
               Ready for a cleaner client relationship?
             </h2>
-            <p className="mt-4 max-w-md text-base text-[var(--landing-muted)]">
+            <p className="mt-4 max-w-md text-base text-zinc-500">
               Create your workspace in minutes. Invite a client when you are
               ready.
             </p>
@@ -173,7 +173,7 @@ export function LandingPage() {
               href={authHref("signup")}
               className={cn(
                 buttonVariants({ size: "lg" }),
-                "mt-8 inline-flex gap-2 border-transparent bg-[var(--landing-accent)] text-white shadow-none hover:bg-[var(--landing-accent-hover)]",
+                "mt-8 inline-flex gap-2 shadow-none",
               )}
             >
               Start 14-day free trial
@@ -202,13 +202,21 @@ function HeroVisual() {
       >
         <defs>
           <linearGradient id="portalRing" x1="80" y1="80" x2="560" y2="640">
-            <stop stopColor="#0F766E" stopOpacity="0.55" />
-            <stop offset="0.55" stopColor="#134E4A" stopOpacity="0.2" />
-            <stop offset="1" stopColor="#F59E0B" stopOpacity="0.35" />
+            <stop stopColor="oklch(0.488 0.243 264.376)" stopOpacity="0.55" />
+            <stop
+              offset="0.55"
+              stopColor="oklch(0.371 0.12 264)"
+              stopOpacity="0.22"
+            />
+            <stop
+              offset="1"
+              stopColor="oklch(0.708 0.08 264)"
+              stopOpacity="0.35"
+            />
           </linearGradient>
           <linearGradient id="portalPanel" x1="220" y1="160" x2="520" y2="520">
-            <stop stopColor="#FFFFFF" stopOpacity="0.72" />
-            <stop offset="1" stopColor="#FFFFFF" stopOpacity="0.18" />
+            <stop stopColor="#FFFFFF" stopOpacity="0.78" />
+            <stop offset="1" stopColor="#FFFFFF" stopOpacity="0.2" />
           </linearGradient>
         </defs>
         <ellipse
@@ -226,7 +234,7 @@ function HeroVisual() {
           cy="360"
           rx="180"
           ry="180"
-          stroke="#0F766E"
+          stroke="oklch(0.488 0.243 264.376)"
           strokeOpacity="0.28"
           strokeWidth="1"
         />
@@ -238,18 +246,24 @@ function HeroVisual() {
           height="340"
           rx="28"
           fill="url(#portalPanel)"
-          stroke="#134E4A"
-          strokeOpacity="0.18"
+          stroke="#18181b"
+          strokeOpacity="0.12"
         />
         <path
           d="M250 270h180M250 310h120M250 350h150M250 420h90M250 460h140"
-          stroke="#134E4A"
-          strokeOpacity="0.22"
+          stroke="#18181b"
+          strokeOpacity="0.16"
           strokeWidth="6"
           strokeLinecap="round"
         />
-        <circle cx="470" cy="230" r="10" fill="#F59E0B" fillOpacity="0.85" />
-        <circle cx="200" cy="480" r="6" fill="#0F766E" fillOpacity="0.7" />
+        <circle
+          cx="470"
+          cy="230"
+          r="10"
+          fill="oklch(0.488 0.243 264.376)"
+          fillOpacity="0.85"
+        />
+        <circle cx="200" cy="480" r="6" fill="#18181b" fillOpacity="0.35" />
       </svg>
     </div>
   );
@@ -265,16 +279,12 @@ function Step({
   body: string;
 }) {
   return (
-    <li className="landing-step border-t border-[var(--landing-line)] pt-5">
-      <p className="font-[family-name:var(--font-display)] text-sm tracking-wide text-[var(--landing-accent)]">
+    <li className="landing-step border-t border-zinc-200/80 pt-5">
+      <p className="font-[family-name:var(--font-display)] text-sm tracking-wide text-primary">
         {number}
       </p>
-      <h3 className="mt-3 text-base font-semibold text-[var(--landing-ink)]">
-        {title}
-      </h3>
-      <p className="mt-2 text-sm leading-relaxed text-[var(--landing-muted)]">
-        {body}
-      </p>
+      <h3 className="mt-3 text-base font-semibold text-zinc-900">{title}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-zinc-500">{body}</p>
     </li>
   );
 }
