@@ -2,7 +2,8 @@
  * Pure post-auth redirect rules (no Supabase). Used by resolvePostAuthPath and tests.
  *
  * Freelancer path order:
- *   password → billing/trial (if no access) → customize portal → dashboard
+ *   password (legacy email) → guided onboarding wizard → dashboard
+ * Clients → dashboard (or requested next). Never enter freelancer onboarding.
  */
 
 function isGenericDashboard(path: string) {
@@ -16,10 +17,8 @@ function isBillingLanding(path: string) {
   );
 }
 
-function isPortalOnboarding(path: string) {
-  return (
-    path === "/onboarding/portal" || path.startsWith("/onboarding/portal?")
-  );
+function isOnboardingPath(path: string) {
+  return path === "/onboarding" || path.startsWith("/onboarding/");
 }
 
 export type PostAuthRole = "freelancer" | "client" | null | undefined;
@@ -28,10 +27,10 @@ export type PostAuthRulesInput = {
   nextPath?: string;
   role: PostAuthRole;
   passwordSet: boolean;
-  /** Freelancer has Portal Pro access (trialing / active). */
-  hasWorkspaceAccess: boolean;
-  /** Freelancer still needs the one-time customize-portal step. */
-  needsPortalSetup?: boolean;
+  /** Freelancer still needs the guided onboarding wizard. */
+  needsOnboarding?: boolean;
+  /** Resume path inside /onboarding/... when needsOnboarding. */
+  onboardingPath?: string;
 };
 
 /**
@@ -42,29 +41,24 @@ export function resolvePostAuthDestination({
   nextPath = "/dashboard",
   role,
   passwordSet,
-  hasWorkspaceAccess,
-  needsPortalSetup = false,
+  needsOnboarding = false,
+  onboardingPath = "/onboarding/welcome",
 }: PostAuthRulesInput): string {
   const safeNext = nextPath.startsWith("/") ? nextPath : "/dashboard";
   let destination = safeNext;
 
   if (role === "freelancer") {
-    if (!hasWorkspaceAccess && isGenericDashboard(safeNext)) {
-      destination = "/dashboard/billing";
-    } else if (hasWorkspaceAccess && isBillingLanding(safeNext)) {
+    // New freelancers go through the full-screen wizard — not locked dashboard FOMO.
+    // Always resume the persisted step (ignore generic /onboarding/welcome next from auth).
+    if (needsOnboarding) {
+      destination = onboardingPath.startsWith("/onboarding")
+        ? onboardingPath
+        : "/onboarding/welcome";
+    } else if (isBillingLanding(safeNext) || isGenericDashboard(safeNext)) {
       destination = "/dashboard";
-    }
-
-    // After trial unlock (or returning freelancers with access), customize once.
-    if (
-      hasWorkspaceAccess &&
-      needsPortalSetup &&
-      !isPortalOnboarding(destination) &&
-      !isBillingLanding(destination)
-    ) {
-      destination = `/onboarding/portal?next=${encodeURIComponent(
-        isGenericDashboard(destination) ? "/dashboard" : destination,
-      )}`;
+    } else if (isOnboardingPath(safeNext)) {
+      // Completed onboarding but next still points at wizard → dashboard.
+      destination = "/dashboard";
     }
   }
 
@@ -75,7 +69,7 @@ export function resolvePostAuthDestination({
   return destination;
 }
 
-/** Whether a freelancer should see the customize-portal onboarding step. */
+/** @deprecated Prefer freelancerNeedsOnboarding — kept for settings/branding checks. */
 export function freelancerNeedsPortalSetup(profile: {
   role?: PostAuthRole;
   portal_setup_completed_at?: string | null;
@@ -83,7 +77,6 @@ export function freelancerNeedsPortalSetup(profile: {
 }) {
   if (profile.role !== "freelancer") return false;
   if (profile.portal_setup_completed_at) return false;
-  // Already branded in settings → treat as complete (no wizard).
   if (profile.business_name?.trim()) return false;
   return true;
 }

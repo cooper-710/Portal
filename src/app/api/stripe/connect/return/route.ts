@@ -3,6 +3,11 @@ import Stripe from "stripe";
 
 import { createClient } from "@/utils/supabase/server";
 
+function safeAppPath(value: string | null, fallback: string) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return fallback;
+  return value;
+}
+
 async function syncConnectStatus() {
   const stripeSecret = process.env.STRIPE_SECRET_KEY;
   if (!stripeSecret) {
@@ -49,24 +54,34 @@ async function syncConnectStatus() {
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
+  const { searchParams } = new URL(request.url);
+  const next = safeAppPath(
+    searchParams.get("next"),
+    "/dashboard/invoices",
+  );
 
   try {
     const result = await syncConnectStatus();
     if ("error" in result && result.error) {
-      return NextResponse.redirect(
-        `${appUrl}/dashboard/invoices?connect=error`,
-      );
+      const sep = next.includes("?") ? "&" : "?";
+      return NextResponse.redirect(`${appUrl}${next}${sep}connect=error`);
     }
 
     const chargesEnabled =
       "chargesEnabled" in result ? result.chargesEnabled : false;
+    const sep = next.includes("?") ? "&" : "?";
+    const status = chargesEnabled ? "ready" : "pending";
 
-    return NextResponse.redirect(
-      `${appUrl}/dashboard/invoices?connect=${chargesEnabled ? "ready" : "pending"}`,
-    );
+    // If returning into onboarding, resume the wizard (auto-skips Connect when ready).
+    if (next.startsWith("/onboarding")) {
+      return NextResponse.redirect(`${appUrl}/onboarding`);
+    }
+
+    return NextResponse.redirect(`${appUrl}${next}${sep}connect=${status}`);
   } catch {
-    return NextResponse.redirect(`${appUrl}/dashboard/invoices?connect=error`);
+    const sep = next.includes("?") ? "&" : "?";
+    return NextResponse.redirect(`${appUrl}${next}${sep}connect=error`);
   }
 }

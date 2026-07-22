@@ -39,7 +39,7 @@ const PAYMENT_KINDS = new Set<PaymentKind>([
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect("/login");
+  redirect("/");
 }
 
 /**
@@ -415,6 +415,8 @@ export async function updateBusinessBranding(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/settings");
   revalidatePath("/onboarding/portal");
+  revalidatePath("/onboarding/branding");
+  revalidatePath("/onboarding");
   return { success: true as const };
 }
 
@@ -450,6 +452,8 @@ export async function completePortalSetup() {
 
   revalidatePath("/dashboard");
   revalidatePath("/onboarding/portal");
+  revalidatePath("/onboarding/branding");
+  revalidatePath("/onboarding");
   return { success: true as const };
 }
 

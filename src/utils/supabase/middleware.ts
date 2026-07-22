@@ -65,16 +65,40 @@ export async function updateSession(request: NextRequest) {
 
   if ((isDashboard || isOnboarding) && !user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = "/";
+    url.search = "";
+    url.searchParams.set("auth", "signin");
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
 
   // Allow login page when an auth error is present so users can recover.
+  // /login itself redirects to /?auth=… — if already signed in, continue.
   if (isLogin && user && !request.nextUrl.searchParams.get("error")) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/continue";
     url.search = "";
+    return NextResponse.redirect(url);
+  }
+
+  // Landing with auth modal while already signed in → continue into app.
+  if (
+    pathname === "/" &&
+    user &&
+    request.nextUrl.searchParams.get("auth") &&
+    !request.nextUrl.searchParams.get("error")
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/continue";
+    url.search = "";
+    const next = request.nextUrl.searchParams.get("next");
+    if (next?.startsWith("/")) {
+      url.searchParams.set("next", next);
+    }
+    const role = request.nextUrl.searchParams.get("role");
+    if (role === "client") {
+      url.searchParams.set("role", "client");
+    }
     return NextResponse.redirect(url);
   }
 

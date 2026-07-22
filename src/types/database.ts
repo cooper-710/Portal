@@ -113,6 +113,10 @@ export type Profile = {
   subscription_current_period_end: string | null;
   /** Set when freelancer saves or skips customize-portal onboarding. */
   portal_setup_completed_at: string | null;
+  /** Set when freelancer finishes the guided onboarding wizard. */
+  onboarding_completed_at: string | null;
+  /** Current guided onboarding step (welcome…done). */
+  onboarding_step: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -213,6 +217,8 @@ export type Database = {
           subscription_status?: PlatformSubscriptionStatus;
           subscription_current_period_end?: string | null;
           portal_setup_completed_at?: string | null;
+          onboarding_completed_at?: string | null;
+          onboarding_step?: string | null;
           created_at?: string;
           updated_at?: string;
         };

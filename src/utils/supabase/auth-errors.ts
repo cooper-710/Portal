@@ -79,8 +79,9 @@ export function isEmailOtpType(value: string | null): value is EmailOtpType {
 
 export function loginErrorHref(code: AuthErrorCode, next = "/dashboard") {
   const params = new URLSearchParams({
+    auth: "signin",
     error: code,
     next,
   });
-  return `/login?${params.toString()}`;
+  return `/?${params.toString()}`;
 }

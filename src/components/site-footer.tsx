@@ -37,7 +37,7 @@ export function SiteFooter({ compact = false }: SiteFooterProps) {
           <Link href="/terms" className="hover:text-zinc-800">
             Terms
           </Link>
-          <Link href="/login" className="hover:text-zinc-800">
+          <Link href="/?auth=signin" className="hover:text-zinc-800">
             Sign in
           </Link>
         </nav>

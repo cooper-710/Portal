@@ -2,22 +2,17 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 
 import { SetPasswordForm } from "./set-password-form";
-import { freelancerHasWorkspaceAccess } from "@/utils/stripe/subscription";
+import { loadOnboardingContext } from "@/utils/onboarding/load-context";
+import {
+  freelancerNeedsOnboarding,
+  onboardingPath,
+  resolveResumeStep,
+} from "@/utils/onboarding/steps";
 import { createClient } from "@/utils/supabase/server";
 
 type PageProps = {
   searchParams: Promise<{ next?: string }>;
 };
-
-function isGenericDashboard(path: string) {
-  return path === "/dashboard" || path === "/dashboard/";
-}
-
-function isBillingLanding(path: string) {
-  return (
-    path === "/dashboard/billing" || path.startsWith("/dashboard/billing?")
-  );
-}
 
 export default async function SetPasswordPage({ searchParams }: PageProps) {
   const params = await searchParams;
@@ -29,26 +24,27 @@ export default async function SetPasswordPage({ searchParams }: PageProps) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect(`/login?next=${encodeURIComponent(nextPath)}`);
+    redirect(`/?auth=signin&next=${encodeURIComponent(nextPath)}`);
   }
 
   const { data: profile } = await supabase
     .from("users")
-    .select("password_set, full_name, role, subscription_status")
+    .select(
+      "password_set, full_name, role, onboarding_completed_at, onboarding_step",
+    )
     .eq("id", user.id)
     .maybeSingle();
 
-  // Match resolvePostAuthPath: no access → billing; trialing/active → dashboard.
-  if (profile?.role === "freelancer") {
-    const hasAccess = freelancerHasWorkspaceAccess({
-      role: profile.role,
-      subscription_status: profile.subscription_status,
-    });
-    if (!hasAccess && isGenericDashboard(nextPath)) {
-      nextPath = "/dashboard/billing";
-    } else if (hasAccess && isBillingLanding(nextPath)) {
-      nextPath = "/dashboard";
-    }
+  // Freelancers still in the wizard → resume onboarding after password.
+  if (
+    profile?.role === "freelancer" &&
+    freelancerNeedsOnboarding(profile) &&
+    (nextPath === "/dashboard" ||
+      nextPath === "/dashboard/" ||
+      nextPath.startsWith("/dashboard/billing"))
+  ) {
+    const ctx = await loadOnboardingContext(supabase, user.id);
+    nextPath = onboardingPath(ctx ? resolveResumeStep(ctx) : "welcome");
   }
 
   if (profile?.password_set) {
@@ -62,11 +58,8 @@ export default async function SetPasswordPage({ searchParams }: PageProps) {
 
   const headingToTrial =
     profile?.role === "freelancer" &&
-    !freelancerHasWorkspaceAccess({
-      role: profile.role,
-      subscription_status: profile.subscription_status,
-    }) &&
-    isBillingLanding(nextPath);
+    freelancerNeedsOnboarding(profile) &&
+    nextPath.includes("/onboarding/trial");
 
   return (
     <Suspense

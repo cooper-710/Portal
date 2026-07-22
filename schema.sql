@@ -76,6 +76,20 @@ create table public.users (
   subscription_current_period_end timestamptz,
   -- Freelancer one-time customize-portal step (set on save or skip)
   portal_setup_completed_at timestamptz,
+  -- Guided full-screen onboarding wizard (freelancers only)
+  onboarding_completed_at timestamptz,
+  onboarding_step text check (
+    onboarding_step is null
+    or onboarding_step in (
+      'welcome',
+      'trial',
+      'stripe',
+      'branding',
+      'project',
+      'invite',
+      'done'
+    )
+  ),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

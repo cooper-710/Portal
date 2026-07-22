@@ -1,12 +1,14 @@
-import { freelancerHasWorkspaceAccess } from "@/utils/stripe/subscription";
+import {
+  freelancerNeedsOnboarding,
+  onboardingPath,
+  resolveResumeStep,
+} from "@/utils/onboarding/steps";
+import { loadOnboardingContext } from "@/utils/onboarding/load-context";
 import {
   syncOAuthProfile,
   type PreferredSignupRole,
 } from "@/utils/supabase/oauth-profile";
-import {
-  freelancerNeedsPortalSetup,
-  resolvePostAuthDestination,
-} from "@/utils/supabase/post-auth-rules";
+import { resolvePostAuthDestination } from "@/utils/supabase/post-auth-rules";
 import { createClient } from "@/utils/supabase/server";
 
 export type ResolvePostAuthOptions = {
@@ -18,13 +20,8 @@ export type ResolvePostAuthOptions = {
  * After magic-link / OTP / password / OAuth sign-in:
  * 1. OAuth users → password_set + full_name sync (skip password onboarding)
  * 2. Users without a password → onboarding password setup
- * 3. Freelancers without workspace access (and a generic /dashboard next)
- *    → /dashboard/billing so they can start/renew
- * 4. Freelancers with workspace access (trialing/active) whose next is billing
- *    → /dashboard (working overview), not billing
- * 5. Freelancers with access who have not customized/skipped portal branding
- *    → /onboarding/portal
- * Clients always keep dashboard (or their requested next).
+ * 3. Freelancers without onboarding_completed_at → guided /onboarding/... (resume)
+ * 4. Clients → dashboard (or their requested next)
  */
 export async function resolvePostAuthPath(
   nextPath = "/dashboard",
@@ -37,7 +34,7 @@ export async function resolvePostAuthPath(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return `/login?next=${encodeURIComponent(safeNext)}`;
+    return `/?auth=signin&next=${encodeURIComponent(safeNext)}`;
   }
 
   await syncOAuthProfile(supabase, user, options.preferredRole);
@@ -53,15 +50,10 @@ export async function resolvePostAuthPath(
   const { data: profile } = await supabase
     .from("users")
     .select(
-      "password_set, role, subscription_status, portal_setup_completed_at, business_name",
+      "password_set, role, subscription_status, portal_setup_completed_at, business_name, onboarding_completed_at, onboarding_step, stripe_charges_enabled",
     )
     .eq("id", user.id)
     .maybeSingle();
-
-  const hasWorkspaceAccess = freelancerHasWorkspaceAccess({
-    role: profile?.role ?? "client",
-    subscription_status: profile?.subscription_status ?? "none",
-  });
 
   // Existing branding without the flag — stamp complete so we don't re-check forever.
   if (
@@ -75,15 +67,30 @@ export async function resolvePostAuthPath(
       .eq("id", user.id);
   }
 
+  let needsOnboarding = false;
+  let resumeOnboardingPath = "/onboarding/welcome";
+
+  if (profile?.role === "freelancer" && freelancerNeedsOnboarding(profile)) {
+    needsOnboarding = true;
+    const ctx = await loadOnboardingContext(supabase, user.id);
+    if (ctx) {
+      const step = resolveResumeStep(ctx);
+      resumeOnboardingPath = onboardingPath(step);
+      // Persist resume cursor so refresh stays consistent.
+      if (ctx.profile.onboarding_step !== step) {
+        await supabase
+          .from("users")
+          .update({ onboarding_step: step })
+          .eq("id", user.id);
+      }
+    }
+  }
+
   return resolvePostAuthDestination({
     nextPath: safeNext,
     role: profile?.role,
     passwordSet: Boolean(profile?.password_set),
-    hasWorkspaceAccess,
-    needsPortalSetup: freelancerNeedsPortalSetup({
-      role: profile?.role,
-      portal_setup_completed_at: profile?.portal_setup_completed_at,
-      business_name: profile?.business_name,
-    }),
+    needsOnboarding,
+    onboardingPath: resumeOnboardingPath,
   });
 }

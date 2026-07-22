@@ -1,66 +1,39 @@
-import Link from "next/link";
-
-import { LoginForm } from "@/components/auth/login-form";
-import { SiteFooter } from "@/components/site-footer";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { redirect } from "next/navigation";
 
 type LoginPageProps = {
   searchParams: Promise<{
     next?: string;
     error?: string;
     role?: string;
+    auth?: string;
   }>;
 };
 
+/**
+ * Thin redirect: auth lives as a modal on the landing page.
+ * Preserves role / next / error for invites and OAuth recovery.
+ */
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
-  const initialError = params.error ?? null;
-  const signupRole = params.role === "client" ? "client" : "freelancer";
-  // Explicit ?next= wins. Otherwise freelancers → billing (start/renew trial);
-  // clients → dashboard. resolvePostAuthPath adjusts for existing subscriptions.
-  const explicitNext = params.next?.startsWith("/") ? params.next : null;
-  const defaultNext =
-    signupRole === "freelancer" ? "/dashboard/billing" : "/dashboard";
-  const nextPath = explicitNext ?? defaultNext;
+  const qs = new URLSearchParams();
 
-  return (
-    <main className="flex min-h-svh flex-col items-center justify-center bg-zinc-50 px-4 py-10">
-      <div className="mb-8 text-center">
-        <Link href="/" className="text-2xl font-semibold tracking-tight text-zinc-900">
-          Portal
-        </Link>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Secure client collaboration for freelancers
-        </p>
-      </div>
+  const mode =
+    params.role === "client"
+      ? "client"
+      : params.auth === "signup"
+        ? "signup"
+        : "signin";
+  qs.set("auth", mode);
 
-      <Card className="w-full max-w-md border-zinc-200 shadow-sm">
-        <CardHeader>
-          <CardTitle>
-            {signupRole === "client" ? "Client access" : "Freelancer portal"}
-          </CardTitle>
-          <CardDescription>
-            {signupRole === "client"
-              ? "Continue with Google to join the project you were invited to."
-              : "Continue with Google to sign in or start your 14-day free trial ($25/mo after)."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <LoginForm
-            nextPath={nextPath}
-            initialError={initialError}
-            signupRole={signupRole}
-          />
-        </CardContent>
-      </Card>
+  if (params.role === "client") {
+    qs.set("role", "client");
+  }
+  if (params.next?.startsWith("/")) {
+    qs.set("next", params.next);
+  }
+  if (params.error) {
+    qs.set("error", params.error);
+  }
 
-      <SiteFooter compact />
-    </main>
-  );
+  redirect(`/?${qs.toString()}`);
 }

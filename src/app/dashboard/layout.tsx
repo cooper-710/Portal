@@ -11,8 +11,13 @@ import {
   requireDashboardProfile,
 } from "@/lib/dashboard-data";
 import { displayName } from "@/lib/format";
-import { freelancerCanCreate, freelancerHasWorkspaceAccess } from "@/utils/stripe/subscription";
-import { freelancerNeedsPortalSetup } from "@/utils/supabase/post-auth-rules";
+import { freelancerCanCreate } from "@/utils/stripe/subscription";
+import { loadOnboardingContext } from "@/utils/onboarding/load-context";
+import {
+  freelancerNeedsOnboarding,
+  onboardingPath,
+  resolveResumeStep,
+} from "@/utils/onboarding/steps";
 
 export default async function DashboardLayout({
   children,
@@ -23,13 +28,11 @@ export default async function DashboardLayout({
   const canCreate =
     profile.role !== "freelancer" || freelancerCanCreate(profile);
 
-  // After trial unlock: one-time customize step before using the workspace.
-  if (
-    profile.role === "freelancer" &&
-    freelancerHasWorkspaceAccess(profile) &&
-    freelancerNeedsPortalSetup(profile)
-  ) {
-    redirect("/onboarding/portal?next=/dashboard");
+  // Freelancers must finish the guided wizard before the main app chrome.
+  if (profile.role === "freelancer" && freelancerNeedsOnboarding(profile)) {
+    const ctx = await loadOnboardingContext(supabase, profile.id);
+    const step = ctx ? resolveResumeStep(ctx) : "welcome";
+    redirect(onboardingPath(step));
   }
 
   // Already branded without the flag — stamp once so the checklist stays clean.

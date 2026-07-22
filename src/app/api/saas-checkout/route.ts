@@ -16,7 +16,14 @@ import { validateCriticalEnv } from "@/utils/env";
  * Subscriptions API. We align duration via subscription_data.trial_period_days
  * and record STRIPE_TRIAL_OFFER_ID in metadata when configured.
  */
-export async function POST() {
+function safeAppPath(value: unknown, fallback: string) {
+  if (typeof value !== "string" || !value.startsWith("/")) return fallback;
+  // Block protocol-relative / external redirects.
+  if (value.startsWith("//")) return fallback;
+  return value;
+}
+
+export async function POST(request: Request) {
   const envCheck = validateCriticalEnv();
   if (!envCheck.ok) {
     console.error("[saas-checkout] missing env:", envCheck.missing.join(", "));
@@ -29,6 +36,19 @@ export async function POST() {
   const stripeSecret = process.env.STRIPE_SECRET_KEY;
   const priceId = process.env.STRIPE_SAAS_PRICE_ID;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
+
+  let successPath = "/dashboard?subscribed=1";
+  let cancelPath = "/dashboard/billing?canceled=1";
+  try {
+    const body = (await request.json()) as {
+      successPath?: string;
+      cancelPath?: string;
+    };
+    successPath = safeAppPath(body.successPath, successPath);
+    cancelPath = safeAppPath(body.cancelPath, cancelPath);
+  } catch {
+    // Empty body is fine (dashboard billing CTA).
+  }
 
   if (!stripeSecret) {
     return NextResponse.json(
@@ -106,8 +126,8 @@ export async function POST() {
       mode: "subscription",
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/dashboard?subscribed=1&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/dashboard/billing?canceled=1`,
+      success_url: `${appUrl}${successPath}${successPath.includes("?") ? "&" : "?"}session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}${cancelPath}`,
       client_reference_id: user.id,
       metadata: {
         freelancer_id: user.id,

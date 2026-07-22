@@ -200,3 +200,39 @@
     animation: none;
   }
 }
+
+/* Guided onboarding motion */
+@keyframes onboarding-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes onboarding-step-copy {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.onboarding-enter {
+  animation: onboarding-enter 0.45s ease-out both;
+}
+
+.onboarding-step-copy {
+  animation: onboarding-step-copy 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-enter,
+  .onboarding-step-copy {
+    animation: none;
+  }
+}

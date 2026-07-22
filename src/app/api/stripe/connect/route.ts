@@ -11,10 +11,17 @@ function getStripe() {
   return new Stripe(stripeSecret);
 }
 
+function safeAppPath(value: unknown, fallback: string) {
+  if (typeof value !== "string" || !value.startsWith("/")) return fallback;
+  if (value.startsWith("//")) return fallback;
+  return value;
+}
+
 /**
  * Start Stripe Connect Express onboarding for the authenticated freelancer.
+ * Optional JSON body: `{ next: "/onboarding/stripe" }` for return/refresh.
  */
-export async function POST() {
+export async function POST(request: Request) {
   const stripe = getStripe();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
 
@@ -23,6 +30,14 @@ export async function POST() {
       { error: "Stripe is not configured." },
       { status: 503 },
     );
+  }
+
+  let returnNext = "/dashboard/invoices";
+  try {
+    const body = (await request.json()) as { next?: string };
+    returnNext = safeAppPath(body.next, returnNext);
+  } catch {
+    // Empty body is fine.
   }
 
   const supabase = await createClient();
@@ -80,10 +95,11 @@ export async function POST() {
       }
     }
 
+    const nextParam = encodeURIComponent(returnNext);
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
-      refresh_url: `${appUrl}/api/stripe/connect/refresh`,
-      return_url: `${appUrl}/api/stripe/connect/return`,
+      refresh_url: `${appUrl}/api/stripe/connect/refresh?next=${nextParam}`,
+      return_url: `${appUrl}/api/stripe/connect/return?next=${nextParam}`,
       type: "account_onboarding",
     });
 
