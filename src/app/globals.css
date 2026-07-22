@@ -138,37 +138,42 @@
   --landing-surface: oklch(0.985 0 0);
   --landing-wash: oklch(0.97 0 0);
   background:
-    radial-gradient(ellipse 90% 60% at 10% -10%, color-mix(in oklab, var(--primary) 14%, white) 0%, transparent 55%),
-    radial-gradient(ellipse 70% 50% at 95% 5%, color-mix(in oklab, var(--primary) 8%, white) 0%, transparent 45%),
+    radial-gradient(ellipse 90% 60% at 10% -10%, color-mix(in oklab, var(--primary) 12%, white) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 95% 5%, color-mix(in oklab, var(--primary) 7%, white) 0%, transparent 45%),
     linear-gradient(180deg, oklch(0.985 0 0) 0%, oklch(0.97 0 0) 40%, oklch(0.985 0 0) 100%);
   color: var(--landing-ink);
+  scroll-behavior: smooth;
+}
+
+.landing-header {
+  will-change: background, border-color;
 }
 
 .landing-hero-atmosphere {
   background:
-    radial-gradient(ellipse 80% 70% at 70% 40%, color-mix(in oklab, var(--primary) 18%, transparent) 0%, transparent 55%),
-    radial-gradient(ellipse 55% 45% at 15% 80%, color-mix(in oklab, var(--primary) 10%, transparent) 0%, transparent 50%),
-    radial-gradient(ellipse at top, oklch(0.96 0 0) 0%, oklch(0.985 0 0) 45%, oklch(0.97 0 0) 100%);
-  animation: landing-atmosphere-shift 18s ease-in-out infinite alternate;
+    radial-gradient(ellipse 78% 68% at 72% 38%, color-mix(in oklab, var(--primary) 14%, transparent) 0%, transparent 58%),
+    radial-gradient(ellipse 50% 42% at 12% 82%, color-mix(in oklab, var(--primary) 8%, transparent) 0%, transparent 52%),
+    radial-gradient(ellipse at top, oklch(0.965 0 0) 0%, oklch(0.985 0 0) 48%, oklch(0.97 0 0) 100%);
+  animation: landing-atmosphere-shift 22s ease-in-out infinite alternate;
 }
 
 .landing-hero-grid {
   background-image:
-    linear-gradient(color-mix(in oklab, var(--foreground) 5%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in oklab, var(--foreground) 5%, transparent) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 75%);
-  opacity: 0.45;
+    linear-gradient(color-mix(in oklab, var(--foreground) 4.5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--foreground) 4.5%, transparent) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(ellipse 68% 58% at 52% 42%, black 18%, transparent 72%);
+  opacity: 0.4;
 }
 
 @keyframes landing-atmosphere-shift {
   from {
-    filter: hue-rotate(0deg) saturate(1);
-    transform: scale(1);
+    opacity: 1;
+    transform: scale(1) translate3d(0, 0, 0);
   }
   to {
-    filter: hue-rotate(8deg) saturate(1.08);
-    transform: scale(1.03);
+    opacity: 0.92;
+    transform: scale(1.025) translate3d(-1.2%, 0.8%, 0);
   }
 }
 
@@ -258,30 +263,47 @@
 }
 
 .landing-panel {
-  animation: landing-panel-rise 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+  animation: landing-panel-rise 1.25s cubic-bezier(0.22, 1, 0.36, 1) 0.18s both;
+}
+
+.landing-hero-orbits {
+  transition: transform 0.15s linear;
 }
 
 .landing-step {
-  animation: landing-step-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: landing-step-in 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .landing-step:nth-child(2) {
-  animation-delay: 0.1s;
+  animation-delay: 0.12s;
 }
 
 .landing-step:nth-child(3) {
-  animation-delay: 0.2s;
+  animation-delay: 0.24s;
+}
+
+.landing-pricing-panel {
+  animation: landing-step-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .landing-root {
+    scroll-behavior: auto;
+  }
+
   .landing-fade-up,
   .landing-brand,
   .landing-hero-atmosphere,
   .landing-orbit-a,
   .landing-orbit-b,
   .landing-panel,
-  .landing-step {
+  .landing-step,
+  .landing-pricing-panel {
     animation: none;
+  }
+
+  .landing-hero-orbits {
+    transition: none;
   }
 }
 
