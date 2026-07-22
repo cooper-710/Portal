@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(39);
+select plan(44);
 
 -- Column grants are the first line of defense for system-managed state.
 select ok(not has_column_privilege('authenticated', 'public.users', 'subscription_status', 'update'), 'subscription status is not user-writable');
@@ -20,6 +20,10 @@ select ok(not has_column_privilege('authenticated', 'public.invoices', 'stripe_c
 select ok(not has_column_privilege('authenticated', 'public.invoices', 'stripe_connected_account_id', 'update'), 'originating connected account is not user-writable');
 select ok(not has_column_privilege('authenticated', 'public.invoices', 'amount_paid', 'update'), 'amount paid is not user-writable');
 select ok(not has_column_privilege('authenticated', 'public.invoices', 'amount_refunded', 'update'), 'amount refunded is not user-writable');
+select ok(not has_column_privilege('authenticated', 'public.invoices', 'refund_pending_amount', 'update'), 'pending refund amount is not user-writable');
+select ok(not has_column_privilege('authenticated', 'public.invoices', 'stripe_refund_id', 'update'), 'refund id is not user-writable');
+select ok(not has_column_privilege('authenticated', 'public.invoices', 'refund_requested_at', 'update'), 'refund request timestamp is not user-writable');
+select ok(not has_column_privilege('authenticated', 'public.invoices', 'refund_completed_at', 'update'), 'refund completion timestamp is not user-writable');
 select ok(not has_column_privilege('authenticated', 'public.invoices', 'stripe_charge_id', 'update'), 'charge id is not user-writable');
 select ok(not has_column_privilege('authenticated', 'public.invoices', 'stripe_dispute_id', 'update'), 'dispute id is not user-writable');
 select ok(not has_column_privilege('authenticated', 'public.invoices', 'dispute_status', 'update'), 'dispute outcome is not user-writable');
@@ -105,6 +109,12 @@ select throws_ok(
   $$insert into public.invoices (project_id, amount, stripe_connected_account_id, status, title) values ('a0000000-0000-0000-0000-000000000001', 5000, 'acct_attacker', 'pending', 'Forged account boundary')$$,
   '42501', null,
   'owner cannot assign a Stripe connected account to an invoice'
+);
+
+select throws_ok(
+  $$insert into public.invoices (project_id, amount, refund_pending_amount, status, title) values ('a0000000-0000-0000-0000-000000000001', 5000, 5000, 'pending', 'Forged refund')$$,
+  '42501', null,
+  'owner cannot forge a pending refund'
 );
 
 select is(

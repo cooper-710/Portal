@@ -25,6 +25,7 @@ export type InvoiceStatus =
   | "pending"
   | "processing"
   | "paid"
+  | "refund_pending"
   | "canceled"
   | "partially_refunded"
   | "refunded"
@@ -203,9 +204,13 @@ export type Invoice = {
   stripe_connected_account_id: string | null;
   amount_paid: number;
   amount_refunded: number;
+  refund_pending_amount: number;
   stripe_charge_id: string | null;
+  stripe_refund_id: string | null;
   stripe_dispute_id: string | null;
   dispute_status: InvoiceDisputeStatus | null;
+  refund_requested_at: string | null;
+  refund_completed_at: string | null;
   payment_status_updated_at: string | null;
   last_payment_event_created_at: number | null;
   created_at: string;
@@ -360,9 +365,13 @@ export type Database = {
           stripe_connected_account_id?: string | null;
           amount_paid?: number;
           amount_refunded?: number;
+          refund_pending_amount?: number;
           stripe_charge_id?: string | null;
+          stripe_refund_id?: string | null;
           stripe_dispute_id?: string | null;
           dispute_status?: InvoiceDisputeStatus | null;
+          refund_requested_at?: string | null;
+          refund_completed_at?: string | null;
           payment_status_updated_at?: string | null;
           last_payment_event_created_at?: number | null;
           created_at?: string;

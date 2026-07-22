@@ -25,9 +25,13 @@ const invoice: Invoice = {
   stripe_connected_account_id: "acct_fixture_a",
   amount_paid: 0,
   amount_refunded: 0,
+  refund_pending_amount: 0,
   stripe_charge_id: null,
+  stripe_refund_id: null,
   stripe_dispute_id: null,
   dispute_status: null,
+  refund_requested_at: null,
+  refund_completed_at: null,
   payment_status_updated_at: null,
   last_payment_event_created_at: null,
   created_at: "2026-07-22T12:00:00.000Z",
@@ -97,6 +101,32 @@ describe("Stripe invoice payment lifecycle fixtures", () => {
       fixture("refunded", { occurredAt: 1_753_200_020, amountRefunded: 10_000 }),
     );
     expect(full).toMatchObject({ status: "refunded", amount_refunded: 10_000 });
+    expect(full.refund_pending_amount).toBe(0);
+    expect(full.refund_completed_at).toBeTruthy();
+  });
+
+  it("restores the completed-payment state when a requested refund fails", () => {
+    const requested = {
+      ...invoice,
+      status: "refund_pending" as const,
+      amount_paid: 10_000,
+      refund_pending_amount: 2_500,
+      refund_requested_at: "2026-07-22T12:05:00.000Z",
+    };
+    expect(
+      reduceInvoicePaymentState(
+        requested,
+        fixture("refund_failed", {
+          occurredAt: 1_753_200_010,
+          refundId: "re_failed",
+        }),
+      ),
+    ).toMatchObject({
+      status: "paid",
+      refund_pending_amount: 0,
+      refund_requested_at: null,
+      stripe_refund_id: "re_failed",
+    });
   });
 
   it("tracks disputes opened, won, and lost", () => {

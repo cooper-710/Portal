@@ -313,7 +313,7 @@ export function PaymentDueCalendar({
           </div>
         </div>
 
-        <ScrollPane className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-contain">
+        <ScrollPane className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden pr-1">
           <div className="mb-2 flex min-w-0 shrink-0 items-center justify-between gap-2">
             <p className="min-w-0 truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
               {listHeading}
@@ -345,12 +345,12 @@ export function PaymentDueCalendar({
           ) : listItems.length === 0 && !selectedDay && overdue.length === 0 ? (
             <p className="text-sm text-zinc-500">No payments due this month.</p>
           ) : (
-            <ul className="grid min-h-0 min-w-0 gap-1.5 overflow-x-hidden">
+            <ul className="grid min-w-0 shrink-0 gap-1.5 overflow-x-hidden">
               {listItems.map((item) => {
                 const date = parseDueDate(item.dueDate);
                 const isPast = Boolean(date && date < today);
                 const rowClass = cn(
-                  "flex w-full min-w-0 max-w-full items-center justify-between gap-2 overflow-hidden rounded-lg border px-2.5 py-2 transition-all",
+                  "flex min-h-[3.25rem] w-full min-w-0 max-w-full shrink-0 items-center justify-between gap-2 overflow-hidden rounded-lg border px-2.5 py-2 transition-all",
                   isPast
                     ? "border-amber-200/80 bg-amber-50/50"
                     : "border-zinc-200/80 bg-zinc-50/40",

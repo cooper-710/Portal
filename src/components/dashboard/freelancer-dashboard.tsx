@@ -20,6 +20,7 @@ import { GettingStartedChecklist } from "@/components/dashboard/getting-started"
 import { CreateInvoiceDialog } from "@/components/dashboard/create-invoice-dialog";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { InvoiceOwnerActions } from "@/components/dashboard/invoice-owner-actions";
+import { InvoiceRefundStatus } from "@/components/dashboard/invoice-refund-status";
 import {
   LatestDeliverables,
   type DeliverableListItem,
@@ -84,7 +85,7 @@ export function FreelancerDashboard({
     0,
   );
   const paidTotal = paidInvoices.reduce(
-    (sum, invoice) => sum + invoice.amount,
+    (sum, invoice) => sum + Math.max(0, invoice.amount_paid - invoice.amount_refunded),
     0,
   );
   const invoicesHref = filterProjectId
@@ -204,7 +205,7 @@ export function FreelancerDashboard({
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-100/80 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-900">
                     <span className="size-1.5 rounded-full bg-emerald-500" />
-                    {formatMoney(paidTotal)} paid
+                    {formatMoney(paidTotal)} net paid
                   </span>
                 </div>
               </div>
@@ -256,7 +257,7 @@ export function FreelancerDashboard({
                           >
                             {formatMoney(invoice.amount, invoice.currency)}
                           </button>
-                          <InvoiceStatusBadge status="pending" />
+                          <InvoiceStatusBadge status={invoice.status} />
                           <ProjectNamePill
                             title={projectTitle}
                             onClick={() => selectProject(invoice.project_id)}
@@ -317,8 +318,17 @@ export function FreelancerDashboard({
                               onClick={() => selectProject(invoice.project_id)}
                             />
                           </div>
+                          <InvoiceRefundStatus invoice={invoice} compact />
                         </div>
-                        <InvoiceStatusBadge status="paid" />
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          <InvoiceOwnerActions
+                            invoice={invoice}
+                            projectTitle={projectTitle}
+                            onMessage={setMessage}
+                            compact
+                          />
+                          <InvoiceStatusBadge status={invoice.status} />
+                        </div>
                       </li>
                     );
                   })}

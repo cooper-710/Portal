@@ -28,6 +28,7 @@ const invoiceStyles: Record<InvoiceStatus, string> = {
     "border-amber-300/70 bg-amber-100 text-amber-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]",
   paid: "border-emerald-300/70 bg-emerald-100 text-emerald-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]",
   processing: "border-sky-300/70 bg-sky-100 text-sky-900",
+  refund_pending: "border-amber-300 bg-amber-100 text-amber-900",
   canceled: "border-zinc-300 bg-zinc-100 text-zinc-700",
   partially_refunded: "border-violet-300 bg-violet-100 text-violet-900",
   refunded: "border-violet-300 bg-violet-100 text-violet-900",
@@ -37,6 +38,7 @@ const invoiceStyles: Record<InvoiceStatus, string> = {
 const invoiceLabels: Record<InvoiceStatus, string> = {
   pending: "Pending",
   processing: "Processing",
+  refund_pending: "Refund initiated",
   paid: "Paid",
   canceled: "Canceled",
   partially_refunded: "Partially refunded",

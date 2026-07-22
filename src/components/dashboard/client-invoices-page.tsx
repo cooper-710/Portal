@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CircleDollarSign, CreditCard, Loader2, Receipt } from "lucide-react";
+import { CircleDollarSign, Loader2, Receipt } from "lucide-react";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { InvoicePdfLink } from "@/components/dashboard/invoice-pdf-link";
+import { InvoiceRefundStatus } from "@/components/dashboard/invoice-refund-status";
 import { PaymentDueCalendar } from "@/components/dashboard/payment-due-calendar";
 import {
   ProjectFilter,
@@ -64,7 +65,7 @@ export function ClientInvoicesPage({
     0,
   );
   const paidTotal = paidInvoices.reduce(
-    (sum, invoice) => sum + invoice.amount,
+    (sum, invoice) => sum + Math.max(0, invoice.amount_paid - invoice.amount_refunded),
     0,
   );
 
@@ -120,14 +121,6 @@ export function ClientInvoicesPage({
         ) : null}
       </div>
 
-      <p className="flex items-start gap-2 rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-3.5 py-2.5 text-xs text-zinc-600">
-        <CreditCard className="mt-0.5 size-3.5 shrink-0 text-zinc-400" aria-hidden />
-        <span>
-          Autopay (save a card): coming soon. For now, pay each invoice with
-          Checkout when it is due.
-        </span>
-      </p>
-
       {error ? (
         <p className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-800">
           {error}
@@ -180,7 +173,7 @@ export function ClientInvoicesPage({
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-100/80 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-900">
                   <span className="size-1.5 rounded-full bg-emerald-500" />
-                  {formatMoney(paidTotal)} paid
+                  {formatMoney(paidTotal)} net paid
                 </span>
               </div>
             </div>
@@ -227,7 +220,7 @@ export function ClientInvoicesPage({
                           <p className="text-sm font-semibold text-zinc-900">
                             {formatMoney(invoice.amount, invoice.currency)}
                           </p>
-                          <InvoiceStatusBadge status="pending" />
+                          <InvoiceStatusBadge status={invoice.status} />
                           <ProjectNamePill
                             title={projectTitle}
                             onClick={() => selectProject(invoice.project_id)}
@@ -236,6 +229,7 @@ export function ClientInvoicesPage({
                         <p className="truncate text-xs text-zinc-500">
                           {new Date(invoice.created_at).toLocaleDateString()}
                         </p>
+                        <InvoiceRefundStatus invoice={invoice} compact />
                       </div>
                       <div className="flex w-full items-center gap-2 sm:w-auto">
                         <InvoicePdfLink invoiceId={invoice.id} />
@@ -291,9 +285,10 @@ export function ClientInvoicesPage({
                         <p className="truncate text-xs text-zinc-500">
                           {new Date(invoice.created_at).toLocaleDateString()}
                         </p>
+                        <InvoiceRefundStatus invoice={invoice} />
                       </div>
                       <InvoicePdfLink invoiceId={invoice.id} compact />
-                      <InvoiceStatusBadge status="paid" />
+                      <InvoiceStatusBadge status={invoice.status} />
                     </li>
                   );
                 })}

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { CreateInvoiceDialog } from "@/components/dashboard/create-invoice-dialog";
 import { InvoiceOwnerActions } from "@/components/dashboard/invoice-owner-actions";
 import { InvoicePdfLink } from "@/components/dashboard/invoice-pdf-link";
+import { InvoiceRefundStatus } from "@/components/dashboard/invoice-refund-status";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { InvoiceStatusBadge } from "@/components/dashboard/status-badge";
 import {
@@ -89,7 +90,10 @@ export function ProjectInvoicesPanel({
                     : "-"}
                 </TableCell>
                 <TableCell>
-                  <InvoiceStatusBadge status={invoice.status} />
+                  <div className="space-y-1.5">
+                    <InvoiceStatusBadge status={invoice.status} />
+                    <InvoiceRefundStatus invoice={invoice} compact />
+                  </div>
                 </TableCell>
                 <TableCell>
                   {new Date(invoice.created_at).toLocaleDateString()}

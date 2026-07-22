@@ -76,6 +76,10 @@ drive direct client-invoice payments, refunds, disputes, expiration, and async
 payment outcomes. Checkout return URLs reconcile through the stored connected
 account if a webhook is delayed.
 
+If the Connect webhook destination uses a selected event list, include
+`charge.refunded` and `refund.failed` so owner-initiated refunds can move from
+"Refund initiated" to their completed or failed state.
+
 Health check: [http://localhost:3001/api/health](http://localhost:3001/api/health).
 
 ## How to deploy (production)

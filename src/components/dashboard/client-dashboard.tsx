@@ -15,6 +15,7 @@ import {
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { FileVault } from "@/components/dashboard/file-vault";
+import { InvoiceRefundStatus } from "@/components/dashboard/invoice-refund-status";
 import {
   InvoiceStatusBadge,
   ProjectStatusBadge,
@@ -313,7 +314,7 @@ export function ClientDashboard({
                         <p className="text-sm font-semibold text-zinc-900">
                           {formatMoney(invoice.amount, invoice.currency)}
                         </p>
-                        <InvoiceStatusBadge status="pending" />
+                        <InvoiceStatusBadge status={invoice.status} />
                       </div>
                       <p className="truncate text-xs text-zinc-500">
                         {invoice.project?.title ?? "Project invoice"} ·{" "}
@@ -362,8 +363,9 @@ export function ClientDashboard({
                         <p className="truncate text-[11px] text-zinc-500">
                           {invoice.project?.title ?? "-"}
                         </p>
+                        <InvoiceRefundStatus invoice={invoice} compact />
                       </div>
-                      <InvoiceStatusBadge status="paid" />
+                      <InvoiceStatusBadge status={invoice.status} />
                     </li>
                   ))}
                 </ul>

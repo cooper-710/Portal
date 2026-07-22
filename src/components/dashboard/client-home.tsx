@@ -25,6 +25,7 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import { DeliverableReviewControls } from "@/components/dashboard/deliverable-review-controls";
 import { FileVault } from "@/components/dashboard/file-vault";
 import { LatestDeliverables } from "@/components/dashboard/latest-deliverables";
+import { InvoiceRefundStatus } from "@/components/dashboard/invoice-refund-status";
 import { PaymentDueCalendar } from "@/components/dashboard/payment-due-calendar";
 import { ProjectFilter } from "@/components/dashboard/project-filter";
 import {
@@ -438,7 +439,7 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
                       <p className="text-sm font-semibold text-zinc-900">
                         {formatMoney(invoice.amount, invoice.currency)}
                       </p>
-                      <InvoiceStatusBadge status="pending" />
+                      <InvoiceStatusBadge status={invoice.status} />
                       {paymentKindBadge(invoice.payment_kind) ? (
                         <span className="rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600">
                           {paymentKindBadge(invoice.payment_kind)}
@@ -453,6 +454,7 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
                         ? ` · due ${formatShortDate(invoice.due_date)}`
                         : ""}
                     </p>
+                    <InvoiceRefundStatus invoice={invoice} compact />
                   </div>
                   <Button
                     size="sm"

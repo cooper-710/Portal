@@ -20,6 +20,7 @@ export type InvoicePaymentOutcome =
   | "canceled"
   | "partially_refunded"
   | "refunded"
+  | "refund_failed"
   | "dispute_opened"
   | "dispute_won"
   | "dispute_lost";
@@ -35,6 +36,7 @@ export type NormalizedInvoicePaymentEvent = {
   amountPaid?: number;
   amountRefunded?: number;
   chargeId?: string | null;
+  refundId?: string | null;
   disputeId?: string | null;
   paymentIntentId?: string | null;
   checkoutSessionId?: string | null;
@@ -47,9 +49,13 @@ type PaymentState = Pick<
   | "status"
   | "amount_paid"
   | "amount_refunded"
+  | "refund_pending_amount"
   | "stripe_charge_id"
+  | "stripe_refund_id"
   | "stripe_dispute_id"
   | "dispute_status"
+  | "refund_requested_at"
+  | "refund_completed_at"
   | "stripe_payment_intent_id"
   | "stripe_checkout_session_id"
   | "stripe_connected_account_id"
@@ -100,6 +106,13 @@ export function reduceInvoicePaymentState(
     case "refunded":
       status = "refunded";
       break;
+    case "refund_failed":
+      status = amountRefunded >= amountPaid && amountPaid > 0
+        ? "refunded"
+        : amountRefunded > 0
+          ? "partially_refunded"
+          : "paid";
+      break;
     case "dispute_opened":
       status = "disputed";
       disputeStatus = "open";
@@ -118,13 +131,24 @@ export function reduceInvoicePaymentState(
       break;
   }
 
+  const refundCompleted =
+    event.outcome === "partially_refunded" || event.outcome === "refunded";
+  const refundResolved = refundCompleted || event.outcome === "refund_failed";
+
   return {
     status,
     amount_paid: amountPaid,
     amount_refunded: amountRefunded,
+    refund_pending_amount: refundResolved ? 0 : current.refund_pending_amount,
     stripe_charge_id: event.chargeId ?? current.stripe_charge_id,
+    stripe_refund_id: event.refundId ?? current.stripe_refund_id,
     stripe_dispute_id: event.disputeId ?? current.stripe_dispute_id,
     dispute_status: disputeStatus,
+    refund_requested_at:
+      event.outcome === "refund_failed" ? null : current.refund_requested_at,
+    refund_completed_at: refundCompleted
+      ? new Date(event.occurredAt * 1000).toISOString()
+      : current.refund_completed_at,
     stripe_payment_intent_id:
       event.paymentIntentId ?? current.stripe_payment_intent_id,
     stripe_checkout_session_id:
@@ -371,7 +395,33 @@ export async function handleInvoiceStripeEvent(
       amountPaid: charge.amount,
       amountRefunded: charge.amount_refunded,
       chargeId: charge.id,
+      refundId: charge.refunds?.data[0]?.id ?? null,
       paymentIntentId,
+    }, admin);
+  }
+
+  if (event.type === "refund.failed") {
+    const refund = event.data.object as Stripe.Refund;
+    const chargeId = id(refund.charge);
+    const invoiceId = await findInvoiceId(admin, {
+      invoiceId: refund.metadata?.invoice_id,
+      chargeId,
+    });
+    if (!invoiceId) return { ok: true as const, ignored: true as const };
+    return applyInvoicePaymentEvent({
+      stripeEventId: event.id,
+      stripeEventType: event.type,
+      stripeObjectId: refund.id,
+      invoiceId,
+      outcome: "refund_failed",
+      connectedAccountId,
+      occurredAt,
+      chargeId,
+      refundId: refund.id,
+      failureCode: refund.failure_reason ?? null,
+      failureMessage: refund.failure_reason
+        ? `Stripe refund failed: ${refund.failure_reason}.`
+        : "Stripe refund failed.",
     }, admin);
   }
 

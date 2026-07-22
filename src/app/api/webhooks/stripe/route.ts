@@ -108,6 +108,7 @@ export async function POST(request: Request) {
     event.type.startsWith("checkout.session.") ||
     event.type.startsWith("payment_intent.") ||
     event.type === "charge.refunded" ||
+    event.type === "refund.failed" ||
     event.type.startsWith("charge.dispute.");
   if (connectedAccountId && event.livemode && isInvoicePaymentEvent) {
     console.error(
@@ -260,6 +261,7 @@ export async function POST(request: Request) {
       case "payment_intent.payment_failed":
       case "payment_intent.canceled":
       case "charge.refunded":
+      case "refund.failed":
       case "charge.dispute.created":
       case "charge.dispute.updated":
       case "charge.dispute.closed": {
