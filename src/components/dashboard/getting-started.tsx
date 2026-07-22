@@ -74,6 +74,7 @@ export function GettingStartedChecklist({
   return (
     <DashboardCard
       fillHeight={false}
+      constrainHeight={false}
       className="border-blue-200/70 bg-gradient-to-br from-blue-50/80 via-white to-white"
     >
       <DashboardCardHeader className="bg-inherit">
@@ -89,7 +90,7 @@ export function GettingStartedChecklist({
         </p>
       </DashboardCardHeader>
 
-      <DashboardCardBody className="p-0 sm:p-0">
+      <DashboardCardBody scrollable={false} className="p-0 sm:p-0">
         <ul className="divide-y divide-zinc-100">
           {steps.map((step) => {
             const Icon = step.icon;

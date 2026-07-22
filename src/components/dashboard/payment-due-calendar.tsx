@@ -9,6 +9,7 @@ import {
   DashboardCard,
   DashboardCardBody,
   DashboardCardHeader,
+  ScrollPane,
 } from "@/components/dashboard/dashboard-card";
 import type { InvoiceWithProject } from "@/lib/dashboard-data";
 import { formatMoney } from "@/lib/format";
@@ -218,20 +219,30 @@ export function PaymentDueCalendar({
       </DashboardCardHeader>
 
       <DashboardCardBody
+        scrollable={false}
         className={cn(
-          "grid gap-4",
-          compact ? "" : "lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]",
+          "flex min-h-0 flex-1 flex-col gap-4",
+          !compact && "lg:flex-row lg:items-stretch",
         )}
       >
-        <div>
+        <div
+          className={cn(
+            "flex min-h-0 flex-1 flex-col justify-center",
+            !compact && "lg:min-w-0 lg:flex-[1.1]",
+          )}
+        >
           <div className="mb-2 grid grid-cols-7 gap-1 text-center text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
               <span key={day}>{day}</span>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-1" role="grid" aria-label="Payment due calendar">
+          <div
+            className="grid flex-1 grid-cols-7 grid-rows-6 gap-1"
+            role="grid"
+            aria-label="Payment due calendar"
+          >
             {Array.from({ length: firstWeekday }).map((_, index) => (
-              <div key={`pad-${index}`} className="aspect-square" aria-hidden />
+              <div key={`pad-${index}`} className="min-h-0" aria-hidden />
             ))}
             {Array.from({ length: daysInMonth }).map((_, index) => {
               const day = index + 1;
@@ -244,7 +255,7 @@ export function PaymentDueCalendar({
               const isSelected = selectedDay === key;
 
               const cellClass = cn(
-                "relative flex aspect-square flex-col items-center justify-center rounded-lg border text-xs transition-colors",
+                "relative flex min-h-0 flex-col items-center justify-center rounded-lg border text-xs transition-colors",
                 hasDue
                   ? isPast
                     ? "border-amber-200 bg-amber-50 text-amber-950"
@@ -303,78 +314,84 @@ export function PaymentDueCalendar({
               );
             })}
           </div>
-          {items.length > 0 ? (
-            <p className="mt-2 text-[11px] text-zinc-400">
+          {items.length > 0 && !compact ? (
+            <p className="mt-2 shrink-0 text-[11px] text-zinc-400">
               Click a highlighted day to see due invoices.
+            </p>
+          ) : items.length > 0 && compact ? (
+            <p className="mt-2 shrink-0 text-[11px] text-zinc-400">
+              Highlighted days have unpaid invoices due.
             </p>
           ) : null}
         </div>
 
-        <div className="min-w-0">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
-              {listHeading}
-            </p>
-            {selectedDay ? (
-              <button
-                type="button"
-                onClick={() => setSelectedDay(null)}
-                className="text-[11px] font-medium text-blue-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
-              >
-                Show all
-              </button>
-            ) : null}
-          </div>
-          {items.length === 0 ? (
-            <EmptyState
-              icon={CalendarDays}
-              className="border-0 bg-transparent py-4"
-              title="Nothing due"
-              description="Unpaid invoices with due dates will appear on this calendar."
-            />
-          ) : listItems.length === 0 && !selectedDay && overdue.length === 0 ? (
-            <p className="text-sm text-zinc-500">No payments due this month.</p>
-          ) : listItems.length === 0 && selectedDay ? (
-            <p className="text-sm text-zinc-500">No payments due on this day.</p>
-          ) : (
-            <ul className="grid gap-2">
-              {listItems.map((item) => {
-                const date = parseDueDate(item.dueDate);
-                const isPast = Boolean(date && date < today);
-                return (
-                  <li key={item.id}>
-                    <Link
-                      href={item.href}
-                      className={cn(
-                        "group flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 transition-all hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
-                        isPast
-                          ? "border-amber-200/80 bg-amber-50/50 hover:border-amber-300"
-                          : "border-zinc-200/80 bg-zinc-50/40 hover:border-blue-200 hover:bg-white",
-                      )}
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-zinc-900">
-                          {formatMoney(item.amount, item.currency)}
-                          <span className="font-medium text-zinc-500">
-                            {" · "}
-                            {item.label}
-                          </span>
-                        </p>
-                        <p className="truncate text-[11px] text-zinc-500">
-                          {item.projectTitle} · {formatShortDate(item.dueDate)}
-                          {isPast ? " · overdue" : ""}
-                        </p>
-                      </div>
-                      <span className="shrink-0 text-[11px] font-medium text-blue-700 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                        Open
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
+        {!compact ? (
+          <ScrollPane className="flex min-h-0 min-w-0 flex-1 flex-col lg:max-h-full">
+            <div className="mb-2 flex shrink-0 items-center justify-between gap-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
+                {listHeading}
+              </p>
+              {selectedDay ? (
+                <button
+                  type="button"
+                  onClick={() => setSelectedDay(null)}
+                  className="text-[11px] font-medium text-blue-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
+                >
+                  Show all
+                </button>
+              ) : null}
+            </div>
+            {items.length === 0 ? (
+              <EmptyState
+                icon={CalendarDays}
+                className="border-0 bg-transparent py-4"
+                title="Nothing due"
+                description="Unpaid invoices with due dates will appear on this calendar."
+              />
+            ) : listItems.length === 0 && !selectedDay && overdue.length === 0 ? (
+              <p className="text-sm text-zinc-500">No payments due this month.</p>
+            ) : listItems.length === 0 && selectedDay ? (
+              <p className="text-sm text-zinc-500">No payments due on this day.</p>
+            ) : (
+              <ul className="grid gap-2">
+                {listItems.map((item) => {
+                  const date = parseDueDate(item.dueDate);
+                  const isPast = Boolean(date && date < today);
+                  return (
+                    <li key={item.id}>
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          "group flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 transition-all hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
+                          isPast
+                            ? "border-amber-200/80 bg-amber-50/50 hover:border-amber-300"
+                            : "border-zinc-200/80 bg-zinc-50/40 hover:border-blue-200 hover:bg-white",
+                        )}
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-zinc-900">
+                            {formatMoney(item.amount, item.currency)}
+                            <span className="font-medium text-zinc-500">
+                              {" · "}
+                              {item.label}
+                            </span>
+                          </p>
+                          <p className="truncate text-[11px] text-zinc-500">
+                            {item.projectTitle} · {formatShortDate(item.dueDate)}
+                            {isPast ? " · overdue" : ""}
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-[11px] font-medium text-blue-700 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                          Open
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </ScrollPane>
+        ) : null}
       </DashboardCardBody>
     </DashboardCard>
   );
