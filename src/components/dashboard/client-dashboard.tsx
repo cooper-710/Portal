@@ -165,7 +165,7 @@ export function ClientDashboard({
         <EmptyState
           icon={FolderKanban}
           title="No projects yet"
-          description="When a freelancer invites you to a project, it will show up here so you can share files and pay invoices."
+          description="When you are invited to a project, it will show up here so you can share files and pay invoices."
         />
         <section className="max-w-md rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-sm">
           <h2 className="text-sm font-semibold text-zinc-900">Your profile</h2>
@@ -294,7 +294,7 @@ export function ClientDashboard({
                 icon={Receipt}
                 className="border-0 bg-transparent py-6"
                 title="No invoices due"
-                description="New invoices from your freelancer will show up here with a Pay button."
+                description="New invoices from your workspace will show up here with a Pay button."
               />
             ) : (
               <ul className="grid gap-2.5">
@@ -364,7 +364,7 @@ export function ClientDashboard({
                           {formatMoney(invoice.amount, invoice.currency)}
                         </p>
                         <p className="truncate text-[11px] text-zinc-500">
-                          {invoice.project?.title ?? "—"}
+                          {invoice.project?.title ?? "-"}
                         </p>
                       </div>
                       <InvoiceStatusBadge status="paid" />
@@ -429,7 +429,7 @@ export function ClientDashboard({
                 description={
                   completedProjects.length > 0
                     ? "Your completed work is in the section below."
-                    : "When a freelancer invites you, projects will show up here."
+                    : "When you are invited, projects will show up here."
                 }
               />
             ) : (
@@ -475,7 +475,7 @@ export function ClientDashboard({
                               ) : null}
                             </div>
                             <p className="mt-0.5 truncate text-xs text-zinc-500">
-                              {displayName(item.freelancer, "Freelancer")}
+                              {displayName(item.freelancer, "Workspace")}
                             </p>
                           </div>
                           <ProjectStatusBadge status={item.status} />
@@ -556,7 +556,7 @@ export function ClientDashboard({
                                 ) : null}
                               </div>
                               <p className="mt-0.5 truncate text-xs text-zinc-400">
-                                {displayName(item.freelancer, "Freelancer")}
+                                {displayName(item.freelancer, "Workspace")}
                               </p>
                             </div>
                             <ProjectStatusBadge status={item.status} />

@@ -71,7 +71,7 @@ export function ProjectStepForm() {
           disabled={pending}
         />
         <p className="text-xs text-zinc-500">
-          Client email can wait — you’ll invite them on the next step.
+          Client email can wait. You’ll invite them on the next step.
         </p>
       </div>
 

@@ -12,7 +12,7 @@ import { resolvePostAuthDestination } from "@/utils/supabase/post-auth-rules";
 import { createClient } from "@/utils/supabase/server";
 
 export type ResolvePostAuthOptions = {
-  /** From login `?role=client` / OAuth redirect — applied on first Google signup. */
+  /** From login `?role=client` / OAuth redirect, applied on first Google signup. */
   preferredRole?: PreferredSignupRole | null;
 };
 
@@ -55,7 +55,7 @@ export async function resolvePostAuthPath(
     .eq("id", user.id)
     .maybeSingle();
 
-  // Existing branding without the flag — stamp complete so we don't re-check forever.
+  // Existing branding without the flag, stamp complete so we don't re-check forever.
   if (
     profile?.role === "freelancer" &&
     !profile.portal_setup_completed_at &&

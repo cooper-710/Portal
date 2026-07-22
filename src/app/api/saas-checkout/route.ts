@@ -12,7 +12,7 @@ import { validateCriticalEnv } from "@/utils/env";
 /**
  * Create a Stripe Checkout Session for Portal Pro (14-day trial, then monthly).
  *
- * Stripe Trial Offers (`to_…`) are not supported on Checkout — only on the
+ * Stripe Trial Offers (`to_…`) are not supported on Checkout, only on the
  * Subscriptions API. We align duration via subscription_data.trial_period_days
  * and record STRIPE_TRIAL_OFFER_ID in metadata when configured.
  */
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
 
   if (!profile || profile.role !== "freelancer") {
     return NextResponse.json(
-      { error: "Only freelancers can subscribe to Portal." },
+      { error: "Only workspace owners can subscribe to Portal." },
       { status: 403 },
     );
   }
@@ -137,7 +137,7 @@ export async function POST(request: Request) {
           : {}),
       },
       subscription_data: {
-        // Legacy free trial — required for Checkout (Trial Offer API unsupported here).
+        // Legacy free trial, required for Checkout (Trial Offer API unsupported here).
         trial_period_days: PORTAL_PRO_TRIAL_DAYS,
         metadata: {
           freelancer_id: user.id,

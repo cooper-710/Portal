@@ -61,7 +61,7 @@ export function TrialStepForm() {
       try {
         await fetch("/api/saas-sync", { method: "POST" });
       } catch {
-        // Non-blocking — advance anyway if they say they've started.
+        // Non-blocking, advance anyway if they say they've started.
       }
       const result = await advanceOnboardingStep("trial");
       if (result.error) {

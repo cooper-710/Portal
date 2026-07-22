@@ -1,17 +1,22 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { DM_Sans, Geist_Mono, Syne } from "next/font/google";
 
 import { isProductionRuntime, validateCriticalEnv } from "@/utils/env";
 
 import "./globals.css";
 
-const geistSans = Geist({
+const dmSans = DM_Sans({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+const syne = Syne({
+  variable: "--font-display",
   subsets: ["latin"],
 });
 
@@ -22,15 +27,15 @@ const appUrl =
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "Portal — Freelance Client Workspace",
+    default: "Portal: Client Workspace",
     template: "%s · Portal",
   },
   description:
     "Invite clients, share deliverables, and collect Stripe payments. Portal Pro: 14-day free trial, then $25/mo.",
   openGraph: {
-    title: "Portal — Freelance Client Workspace",
+    title: "Portal: Client Workspace",
     description:
-      "The client workspace freelancers actually use. 14-day free trial, then $25/mo.",
+      "The client workspace your business actually runs on. 14-day free trial, then $25/mo.",
     url: appUrl,
     siteName: "Portal",
     type: "website",
@@ -38,9 +43,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Portal — Freelance Client Workspace",
+    title: "Portal: Client Workspace",
     description:
-      "Invite clients, share deliverables, and collect payment — one private portal per project.",
+      "Invite clients, share deliverables, and collect payment in one private portal per project.",
   },
   robots: {
     index: true,
@@ -76,7 +81,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+        className={`${dmSans.variable} ${geistMono.variable} ${syne.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <ProductionEnvBanner />

@@ -13,7 +13,7 @@ Legend: **DONE in repo** = no action for this item. **USER-MUST-DO** = requires 
 - [x] Invoice + subscription sync idempotency
 - [x] Legal pages + public footer (Privacy/Terms)
 - [x] Friendly billing/checkout errors
-- [x] Freelancer getting-started checklist
+- [x] Workspace getting-started checklist
 - [x] Customize portal onboarding (`portal_setup_completed_at`) with Skip
 - [x] Retainer/recurring labeled as scheduled invoices
 - [x] Dashboard loading + error boundaries
@@ -23,7 +23,7 @@ Legend: **DONE in repo** = no action for this item. **USER-MUST-DO** = requires 
 
 ---
 
-## USER-MUST-DO — Pre-deploy
+## USER-MUST-DO: Pre-deploy
 
 - [ ] Domain purchased and DNS ready for Vercel
 - [ ] Production Supabase project created; `schema.sql` applied (includes `portal_setup_completed_at` + `stripe_webhook_events`)
@@ -38,13 +38,13 @@ Legend: **DONE in repo** = no action for this item. **USER-MUST-DO** = requires 
 - [ ] `NEXT_PUBLIC_APP_URL` = `https://YOUR_DOMAIN` (no trailing slash)
 - [ ] Rotated `SUPABASE_SERVICE_ROLE_KEY` if it was ever exposed
 
-## USER-MUST-DO — Deploy day
+## USER-MUST-DO: Deploy day
 
 - [ ] Vercel deploy succeeded
 - [ ] `GET https://YOUR_DOMAIN/api/health` returns `"ok": true`
 - [ ] Stripe live webhook → `https://YOUR_DOMAIN/api/webhooks/stripe` (events listed in PRODUCTION_PLAN)
 - [ ] Webhook signing secret matches Vercel `STRIPE_WEBHOOK_SECRET`
-- [ ] Freelancer signup → email confirm → set password → start trial → customize or skip → dashboard
+- [ ] Workspace signup → email confirm → set password → start trial → customize or skip → dashboard
 - [ ] Billing shows trialing; workspace unlocks
 - [ ] Connect Stripe Express completes (`charges_enabled`)
 - [ ] Create project, invite client, upload deliverable

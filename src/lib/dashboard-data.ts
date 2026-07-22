@@ -458,7 +458,7 @@ export async function loadClientWorkspace(
   };
 }
 
-/** Brand for client chrome (nav/layout) — primary freelancer across projects. */
+/** Brand for client chrome (nav/layout), primary freelancer across projects. */
 export async function loadClientBrand(profileId: string) {
   const supabase = await createClient();
   const { data: projects } = await supabase

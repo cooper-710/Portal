@@ -34,7 +34,7 @@ export async function POST() {
 
   if (!profile || profile.role !== "freelancer") {
     return NextResponse.json(
-      { error: "Only freelancers can manage platform billing." },
+      { error: "Only workspace owners can manage platform billing." },
       { status: 403 },
     );
   }

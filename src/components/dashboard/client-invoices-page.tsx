@@ -141,7 +141,7 @@ export function ClientInvoicesPage({
                 icon={Receipt}
                 className="border-0 bg-transparent py-6"
                 title="No invoices due"
-                description="New invoices from your freelancer will show up here with a Pay button."
+                description="New invoices from your workspace will show up here with a Pay button."
               />
             ) : (
               <ul className="grid gap-2.5">
@@ -202,7 +202,7 @@ export function ClientInvoicesPage({
                         {formatMoney(invoice.amount, invoice.currency)}
                       </p>
                       <p className="truncate text-xs text-zinc-500">
-                        {invoice.project?.title ?? "—"} ·{" "}
+                        {invoice.project?.title ?? "-"} ·{" "}
                         {new Date(invoice.created_at).toLocaleDateString()}
                       </p>
                     </div>

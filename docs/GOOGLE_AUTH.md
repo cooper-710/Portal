@@ -16,8 +16,8 @@ Email/password remains available as a secondary fallback on the login page.
 4. Application type: **Web application**.
 5. **Authorized JavaScript origins**
    - `http://localhost:3001`
-   - Your Vercel URL (e.g. `https://your-app.vercel.app`) — no path
-6. **Authorized redirect URIs** — use the **Supabase** callback (not your app URL):
+   - Your Vercel URL (e.g. `https://your-app.vercel.app`), no path
+6. **Authorized redirect URIs**, use the **Supabase** callback (not your app URL):
 
    ```text
    https://<PROJECT_REF>.supabase.co/auth/v1/callback
@@ -52,7 +52,7 @@ App-side `syncOAuthProfile` (called from `resolvePostAuthPath`) also sets `passw
 1. Login → **Continue with Google** → `signInWithOAuth({ provider: 'google', options: { redirectTo: origin/auth/callback?next=...&role=..., queryParams: { access_type: 'offline', prompt: 'consent' } } })`.
 2. Google → Supabase → browser returns to `/auth/callback?code=...`.
 3. Callback exchanges the PKCE code, then `resolvePostAuthPath` runs (trial / billing / portal customize / dashboard).
-4. Role: default freelancer; `?role=client` on the login page is forwarded on the OAuth `redirectTo` so new client invite signups stay clients.
+4. Role: default workspace owner (`freelancer`); `?role=client` on the login page is forwarded on the OAuth `redirectTo` so new client invite signups stay clients.
 
 ### Password onboarding skip
 

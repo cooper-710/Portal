@@ -59,7 +59,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   let workingProfile = profile;
 
   // If Checkout return already cleared session_id (or webhook never fired) but
-  // Stripe customer exists while DB still says "none" — reconcile once from Stripe.
+  // Stripe customer exists while DB still says "none", reconcile once from Stripe.
   const shouldReconcile =
     workingProfile.role === "freelancer" &&
     Boolean(workingProfile.stripe_customer_id) &&

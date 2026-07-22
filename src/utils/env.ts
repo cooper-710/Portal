@@ -1,5 +1,5 @@
 /**
- * Production env validation — fail fast when critical secrets are missing.
+ * Production env validation, fail fast when critical secrets are missing.
  * Safe to import from API routes and server layouts (no secrets returned).
  */
 
@@ -60,7 +60,7 @@ export function assertCriticalEnv() {
   }
 }
 
-/** Presence checks for /api/health — never returns secret values. */
+/** Presence checks for /api/health, never returns secret values. */
 export function envPresenceReport() {
   const checks: Record<string, boolean> = {};
   for (const key of CRITICAL_ENV_KEYS) {

@@ -63,7 +63,7 @@ export function NewProjectDialog({ onCreated }: NewProjectDialogProps) {
             <DialogTitle>New project</DialogTitle>
             <DialogDescription>
               Create a project and optionally invite a client by email. They do
-              not need an account yet — we email them a portal link and link the
+              not need an account yet. We email them a portal link and link the
               project when they join.
             </DialogDescription>
           </DialogHeader>

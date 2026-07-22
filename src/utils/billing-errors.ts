@@ -28,12 +28,15 @@ export function friendlyBillingError(
     return "You already have an active plan. Open Manage billing to make changes.";
   }
 
-  if (lower.includes("only freelancers")) {
-    return "Only freelancer accounts can subscribe to Portal Pro.";
+  if (
+    lower.includes("only freelancers") ||
+    lower.includes("only workspace owners")
+  ) {
+    return "Only workspace owner accounts can subscribe to Portal Pro.";
   }
 
   if (lower.includes("connect") && lower.includes("stripe")) {
-    return "This freelancer has not finished connecting payouts yet. Ask them to complete Stripe Connect.";
+    return "This workspace has not finished connecting payouts yet. Ask the owner to complete Stripe Connect.";
   }
 
   if (lower.includes("already paid")) {
@@ -55,6 +58,6 @@ export function friendlyBillingError(
 export function friendlyCheckoutError(message: string | null | undefined) {
   return friendlyBillingError(
     message,
-    "Unable to start checkout. Please try again, or contact the freelancer if this continues.",
+    "Unable to start checkout. Please try again, or contact the workspace owner if this continues.",
   );
 }

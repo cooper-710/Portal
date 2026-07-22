@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — Portal",
-  description: "Terms governing use of the Portal freelance client workspace.",
+  title: "Terms of Service · Portal",
+  description: "Terms governing use of the Portal client workspace.",
 };
 
 export default function TermsPage() {
@@ -31,7 +31,7 @@ export default function TermsPage() {
           <section className="space-y-3">
             <h2 className="text-base font-semibold text-zinc-900">The service</h2>
             <p>
-              Portal is a software platform for freelancers to invite clients,
+              Portal is a software platform for businesses and studios to invite clients,
               share project files, track status, and collect invoice payments.
               Features may change as we improve the product. We may suspend
               access for abuse, non-payment, or legal risk.
@@ -41,7 +41,7 @@ export default function TermsPage() {
           <section className="space-y-3">
             <h2 className="text-base font-semibold text-zinc-900">Accounts & roles</h2>
             <p>
-              Freelancers operate workspaces and may invite clients. You are
+              Workspace owners operate workspaces and may invite clients. You are
               responsible for activity under your credentials and for content you
               upload or send. Do not share passwords. Clients may only access
               projects they are invited to.
@@ -62,7 +62,7 @@ export default function TermsPage() {
                 of the invoice amount) retained by Portal via Stripe Connect.
               </li>
               <li>
-                Payments are processed by Stripe. Freelancer payouts are subject
+                Payments are processed by Stripe. Your payouts are subject
                 to Stripe Connect terms and payout schedules.
               </li>
               <li>
@@ -97,8 +97,8 @@ export default function TermsPage() {
             <h2 className="text-base font-semibold text-zinc-900">Disclaimers</h2>
             <p>
               Portal is provided “as is” without warranties of uninterrupted or
-              error-free operation. We are not a party to freelance contracts
-              between freelancers and their clients, and we do not guarantee
+              error-free operation. We are not a party to contracts
+              between you and your clients, and we do not guarantee
               payment outcomes beyond facilitating Stripe Checkout and Connect.
             </p>
           </section>

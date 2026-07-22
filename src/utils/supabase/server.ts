@@ -28,7 +28,7 @@ export async function createClient() {
               void headers;
             }
           } catch {
-            // Called from a Server Component — middleware will refresh the session.
+            // Called from a Server Component, middleware will refresh the session.
           }
         },
       },

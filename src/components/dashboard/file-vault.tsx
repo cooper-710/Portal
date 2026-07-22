@@ -298,7 +298,7 @@ export function FileVault({
             Drag and drop a file here
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            PDF, images, Office docs, ZIP — up to 50 MB
+            PDF, images, Office docs, ZIP (up to 50 MB)
           </p>
 
           <div className="mt-4 flex items-center gap-3">

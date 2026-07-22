@@ -306,7 +306,7 @@ export function FreelancerBillingPage({ profile, notice }: BillingPageProps) {
                 <Check className="mt-0.5 size-4 shrink-0 text-emerald-600" />
                 <span>
                   <span className="font-medium text-zinc-900">{item.title}</span>
-                  {" — "}
+                  {" · "}
                   {item.body}
                 </span>
               </li>

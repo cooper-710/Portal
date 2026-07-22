@@ -1,6 +1,6 @@
-# Portal — Production Plan
+# Portal: Production Plan
 
-Turn this freelance client portal into a live product that charges freelancers (SaaS) and takes a cut of client invoice payments (Connect application fees).
+Turn this client workspace into a live product that charges workspace owners (SaaS) and takes a cut of client invoice payments (Connect application fees).
 
 **Pricing (locked):** Portal Pro **$25/mo** after a **14-day free trial**, plus an ~**1% platform fee** on client invoice payments (configurable via `STRIPE_PLATFORM_FEE_PERCENT`).
 
@@ -9,21 +9,21 @@ Turn this freelance client portal into a live product that charges freelancers (
 ## 1. Product positioning
 
 ### What you sell
-**Portal** is a branded client workspace for digital freelancers: invite clients, share deliverables in a private vault, track project phases, and collect invoice payments via Stripe Connect.
+**Portal** is a branded client workspace for pros, sellers, and studios: invite clients, share deliverables in a private vault, track project phases, and collect invoice payments via Stripe Connect.
 
 ### Who buys
-Solo freelancers and small studios (design, web, video, marketing) who currently juggle email + Drive + Stripe invoices and want one client-facing place.
+Solo sellers and small studios (design, web, video, marketing) who currently juggle email + Drive + Stripe invoices and want one client-facing place.
 
 ### How you make money
 | Stream | Mechanism | Amount |
 | --- | --- | --- |
-| **SaaS** | Freelancer subscribes via Stripe Checkout (`STRIPE_SAAS_PRICE_ID`) | $25/mo after 14-day trial |
+| **SaaS** | Workspace owner subscribes via Stripe Checkout (`STRIPE_SAAS_PRICE_ID`) | $25/mo after 14-day trial |
 | **Application fee** | Destination charges on client invoice Checkout; platform keeps `application_fee_amount` | Default ~1% of invoice (`STRIPE_PLATFORM_FEE_PERCENT`) |
 
-Freelancers receive net invoice funds on their connected Express account. Platform SaaS billing is separate (platform Stripe Customer + Subscription on the freelancer).
+Workspace owners receive net invoice funds on their connected Express account. Platform SaaS billing is separate (platform Stripe Customer + Subscription on the workspace owner).
 
 ### What “done” means for v1 launch
-A freelancer can sign up → set password → start trial → customize portal (or skip) → connect Stripe → invite a client → upload deliverables → send an invoice → client pays → webhook marks paid → platform keeps SaaS + fee. Legal pages exist. Deploy is reproducible on Vercel + Supabase + Stripe live mode.
+A workspace owner can sign up → set password → start trial → customize portal (or skip) → connect Stripe → invite a client → upload deliverables → send an invoice → client pays → webhook marks paid → platform keeps SaaS + fee. Legal pages exist. Deploy is reproducible on Vercel + Supabase + Stripe live mode.
 
 ---
 
@@ -40,7 +40,7 @@ A freelancer can sign up → set password → start trial → customize portal (
 - **Stripe Connect:** Express onboard (`/api/stripe/connect`), return/refresh routes, `account.updated` webhook sync.
 - **Portal Pro gate:** Freelancers need `subscription_status` in `active`/`trialing` (`freelancerHasWorkspaceAccess`); Checkout at `/api/saas-checkout` with `trial_period_days`.
 - **Billing portal:** `/api/saas-portal` for manage/cancel.
-- **Webhooks:** `/api/webhooks/stripe` — signature verification, service-role required, event-id claim table + content-level invoice/subscription idempotency.
+- **Webhooks:** `/api/webhooks/stripe`, signature verification, service-role required, event-id claim table + content-level invoice/subscription idempotency.
 - **Return-path sync:** Checkout success URLs + `/api/saas-sync` reconcile if webhook lags.
 - **Branding:** Business name, logo, colors on client-facing views; one-time customize step.
 - **Schema:** Full RLS in `schema.sql` (tables + storage policies).
@@ -56,11 +56,11 @@ A freelancer can sign up → set password → start trial → customize portal (
 
 ## 3. Production readiness checklist
 
-### P0 — Blockers before charging real money
+### P0: Blockers before charging real money
 | Item | Status | Notes |
 | --- | --- | --- |
 | Deploy config (Vercel + build scripts) | **DONE** | `vercel.json`, `npm run build` / `start`, port **3001** local |
-| Env validation for critical secrets | **DONE** | `src/utils/env.ts` — fail-fast in production |
+| Env validation for critical secrets | **DONE** | `src/utils/env.ts`, fail-fast in production |
 | `GET /api/health` | **DONE** | Liveness + config presence (no secrets) |
 | Webhook hardening (verify, log, idempotent) | **DONE** | Signature + service role; `stripe_webhook_events`; invoice alreadyPaid + subscription alreadySynced |
 | Security pass (no service role public, RLS uploads) | **DONE** | Service role server-only; storage INSERT freelancer-only |
@@ -75,7 +75,7 @@ A freelancer can sign up → set password → start trial → customize portal (
 | Rotate any leaked service role | **USER-MUST-DO** | If key was ever committed or shared |
 | Auth redirect URLs + leaked password protection | **USER-MUST-DO** | Supabase Dashboard |
 
-### P1 — Soon after launch
+### P1: Soon after launch
 - [ ] True Connect recurring / retainer subscriptions for clients (schema already has `payment_kind`; UI currently schedules invoices)
 - [ ] Stripe Dashboard alerts + dead-letter review for failed webhooks
 - [ ] Optional Sentry (`SENTRY_DSN`) or equivalent error tracking
@@ -84,7 +84,7 @@ A freelancer can sign up → set password → start trial → customize portal (
 - [ ] Customer support inbox + refund/cancel playbook
 - [ ] Richer OG image asset (basic OG/Twitter metadata done)
 
-### P2 — Growth / hardening
+### P2: Growth / hardening
 - [ ] Multi-seat studios / team roles
 - [ ] Invoice PDF export, tax fields, multi-currency UX
 - [ ] Usage analytics (activation → paid conversion)
@@ -99,18 +99,18 @@ See also: [scripts/production-checklist.md](./scripts/production-checklist.md).
 
 Do these in order on launch day.
 
-1. **Domain** — Point DNS (A/CNAME) at Vercel for `app.yourdomain.com` (or apex).
-2. **Supabase production project** — Apply `schema.sql` if not already. Confirm RLS enabled on all `public` tables + storage policies.
-3. **Supabase Auth URLs** — Site URL = `https://YOUR_DOMAIN`. Redirect URLs include:
+1. **Domain:** Point DNS (A/CNAME) at Vercel for `app.yourdomain.com` (or apex).
+2. **Supabase production project:** Apply `schema.sql` if not already. Confirm RLS enabled on all `public` tables + storage policies.
+3. **Supabase Auth URLs:** Site URL = `https://YOUR_DOMAIN`. Redirect URLs include:
    - `https://YOUR_DOMAIN/auth/callback`
    - `https://YOUR_DOMAIN/auth/confirm`
    - `https://YOUR_DOMAIN/**` (optional catch-all for next paths)
-4. **Vercel project** — Import repo; Framework = Next.js; set all env vars from `.env.example` with **live** values. Set `NEXT_PUBLIC_APP_URL=https://YOUR_DOMAIN`.
-5. **Stripe live mode** — Switch Dashboard to Live. Create Portal Pro Product/Price ($25/mo); copy Price ID → `STRIPE_SAAS_PRICE_ID`. Enable Connect (Express). Enable Customer Portal.
-6. **Stripe webhook (live)** — Endpoint: `https://YOUR_DOMAIN/api/webhooks/stripe`. Events: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `account.updated`. Copy signing secret → `STRIPE_WEBHOOK_SECRET`.
-7. **Env keys** — `STRIPE_SECRET_KEY=sk_live_…`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_…`, `SUPABASE_SERVICE_ROLE_KEY` (server-only, never `NEXT_PUBLIC_`), anon URL/key, Resend if using invites.
-8. **Deploy & smoke** — Hit `https://YOUR_DOMAIN/api/health` → `ok: true`. Sign up test freelancer → password → trial → customize (or skip) → Connect → invoice → client pay.
-9. **Post-deploy** — Watch Stripe webhook delivery log and Vercel function logs for 24h.
+4. **Vercel project:** Import repo; Framework = Next.js; set all env vars from `.env.example` with **live** values. Set `NEXT_PUBLIC_APP_URL=https://YOUR_DOMAIN`.
+5. **Stripe live mode:** Switch Dashboard to Live. Create Portal Pro Product/Price ($25/mo); copy Price ID → `STRIPE_SAAS_PRICE_ID`. Enable Connect (Express). Enable Customer Portal.
+6. **Stripe webhook (live):** Endpoint: `https://YOUR_DOMAIN/api/webhooks/stripe`. Events: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `account.updated`. Copy signing secret → `STRIPE_WEBHOOK_SECRET`.
+7. **Env keys:** `STRIPE_SECRET_KEY=sk_live_…`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_…`, `SUPABASE_SERVICE_ROLE_KEY` (server-only, never `NEXT_PUBLIC_`), anon URL/key, Resend if using invites.
+8. **Deploy & smoke:** Hit `https://YOUR_DOMAIN/api/health` → `ok: true`. Sign up test workspace owner → password → trial → customize (or skip) → Connect → invoice → client pay.
+9. **Post-deploy:** Watch Stripe webhook delivery log and Vercel function logs for 24h.
 
 ---
 

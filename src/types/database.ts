@@ -1,11 +1,11 @@
-export type UserRole = "freelancer" | "client";
+export type UserRole = "freelancer" | "client"; // freelancer = workspace owner (keep id for authz)
 
 export type ProjectStatus =
   | "discovery"
   | "in_progress"
   | "review"
   | "completed"
-  /** @deprecated legacy — migrated to discovery / in_progress / review / completed */
+  /** @deprecated legacy, migrated to discovery / in_progress / review / completed */
   | "draft"
   | "active"
   | "in_review"
@@ -83,12 +83,12 @@ export const PAYMENT_KINDS: { value: PaymentKind; label: string; hint: string }[
     {
       value: "retainer",
       label: "Retainer (scheduled invoices)",
-      hint: "Creates a series of dated invoices — billed as scheduled invoices, not a Stripe subscription",
+      hint: "Creates a series of dated invoices, billed as scheduled invoices, not a Stripe subscription",
     },
     {
       value: "recurring",
       label: "Recurring (scheduled invoices)",
-      hint: "Creates a series of dated invoices — billed as scheduled invoices, not auto-charged",
+      hint: "Creates a series of dated invoices, billed as scheduled invoices, not auto-charged",
     },
   ];
 

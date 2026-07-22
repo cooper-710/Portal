@@ -24,7 +24,7 @@ export function isPlatformSubscriptionActive(
 }
 
 /**
- * Working-product access: freelancers need active paid OR trialing subscription.
+ * Working-product access: workspace owners (role freelancer) need active paid OR trialing subscription.
  * Clients are always allowed (no SaaS subscription required).
  */
 export function freelancerHasWorkspaceAccess(
@@ -36,7 +36,7 @@ export function freelancerHasWorkspaceAccess(
   return isPlatformSubscriptionActive(profile.subscription_status);
 }
 
-/** Same rule as workspace access — create/invite/upload require trial or paid. */
+/** Same rule as workspace access, create/invite/upload require trial or paid. */
 export function freelancerCanCreate(
   profile: Pick<Profile, "role" | "subscription_status">,
 ) {

@@ -181,7 +181,7 @@ export function ProjectInvoiceForm({ projectId }: ProjectInvoiceFormProps) {
           />
           <p className="rounded-lg border border-amber-200/80 bg-amber-50/70 px-3 py-2 text-xs text-amber-950">
             Billed as scheduled invoices (monthly due dates). Clients pay each
-            invoice separately — this is not an automatic Stripe subscription.
+            invoice separately. This is not an automatic Stripe subscription.
           </p>
         </div>
       ) : null}

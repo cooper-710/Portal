@@ -1,6 +1,6 @@
-# Portal — Freelance Client Workspace
+# Portal: Client Workspace
 
-B2B client portal for digital freelancers. Invite clients, share files in a private vault, collect payments with Stripe Connect, and subscribe to **Portal Pro** ($25/mo after a 14-day trial, plus ~1% on invoice payments).
+B2B client workspace for pros, sellers, and studios. Invite clients, share files in a private vault, collect payments with Stripe Connect, and subscribe to **Portal Pro** ($25/mo after a 14-day trial, plus ~1% on invoice payments).
 
 See **[PRODUCTION_PLAN.md](./PRODUCTION_PLAN.md)** for positioning, money path, and launch checklist. Operator checklist: **[scripts/production-checklist.md](./scripts/production-checklist.md)**.
 
@@ -45,7 +45,7 @@ Open [http://localhost:3001](http://localhost:3001).
 | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | Auth + data |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Auth + data |
-| `SUPABASE_SERVICE_ROLE_KEY` | Webhooks, invites (server-only — never `NEXT_PUBLIC_`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Webhooks, invites (server-only, never `NEXT_PUBLIC_`) |
 | `STRIPE_SECRET_KEY` | Checkout / Connect / SaaS |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Client Stripe.js (optional for redirect Checkout) |
 | `STRIPE_WEBHOOK_SECRET` | Verify webhook signatures |
@@ -56,7 +56,7 @@ Open [http://localhost:3001](http://localhost:3001).
 | `RESEND_API_KEY` | Project invite emails (recommended) |
 | `RESEND_FROM_EMAIL` | Invite From address (needs verified domain for real clients) |
 
-**Auth email / rate limits:** see **[docs/AUTH_EMAIL.md](./docs/AUTH_EMAIL.md)** — disable Confirm email to unblock signup without a domain; later wire Resend SMTP for branded Auth mail.
+**Auth email / rate limits:** see **[docs/AUTH_EMAIL.md](./docs/AUTH_EMAIL.md)**. Disable Confirm email to unblock signup without a domain; later wire Resend SMTP for branded Auth mail.
 
 Production notes are commented in `.env.example` (live keys, webhook endpoint URL, `NEXT_PUBLIC_APP_URL` = your domain).
 
@@ -74,27 +74,27 @@ Health check: [http://localhost:3001/api/health](http://localhost:3001/api/healt
 
 ## How to deploy (production)
 
-1. **Vercel** — Import this repo. Framework: Next.js. `vercel.json` sets the region; build uses `npm run build`, start via Next defaults on Vercel.
-2. **Env** — Set every required var from `.env.example` in Vercel **Production**:
+1. **Vercel:** Import this repo. Framework: Next.js. `vercel.json` sets the region; build uses `npm run build`, start via Next defaults on Vercel.
+2. **Env:** Set every required var from `.env.example` in Vercel **Production**:
    - `NEXT_PUBLIC_APP_URL=https://YOUR_DOMAIN` (no trailing slash)
    - Live Stripe keys (`sk_live_…`, `pk_live_…`)
    - Live `STRIPE_SAAS_PRICE_ID` ($25/mo Price)
    - Production Supabase URL, anon key, **service role** (server-only)
-3. **Supabase Auth** — Site URL = `https://YOUR_DOMAIN`. Redirect URLs must include:
+3. **Supabase Auth:** Site URL = `https://YOUR_DOMAIN`. Redirect URLs must include:
    - `https://YOUR_DOMAIN/auth/callback`
    - `https://YOUR_DOMAIN/auth/confirm`
-4. **Stripe Live webhook** — Endpoint: `https://YOUR_DOMAIN/api/webhooks/stripe`  
+4. **Stripe Live webhook:** Endpoint: `https://YOUR_DOMAIN/api/webhooks/stripe`  
    Events: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `account.updated`.  
    Paste the signing secret into `STRIPE_WEBHOOK_SECRET`.
-5. **Connect + Customer Portal** — Enable Express Connect and the Customer Portal in Stripe Live.
-6. **Verify** — `GET https://YOUR_DOMAIN/api/health` should return `"ok": true`. Smoke-test signup → trial → Connect → invoice pay.
+5. **Connect + Customer Portal:** Enable Express Connect and the Customer Portal in Stripe Live.
+6. **Verify:** `GET https://YOUR_DOMAIN/api/health` should return `"ok": true`. Smoke-test signup → trial → Connect → invoice pay.
 
 Do **not** commit `.env.local` or live secrets. Rotate `SUPABASE_SERVICE_ROLE_KEY` if it was ever exposed.
 
 ## Product roles
 
-- **Freelancer** — Portal Pro trial/subscription; create projects; upload files; create invoices; Connect Stripe
-- **Client** — view phase, download deliverables, pay invoices (no SaaS subscription)
+- **Workspace owner** (internal role id `freelancer`): Portal Pro trial/subscription; create projects; upload files; create invoices; Connect Stripe
+- **Client:** view phase, download deliverables, pay invoices (no SaaS subscription)
 
 Role is stored in `public.users` (not trusted from JWT `user_metadata` for authorization).
 
@@ -127,8 +127,8 @@ Email scanners can consume one-time confirmation links (`otp_expired`). Prefer p
 
 Auth routes:
 
-- `/auth/confirm` — button-gated confirmation (prefetch-safe)
-- `/auth/callback` — PKCE `code` exchange + `token_hash`/`type` `verifyOtp`
+- `/auth/confirm`, button-gated confirmation (prefetch-safe)
+- `/auth/callback`, PKCE `code` exchange + `token_hash`/`type` `verifyOtp`
 
 ## Scripts
 

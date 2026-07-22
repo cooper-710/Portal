@@ -71,7 +71,7 @@ export function InviteStepForm({ projects }: { projects: ProjectOption[] }) {
     return (
       <div className="space-y-3">
         <p className="rounded-lg border border-zinc-200 bg-white/70 px-3 py-2 text-sm text-zinc-600">
-          No project yet — skip this step and invite a client from the dashboard
+          No project yet. Skip this step and invite a client from the dashboard
           whenever you’re ready.
         </p>
         <Button

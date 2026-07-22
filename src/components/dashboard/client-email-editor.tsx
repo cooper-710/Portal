@@ -48,7 +48,7 @@ export function ClientEmailEditor({
         setMessage("Client email updated and invite sent.");
       } else if (result.emailChanged) {
         setMessage(
-          "Client email updated. Invite not sent — add RESEND_API_KEY to enable email.",
+          "Client email updated. Invite not sent (add RESEND_API_KEY to enable email).",
         );
       } else {
         setMessage("No changes to save.");

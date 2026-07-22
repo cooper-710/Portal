@@ -48,7 +48,7 @@ export function resolvePostAuthDestination({
   let destination = safeNext;
 
   if (role === "freelancer") {
-    // New freelancers go through the full-screen wizard — not locked dashboard FOMO.
+    // New freelancers go through the full-screen wizard, not locked dashboard FOMO.
     // Always resume the persisted step (ignore generic /onboarding/welcome next from auth).
     if (needsOnboarding) {
       destination = onboardingPath.startsWith("/onboarding")
@@ -69,7 +69,7 @@ export function resolvePostAuthDestination({
   return destination;
 }
 
-/** @deprecated Prefer freelancerNeedsOnboarding — kept for settings/branding checks. */
+/** @deprecated Prefer freelancerNeedsOnboarding, kept for settings/branding checks. */
 export function freelancerNeedsPortalSetup(profile: {
   role?: PostAuthRole;
   portal_setup_completed_at?: string | null;

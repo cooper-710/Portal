@@ -123,7 +123,7 @@ export function ClientProjectsPage({
               icon={FolderKanban}
               className="border-0 bg-transparent py-10"
               title="No projects yet"
-              description="When a freelancer invites you, projects will show up here."
+              description="When you are invited to a project, it will show up here."
             />
           ) : activeProjects.length === 0 ? (
             <EmptyState
@@ -151,7 +151,7 @@ export function ClientProjectsPage({
                         <ProjectStatusBadge status={item.status} />
                       </div>
                       <p className="mt-0.5 truncate text-xs text-zinc-500">
-                        With {displayName(item.freelancer, "your freelancer")}
+                        With {displayName(item.freelancer, "your contact")}
                       </p>
                     </div>
                     <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-[11px] font-medium text-zinc-500 transition-colors group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-700">
@@ -205,7 +205,7 @@ export function ClientProjectsPage({
                             <ProjectStatusBadge status={item.status} />
                           </div>
                           <p className="mt-0.5 truncate text-xs text-zinc-400">
-                            {displayName(item.freelancer, "Freelancer")}
+                            {displayName(item.freelancer, "Workspace")}
                           </p>
                         </div>
                         <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-zinc-400 transition-colors group-hover:text-blue-700">

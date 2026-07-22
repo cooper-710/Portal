@@ -79,7 +79,7 @@ export function SettingsPage({
         description={
           isFreelancer
             ? "Clients see this name on projects and invites."
-            : "Freelancers see this name on your projects."
+            : "Workspace owners see this name on your projects."
         }
       >
         <div className="max-w-sm">
@@ -184,7 +184,7 @@ export function SettingsPage({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-2">
             <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-blue-800">
-              {isFreelancer ? "Freelancer" : "Client"}
+              {isFreelancer ? "Workspace owner" : "Client"}
             </span>
             <p className="text-sm text-zinc-600">
               Signed in as{" "}
@@ -203,7 +203,7 @@ export function SettingsPage({
         <div className="space-y-1">
           <h2 className="text-sm font-semibold text-red-900">Delete account</h2>
           <p className="text-xs text-zinc-500">
-            Danger zone — permanent removal of this login and portal data tied
+            Danger zone: permanent removal of this login and portal data tied
             to you.
           </p>
         </div>

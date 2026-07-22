@@ -35,7 +35,7 @@ export default async function DashboardLayout({
     redirect(onboardingPath(step));
   }
 
-  // Already branded without the flag — stamp once so the checklist stays clean.
+  // Already branded without the flag, stamp once so the checklist stays clean.
   if (
     profile.role === "freelancer" &&
     !profile.portal_setup_completed_at &&

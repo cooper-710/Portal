@@ -15,11 +15,11 @@ import { createAdminClient } from "@/utils/supabase/admin";
 export const runtime = "nodejs";
 
 /**
- * Stripe webhook — client invoice payments, Connect accounts, and platform subscriptions.
+ * Stripe webhook, client invoice payments, Connect accounts, and platform subscriptions.
  *
  * Requires STRIPE_WEBHOOK_SECRET (raw-body signature verification) and
  * SUPABASE_SERVICE_ROLE_KEY (server-only writes that bypass RLS). Misconfiguration
- * returns 5xx so Stripe retries and operators notice — never pretend payments synced.
+ * returns 5xx so Stripe retries and operators notice, never pretend payments synced.
  *
  * Idempotency: event ids are claimed in stripe_webhook_events; failed handlers
  * release the claim so Stripe can retry. Subscription/invoice writers are also
@@ -133,7 +133,7 @@ export async function POST(request: Request) {
             console.warn(
               `[stripe webhook] ${event.id} subscription checkout missing subscription id`,
             );
-            // Soft miss — keep claim so we do not loop forever on bad data.
+            // Soft miss, keep claim so we do not loop forever on bad data.
             return NextResponse.json({
               received: true,
               handled: false,

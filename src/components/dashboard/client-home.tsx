@@ -176,7 +176,7 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
         <EmptyState
           icon={FolderKanban}
           title="No projects yet"
-          description="When your freelancer invites you to a project, your status, payments, and deliverables will show up here. If you expected an invite, check your email or ask them to resend it."
+          description="When you are invited to a project, your status, payments, and deliverables will show up here. If you expected an invite, check your email or ask them to resend it."
         />
         {error ? (
           <p className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-800">
@@ -323,7 +323,7 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
           <p className="mt-2 text-3xl font-semibold tracking-tight text-zinc-900">
             {home.nextPaymentDate
               ? formatShortDate(home.nextPaymentDate)
-              : "—"}
+              : "-"}
           </p>
           <p className="mt-1 text-xs text-zinc-500">
             {home.nextPaymentDate
@@ -344,7 +344,7 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <ProjectStatusBadge status={project.status} />
             <span className="text-xs text-zinc-500">
-              {businessDisplayName(project.freelancer, "Freelancer")}
+              {businessDisplayName(project.freelancer, "Workspace")}
             </span>
           </div>
           <Link
@@ -377,7 +377,7 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
               icon={FileCheck2}
               className="border-0 bg-transparent py-6"
               title="No deliverables yet"
-              description="Shared files will appear here when your freelancer marks them as deliverables."
+              description="Shared files will appear here when they are marked as deliverables."
             />
           ) : (
             <ul className="grid gap-2">

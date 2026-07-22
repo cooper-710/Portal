@@ -45,7 +45,7 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Validate JWT — do not use getSession() for auth checks.
+  // Validate JWT, do not use getSession() for auth checks.
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
@@ -58,7 +58,7 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/auth/confirm") ||
     pathname.startsWith("/auth/continue");
 
-  // Never intercept auth exchange routes — let them complete token handling.
+  // Never intercept auth exchange routes, let them complete token handling.
   if (isAuthFlow) {
     return supabaseResponse;
   }
@@ -73,7 +73,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // Allow login page when an auth error is present so users can recover.
-  // /login itself redirects to /?auth=… — if already signed in, continue.
+  // /login itself redirects to /?auth=…, if already signed in, continue.
   if (isLogin && user && !request.nextUrl.searchParams.get("error")) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/continue";

@@ -262,7 +262,7 @@ export function FreelancerInvoicesPage({
                           {formatMoney(invoice.amount, invoice.currency)}
                         </p>
                         <p className="truncate text-xs text-zinc-500">
-                          {invoice.project?.title ?? "—"} ·{" "}
+                          {invoice.project?.title ?? "-"} ·{" "}
                           {new Date(invoice.created_at).toLocaleDateString()}
                         </p>
                       </div>

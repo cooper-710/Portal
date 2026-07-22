@@ -1,5 +1,5 @@
 /**
- * Guided freelancer onboarding — pure step order + skip/resume rules.
+ * Guided freelancer onboarding, pure step order + skip/resume rules.
  *
  * Step order (before the real app):
  *   welcome → trial → stripe → branding → project → invite → done

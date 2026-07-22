@@ -31,7 +31,7 @@ These are two different pipes. Setting `RESEND_API_KEY` alone does **not** fix S
 
 You are hitting Supabase’s built-in email rate limits / branded mail. Unblock signup without waiting on quota:
 
-### Option 1 — Disable “Confirm email” (recommended for testing)
+### Option 1: Disable “Confirm email” (recommended for testing)
 
 1. Open [Supabase Dashboard](https://supabase.com/dashboard) → your project.
 2. Go to **Authentication** → **Providers** → **Email**.
@@ -41,17 +41,17 @@ You are hitting Supabase’s built-in email rate limits / branded mail. Unblock 
 Effect:
 
 - `signUp` with password creates a session immediately (no magic link).
-- Portal’s signup form (name + email + password) can send freelancers straight into onboarding / trial.
+- Portal’s signup form (name + email + password) can send new workspace owners straight into onboarding / trial.
 - **Warn:** leave this off only until custom SMTP works. Re-enable for production once Resend SMTP is live so you verify ownership of addresses.
 
-### Option 2 — Manually confirm users
+### Option 2: Manually confirm users
 
 1. Supabase → **Authentication** → **Users**.
 2. Open the stuck user → confirm / mark email confirmed (or delete and re-signup after Option 1).
 
 ---
 
-## B. Proper path — Resend SMTP for Auth (needs a domain)
+## B. Proper path: Resend SMTP for Auth (needs a domain)
 
 Goal: Supabase Auth emails go through **Resend SMTP** (branded, higher limits), not Supabase’s default mailer.
 
@@ -138,7 +138,7 @@ Resend will only deliver those invites to **your Resend account email**. Client 
 - **Confirm email ON** (after SMTP): account created → “check your email” → confirm link → then continue.
 - **Sign in:** Google or email + password.
 
-You do **not** need to remove Supabase Auth — only replace the mail transport via SMTP when you want email confirmation.
+You do **not** need to remove Supabase Auth, only replace the mail transport via SMTP when you want email confirmation.
 
 ---
 

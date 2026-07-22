@@ -28,7 +28,7 @@ type OnboardingShellProps = {
   skipLabel?: string;
   /** When true, primary button completes onboarding → /dashboard. */
   isFinal?: boolean;
-  /** Hide default continue — page supplies its own CTA via children. */
+  /** Hide default continue, page supplies its own CTA via children. */
   hideDefaultActions?: boolean;
   className?: string;
 };

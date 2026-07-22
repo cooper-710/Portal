@@ -147,7 +147,7 @@ export function FreelancerLockedPreview({
               icon={Receipt}
               className="border-0 bg-transparent py-8"
               title="Send invoices to clients"
-              description="Bill clients and get paid to your connected Stripe account — unlocked with Portal Pro."
+              description="Bill clients and get paid to your connected Stripe account, unlocked with Portal Pro."
             />
           </div>
         </section>

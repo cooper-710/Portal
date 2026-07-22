@@ -46,7 +46,7 @@ export async function signOut() {
  * Permanently delete the signed-in user's account.
  *
  * Freelancer: cancels Portal Pro subscription (best-effort), removes project
- * storage objects, then deletes auth user — projects/assets/invoices cascade.
+ * storage objects, then deletes auth user, projects/assets/invoices cascade.
  * Client: unlinks from projects (`client_id` SET NULL); does not delete projects.
  */
 export async function deleteAccount(formData: FormData) {
@@ -185,7 +185,7 @@ async function requireSubscribedFreelancer() {
     .single();
 
   if (!profile || profile.role !== "freelancer") {
-    return { error: "Only freelancers can do that." as const };
+    return { error: "Only workspace owners can do that." as const };
   }
 
   if (!isPlatformSubscriptionActive(profile.subscription_status)) {
@@ -221,7 +221,7 @@ export async function setAccountPassword(formData: FormData) {
     return { error: "You must be signed in to set a password." };
   }
 
-  // Stores the password in Supabase Auth (auth.users) — never in public tables.
+  // Stores the password in Supabase Auth (auth.users), never in public tables.
   const { error: updateError } = await supabase.auth.updateUser({
     password,
     data: { full_name: fullName },
@@ -325,7 +325,7 @@ export async function updateBusinessBranding(formData: FormData) {
     .single();
 
   if (!profile || profile.role !== "freelancer") {
-    return { error: "Only freelancers can edit client portal branding." };
+    return { error: "Only workspace owners can edit client portal branding." };
   }
 
   let logoUrl: string | null | undefined = undefined;
@@ -438,7 +438,7 @@ export async function completePortalSetup() {
     .maybeSingle();
 
   if (!profile || profile.role !== "freelancer") {
-    return { error: "Only freelancers can complete portal setup." };
+    return { error: "Only workspace owners can complete portal setup." };
   }
 
   const { error } = await supabase
@@ -619,7 +619,7 @@ export async function createProject(formData: FormData) {
       to: clientEmail,
       projectTitle: title,
       freelancerName:
-        displayName(profile, user.email ?? "") || "your freelancer",
+        displayName(profile, user.email ?? "") || "your contact",
       existingClient,
       businessName: profile.business_name,
       logoUrl: profile.logo_url,
@@ -706,7 +706,7 @@ export async function updateProjectClientEmail(formData: FormData) {
       to: nextEmail,
       projectTitle: projectRow.title,
       freelancerName:
-        displayName(profile, user.email ?? "") || "your freelancer",
+        displayName(profile, user.email ?? "") || "your contact",
       existingClient,
       businessName: profile.business_name,
       logoUrl: profile.logo_url,
@@ -1024,7 +1024,7 @@ export async function uploadAsset(formData: FormData) {
 
   // Uploads are freelancer-only. Clients may only view/download deliverables.
   if (!isFreelancer) {
-    return { error: "Only freelancers can upload files to a project." };
+    return { error: "Only workspace owners can upload files to a project." };
   }
 
   // Freelancer uploads require Portal Pro trial or paid subscription.
@@ -1131,7 +1131,7 @@ export async function updateAssetVisibility(formData: FormData) {
     .maybeSingle();
 
   if (!project) {
-    return { error: "Only freelancers can change file visibility on their projects." };
+    return { error: "Only workspace owners can change file visibility on their projects." };
   }
 
   const { error } = await supabase
@@ -1203,7 +1203,7 @@ export async function deleteAsset(formData: FormData) {
     .maybeSingle();
 
   if (!project) {
-    return { error: "Only freelancers can delete files on their projects." };
+    return { error: "Only workspace owners can delete files on their projects." };
   }
 
   const { error: storageError } = await supabase.storage

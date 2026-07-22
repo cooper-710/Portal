@@ -77,11 +77,11 @@ export function StripeConnectBanner({
           </p>
           <p className="text-xs text-amber-900/80">
             Clients can only pay after you complete Stripe Connect Express
-            onboarding. Funds go to your account — not a shared platform wallet.
+            onboarding. Funds go to your account, not a shared platform wallet.
           </p>
           {connectStatus === "pending" ? (
             <p className="text-xs font-medium text-amber-900">
-              Onboarding saved — complete any remaining Stripe steps if payouts
+              Onboarding saved. Complete any remaining Stripe steps if payouts
               are still disabled.
             </p>
           ) : null}

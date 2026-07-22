@@ -1,4 +1,4 @@
--- Freelance Client Portal — Supabase schema
+-- Portal client workspace: Supabase schema
 -- Run this in the Supabase SQL Editor (or via supabase db query / MCP apply_migration).
 
 -- ---------------------------------------------------------------------------
@@ -231,7 +231,7 @@ create trigger client_actions_set_updated_at
 -- Auto-create public.users row when a new auth user signs up
 -- Default role is freelancer (self-serve workspace). Invites pass role=client.
 -- Matching a pending project invite also forces client.
--- Authorization thereafter uses public.users.role — never user_metadata alone.
+-- Authorization thereafter uses public.users.role : never user_metadata alone.
 -- ---------------------------------------------------------------------------
 create or replace function public.handle_new_user()
 returns trigger
@@ -262,7 +262,7 @@ begin
     ''
   );
 
-  -- OAuth users never set a local password — skip /onboarding/password.
+  -- OAuth users never set a local password : skip /onboarding/password.
   auth_provider := coalesce(new.raw_app_meta_data ->> 'provider', 'email');
   selected_password_set := auth_provider is distinct from 'email';
 

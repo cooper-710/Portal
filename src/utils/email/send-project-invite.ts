@@ -20,7 +20,7 @@ type ProjectInviteParams = {
 /**
  * Sends a client project invite.
  * Prefer Resend when RESEND_API_KEY is set; otherwise try Supabase Auth invite
- * when SUPABASE_SERVICE_ROLE_KEY is available. Never throws — invites are best-effort.
+ * when SUPABASE_SERVICE_ROLE_KEY is available. Never throws, invites are best-effort.
  */
 export async function sendProjectInvite(
   params: ProjectInviteParams,
@@ -41,7 +41,7 @@ export async function sendProjectInvite(
       const { error } = await resend.emails.send({
         from,
         to: params.to,
-        subject: `You're invited to “${params.projectTitle}” — ${brandName}`,
+        subject: `You're invited to “${params.projectTitle}”, ${brandName}`,
         html: buildInviteHtml({
           projectTitle: params.projectTitle,
           freelancerName: params.freelancerName,

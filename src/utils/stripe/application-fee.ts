@@ -2,8 +2,8 @@
  * Platform application fee for Connect destination charges (client invoice payments).
  *
  * Env:
- * - STRIPE_PLATFORM_FEE_PERCENT — percent of invoice (e.g. "1" = 1%). Default 1 when unset.
- * - STRIPE_PLATFORM_FEE_FLAT_CENTS — optional flat fee in cents added on top (e.g. "500" = $5).
+ * - STRIPE_PLATFORM_FEE_PERCENT, percent of invoice (e.g. "1" = 1%). Default 1 when unset.
+ * - STRIPE_PLATFORM_FEE_FLAT_CENTS, optional flat fee in cents added on top (e.g. "500" = $5).
  *
  * Fee is always at least 1¢ when the invoice is large enough, and never >= charge amount
  * (freelancer receives at least 1¢).

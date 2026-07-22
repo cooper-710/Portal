@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — Portal",
+  title: "Privacy Policy · Portal",
   description: "How Portal collects, uses, and protects your information.",
 };
 
@@ -22,7 +22,7 @@ export default function PrivacyPage() {
           <section className="space-y-3">
             <h2 className="text-base font-semibold text-zinc-900">Who we are</h2>
             <p>
-              Portal (“we”, “us”) provides a client workspace for freelancers:
+              Portal (“we”, “us”) provides a client workspace for your business:
               projects, file sharing, invoicing, and payments. This policy
               describes how we handle information when you use the service at
               our website and application.
@@ -34,7 +34,7 @@ export default function PrivacyPage() {
             <ul className="list-disc space-y-2 pl-5">
               <li>
                 <span className="font-medium text-zinc-800">Account data:</span>{" "}
-                name, email address, role (freelancer or client), and optional
+                name, email address, role (workspace owner or client), and optional
                 business branding (name, logo, colors).
               </li>
               <li>
@@ -45,7 +45,7 @@ export default function PrivacyPage() {
               <li>
                 <span className="font-medium text-zinc-800">Payment data:</span>{" "}
                 processed by Stripe. We store Stripe customer, subscription,
-                Connect account, and payment identifiers—not full card numbers.
+                Connect account, and payment identifiers, not full card numbers.
               </li>
               <li>
                 <span className="font-medium text-zinc-800">Technical data:</span>{" "}
@@ -83,7 +83,7 @@ export default function PrivacyPage() {
             <h2 className="text-base font-semibold text-zinc-900">Retention & deletion</h2>
             <p>
               We retain account and workspace data while your account is active.
-              Freelancers may delete their account from Settings. You may also
+              Workspace owners may delete their account from Settings. You may also
               request deletion by contacting us. Backup copies may persist for a
               limited period before irreversible removal.
             </p>

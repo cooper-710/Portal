@@ -33,7 +33,7 @@ async function requireOnboardingFreelancer() {
     .maybeSingle();
 
   if (!profile || profile.role !== "freelancer") {
-    return { error: "Only freelancers can continue onboarding." as const };
+    return { error: "Only workspace owners can continue onboarding." as const };
   }
 
   if (!freelancerNeedsOnboarding(profile)) {
@@ -250,7 +250,7 @@ export async function inviteOnboardingClient(formData: FormData) {
   const invite = await sendProjectInvite({
     to: clientEmail,
     projectTitle: projectRow.title,
-    freelancerName: displayName(profile, user.email ?? "") || "your freelancer",
+    freelancerName: displayName(profile, user.email ?? "") || "your contact",
     existingClient,
     businessName: profile.business_name,
     logoUrl: profile.logo_url,

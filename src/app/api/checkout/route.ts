@@ -102,7 +102,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "This freelancer has not finished connecting Stripe payouts yet. Ask them to complete Stripe Connect from their Invoices page.",
+          "This workspace has not finished connecting Stripe payouts yet. Ask the owner to complete Stripe Connect from their Invoices page.",
       },
       { status: 400 },
     );
@@ -123,7 +123,7 @@ export async function POST(request: Request) {
             currency: (invoice.currency || "usd").toLowerCase(),
             unit_amount: invoice.amount,
             product_data: {
-              name: `Invoice — ${project.title}`,
+              name: `Invoice, ${project.title}`,
               description: `Portal invoice ${invoice.id.slice(0, 8)}`,
             },
           },

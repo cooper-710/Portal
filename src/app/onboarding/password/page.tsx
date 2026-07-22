@@ -35,7 +35,7 @@ export default async function SetPasswordPage({ searchParams }: PageProps) {
     .eq("id", user.id)
     .maybeSingle();
 
-  // Freelancers still in the wizard → resume onboarding after password.
+  // Workspace owners still in the wizard → resume onboarding after password.
   if (
     profile?.role === "freelancer" &&
     freelancerNeedsOnboarding(profile) &&

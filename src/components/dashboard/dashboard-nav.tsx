@@ -38,7 +38,7 @@ function isActive(pathname: string, item: NavItem) {
 
 type DashboardNavProps = {
   role: UserRole;
-  /** False when freelancer lacks trial/paid — nav stays open; product is locked. */
+  /** False when freelancer lacks trial/paid, nav stays open; product is locked. */
   canCreate?: boolean;
   displayLabel?: string;
   /** Client-facing brand name (freelancer business name). */

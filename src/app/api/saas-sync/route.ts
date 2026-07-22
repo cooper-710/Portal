@@ -28,7 +28,7 @@ export async function POST() {
 
   if (!profile || profile.role !== "freelancer") {
     return NextResponse.json(
-      { error: "Only freelancers can refresh Portal Pro." },
+      { error: "Only workspace owners can refresh Portal Pro." },
       { status: 403 },
     );
   }

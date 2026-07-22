@@ -332,8 +332,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               title="No invoices yet"
               description={
                 isFreelancer
-                  ? "Create an invoice above — your client can pay it from their Invoices page."
-                  : "When your freelancer sends an invoice, it will show up here."
+                  ? "Create an invoice above. Your client can pay it from their Invoices page."
+                  : "When an invoice is sent, it will show up here."
               }
             />
           ) : (

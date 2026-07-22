@@ -300,7 +300,7 @@ export function FreelancerDashboard({
                           {formatMoney(invoice.amount, invoice.currency)}
                         </p>
                         <p className="truncate text-[11px] text-zinc-500">
-                          {invoice.project?.title ?? "—"}
+                          {invoice.project?.title ?? "-"}
                         </p>
                       </div>
                       <InvoiceStatusBadge status="paid" />

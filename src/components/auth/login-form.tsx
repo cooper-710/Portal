@@ -10,7 +10,7 @@ import { createClient } from "@/utils/supabase/client";
 type LoginFormProps = {
   nextPath?: string;
   initialError?: string | null;
-  /** Invite flow: provision as client instead of freelancer workspace. */
+  /** Invite flow: provision as client instead of workspace-owner (role id: freelancer). */
   signupRole?: "freelancer" | "client";
 };
 
@@ -77,7 +77,7 @@ export function LoginForm({
         setError(oauthError.message);
         setOauthLoading(false);
       }
-      // On success the browser redirects to Google — keep spinner visible.
+      // On success the browser redirects to Google, keep spinner visible.
     } catch {
       setError(authErrorMessage("exchange_failed"));
       setOauthLoading(false);
@@ -127,7 +127,7 @@ export function LoginForm({
       <p className="text-center text-xs text-muted-foreground">
         {signupRole === "client"
           ? "Use the Google account that matches your invite email when possible."
-          : "New and returning freelancers — one click to your workspace."}
+          : "New and returning users: one click to your workspace."}
       </p>
     </div>
   );

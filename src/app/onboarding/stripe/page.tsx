@@ -9,7 +9,7 @@ export default async function OnboardingStripePage() {
     <OnboardingShell
       step="stripe"
       title="Connect Stripe"
-      description="Get paid directly to your bank when clients pay invoices. Takes a few minutes — you can finish later."
+      description="Get paid directly to your bank when clients pay invoices. Takes a few minutes (you can finish later)."
       hideDefaultActions
     >
       <StripeStepForm />

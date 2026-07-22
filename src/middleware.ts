@@ -7,7 +7,7 @@ import { updateSession } from "@/utils/supabase/middleware";
  *
  * Rate limiting: auth endpoints are primarily Supabase-hosted (signIn/signUp
  * from the browser SDK). App Route Handlers under /api/* should add edge
- * rate limits (e.g. Upstash) before public abuse becomes material — tracked
+ * rate limits (e.g. Upstash) before public abuse becomes material, tracked
  * as P1 in PRODUCTION_PLAN.md. Do not block Stripe webhooks.
  */
 export async function middleware(request: NextRequest) {

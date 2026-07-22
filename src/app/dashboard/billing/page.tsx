@@ -23,7 +23,7 @@ export default async function DashboardBillingPage({
     redirect("/dashboard");
   }
 
-  // Legacy success_url landed here — sync then send to the working overview.
+  // Legacy success_url landed here, sync then send to the working overview.
   if (params.subscribed === "1" && params.session_id) {
     const result = await syncPlatformCheckoutSessionById(params.session_id, {
       freelancerId: profile.id,

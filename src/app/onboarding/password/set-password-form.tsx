@@ -87,7 +87,7 @@ export function SetPasswordForm({
     <main className="flex min-h-svh items-center justify-center bg-zinc-50 px-4 py-10">
       <Card className="w-full max-w-md border-zinc-200 shadow-sm">
         <CardHeader>
-          <CardTitle>Email confirmed — set your password</CardTitle>
+          <CardTitle>Email confirmed: set your password</CardTitle>
           <CardDescription>
             {headingToTrial
               ? "Create a password for next time. After this you’ll open Billing to start your free trial."

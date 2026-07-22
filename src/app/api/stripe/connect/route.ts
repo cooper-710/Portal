@@ -59,7 +59,7 @@ export async function POST(request: Request) {
 
   if (!profile || profile.role !== "freelancer") {
     return NextResponse.json(
-      { error: "Only freelancers can connect a Stripe payout account." },
+      { error: "Only workspace owners can connect a Stripe payout account." },
       { status: 403 },
     );
   }

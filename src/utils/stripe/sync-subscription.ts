@@ -63,7 +63,7 @@ function subscriptionPayload(
  * Prefer service role (webhooks). Fall back to the caller's authenticated
  * client so Checkout return-path sync works without SUPABASE_SERVICE_ROLE_KEY
  * (users may update their own subscription columns via RLS).
- * When requireAdmin is true (webhook path), never fall back — fail loudly.
+ * When requireAdmin is true (webhook path), never fall back, fail loudly.
  */
 async function resolveUsersClient(
   preferred?: UsersClient | null,
