@@ -5,18 +5,14 @@ import { Suspense, useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 
 import { AuthModal, authHref } from "@/components/auth/auth-modal";
-import { SiteFooter } from "@/components/site-footer";
+import {
+  MARKETING_NAV,
+  MarketingShell,
+} from "@/components/landing/marketing-shell";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const NAV = [
-  { href: "#how-it-works", label: "How it works" },
-  { href: "#features", label: "Features" },
-  { href: "#pricing", label: "Pricing" },
-] as const;
-
 export function LandingPage() {
-  const [scrolled, setScrolled] = useState(false);
   const [parallaxY, setParallaxY] = useState(0);
 
   useEffect(() => {
@@ -26,7 +22,6 @@ export function LandingPage() {
 
     function onScroll() {
       const y = window.scrollY;
-      setScrolled(y > 12);
       if (!reduceMotion) {
         setParallaxY(Math.min(y * 0.12, 48));
       }
@@ -38,234 +33,216 @@ export function LandingPage() {
   }, []);
 
   return (
-    <div className="landing-root min-h-svh text-foreground">
+    <>
       <Suspense fallback={null}>
         <AuthModal />
       </Suspense>
 
-      <header
-        className={cn(
-          "landing-header sticky top-0 z-40 transition-[background,border-color,box-shadow] duration-300",
-          scrolled
-            ? "border-b border-zinc-200/70 bg-white/75 shadow-[0_1px_0_0_rgba(24,24,27,0.04)] backdrop-blur-xl"
-            : "border-b border-transparent bg-transparent",
-        )}
-      >
-        <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 sm:px-6">
-          <a
-            href="#top"
-            className="font-[family-name:var(--font-display)] text-lg font-semibold tracking-tight text-zinc-900"
-          >
-            Portal
-          </a>
+      <MarketingShell transparentUntilScroll>
+        {/* Hero: one composition, brand-first. Pulls under sticky header so atmosphere shows through. */}
+        <section
+          id="top"
+          className="relative isolate -mt-14 min-h-svh overflow-x-clip pt-14"
+        >
+          <div aria-hidden className="landing-hero-atmosphere absolute inset-0" />
+          <div aria-hidden className="landing-hero-grid absolute inset-0" />
+          <HeroVisual offsetY={parallaxY} />
 
-          <nav
-            aria-label="Page"
-            className="hidden flex-1 items-center justify-center gap-7 md:flex"
-          >
-            {NAV.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                className="text-sm text-zinc-500 transition-colors hover:text-zinc-900"
-              >
-                {item.label}
-              </a>
-            ))}
-          </nav>
-
-          <div className="ml-auto flex items-center gap-3 md:ml-0">
-            <Link
-              href={authHref("signin")}
-              className="text-sm text-zinc-500 transition-colors hover:text-zinc-900"
-            >
-              Sign in
-            </Link>
-            <Link
-              href={authHref("signup")}
-              className={cn(buttonVariants({ size: "sm" }), "shadow-none")}
-            >
-              Start free trial
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero: one composition, brand-first. Pulls under sticky header so atmosphere shows through. */}
-      <section
-        id="top"
-        className="relative isolate -mt-14 min-h-svh overflow-hidden pt-14"
-      >
-        <div aria-hidden className="landing-hero-atmosphere absolute inset-0" />
-        <div aria-hidden className="landing-hero-grid absolute inset-0" />
-        <HeroVisual offsetY={parallaxY} />
-
-        <div className="relative z-10 mx-auto flex min-h-[calc(100svh-3.5rem)] w-full max-w-6xl flex-col justify-center px-4 pb-24 pt-10 sm:px-6 sm:pb-28 sm:pt-12">
-          <div className="max-w-2xl">
-            <p className="landing-brand font-[family-name:var(--font-display)] text-[clamp(3.5rem,12vw,7.5rem)] leading-[0.9] tracking-[-0.04em] text-zinc-900">
-              Portal
-            </p>
-            <h1 className="landing-fade-up landing-delay-1 mt-7 max-w-xl text-2xl font-medium tracking-tight text-zinc-900 sm:text-3xl lg:text-[2.15rem] lg:leading-snug">
-              The client workspace your business actually runs on.
-            </h1>
-            <p className="landing-fade-up landing-delay-2 mt-4 max-w-md text-base leading-relaxed text-zinc-500 sm:text-lg">
-              Invite clients, share deliverables, and collect payment in one
-              private space per project.
-            </p>
-            <div className="landing-fade-up landing-delay-3 mt-10 flex flex-wrap items-center gap-3">
-              <Link
-                href={authHref("signup")}
-                className={cn(
-                  buttonVariants({ size: "lg" }),
-                  "gap-2 shadow-none",
-                )}
-              >
-                Start 14-day free trial
-                <ArrowRight className="size-4" />
-              </Link>
-              <Link
-                href={authHref("signin")}
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "lg" }),
-                  "border-zinc-200/80 bg-white/70 text-zinc-900 shadow-none backdrop-blur-sm hover:bg-white",
-                )}
-              >
-                I already have an account
-              </Link>
+          <div className="relative z-10 mx-auto flex min-h-[calc(100svh-3.5rem)] w-full max-w-6xl flex-col justify-center px-4 pb-24 pt-10 sm:px-6 sm:pb-28 sm:pt-12">
+            <div className="max-w-2xl">
+              <p className="landing-brand landing-display text-[clamp(3.5rem,12vw,7.5rem)] tracking-[-0.04em] text-zinc-900">
+                Portal
+              </p>
+              <h1 className="landing-fade-up landing-delay-1 mt-7 max-w-xl text-2xl font-medium tracking-tight text-zinc-900 sm:text-3xl lg:text-[2.15rem] lg:leading-snug">
+                The client workspace your business actually runs on.
+              </h1>
+              <p className="landing-fade-up landing-delay-2 mt-4 max-w-md text-base leading-relaxed text-zinc-500 sm:text-lg">
+                Invite clients, share deliverables, and collect payment in one
+                private space per project.
+              </p>
+              <div className="landing-fade-up landing-delay-3 mt-10 flex flex-wrap items-center gap-3">
+                <Link
+                  href={authHref("signup")}
+                  className={cn(
+                    buttonVariants({ size: "lg" }),
+                    "gap-2 shadow-none",
+                  )}
+                >
+                  Start 14-day free trial
+                  <ArrowRight className="size-4" />
+                </Link>
+                <Link
+                  href={authHref("signin")}
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "lg" }),
+                    "border-zinc-200/80 bg-white/70 text-zinc-900 shadow-none backdrop-blur-sm hover:bg-white",
+                  )}
+                >
+                  I already have an account
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* How it works */}
-      <section
-        id="how-it-works"
-        className="scroll-mt-16 border-t border-zinc-200/80 bg-[var(--landing-surface)]"
-      >
-        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-            How it works
-          </p>
-          <h2 className="mt-3 max-w-xl font-[family-name:var(--font-display)] text-3xl tracking-tight text-zinc-900 sm:text-4xl">
-            From invite to paid in three quiet steps.
-          </h2>
-          <ol className="mt-14 grid gap-12 sm:grid-cols-3 sm:gap-10">
-            <Step
-              number="01"
-              title="Open a project"
-              body="Create a workspace, set the phase, and invite your client by email."
-            />
-            <Step
-              number="02"
-              title="Share deliverables"
-              body="Keep internal references private. Release only what the client should download."
-            />
-            <Step
-              number="03"
-              title="Get paid directly"
-              body="Send invoices and collect through Stripe. Funds go to your connected account."
-            />
-          </ol>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section
-        id="features"
-        className="scroll-mt-16 border-t border-zinc-200/80 bg-[var(--landing-wash)]"
-      >
-        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-            Features
-          </p>
-          <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-display)] text-3xl tracking-tight text-zinc-900 sm:text-4xl">
-            Everything the client needs, in one place they will actually use.
-          </h2>
-
-          <ul className="mt-14 grid gap-12 sm:grid-cols-3 sm:gap-10">
-            <Feature
-              title="Private project rooms"
-              body="Each engagement gets its own space for status, files, and messages that stay out of the inbox."
-            />
-            <Feature
-              title="Permissioned files"
-              body="Upload freely. Share only the versions your client should see and download."
-            />
-            <Feature
-              title="Stripe invoices"
-              body="Send payment requests from the same workspace. Money lands in your connected account."
-            />
-          </ul>
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section
-        id="pricing"
-        className="scroll-mt-16 border-t border-zinc-200/80 bg-[var(--landing-surface)]"
-      >
-        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-            Pricing
-          </p>
-          <h2 className="mt-3 max-w-xl font-[family-name:var(--font-display)] text-3xl tracking-tight text-zinc-900 sm:text-4xl">
-            Simple pricing that pays for itself on the first invoice.
-          </h2>
-          <div className="landing-pricing-panel mt-12 max-w-md border-t border-zinc-200/80 pt-8">
-            <p className="font-[family-name:var(--font-display)] text-sm tracking-wide text-primary">
-              Portal Pro
+        {/* How it works teaser */}
+        <section className="border-t border-zinc-200/80 bg-[var(--landing-surface)]">
+          <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+              How it works
             </p>
-            <p className="mt-4 flex items-baseline gap-2">
-              <span className="font-[family-name:var(--font-display)] text-5xl tracking-tight text-zinc-900">
-                $25
-              </span>
-              <span className="text-zinc-500">/ month</span>
-            </p>
-            <p className="mt-4 text-sm leading-relaxed text-zinc-500">
-              14-day free trial, then $25/mo. Plus a ~1% platform fee on client
-              invoice payments processed through Portal.
-            </p>
-            <Link
-              href={authHref("signup")}
-              className={cn(
-                buttonVariants({ size: "lg" }),
-                "mt-8 inline-flex gap-2 shadow-none",
-              )}
-            >
-              Start free trial
-              <ArrowRight className="size-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Closing CTA */}
-      <section className="border-t border-zinc-200/80 bg-[var(--landing-wash)]">
-        <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
-          <div className="max-w-xl">
-            <h2 className="font-[family-name:var(--font-display)] text-3xl tracking-tight text-zinc-900 sm:text-4xl">
-              Ready for a cleaner client relationship?
+            <h2 className="landing-display mt-3 max-w-xl text-3xl tracking-tight text-zinc-900 sm:text-4xl">
+              From invite to paid in three quiet steps.
             </h2>
-            <p className="mt-4 max-w-md text-base text-zinc-500">
-              Create your workspace in minutes. Invite a client when you are
-              ready.
-            </p>
+            <ol className="mt-14 grid gap-12 sm:grid-cols-3 sm:gap-10">
+              <Step
+                number="01"
+                title="Open a project"
+                body="Create a workspace, set the phase, and invite your client by email."
+              />
+              <Step
+                number="02"
+                title="Share deliverables"
+                body="Keep internal references private. Release only what the client should download."
+              />
+              <Step
+                number="03"
+                title="Get paid directly"
+                body="Send invoices and collect through Stripe. Funds go to your connected account."
+              />
+            </ol>
             <Link
-              href={authHref("signup")}
-              className={cn(
-                buttonVariants({ size: "lg" }),
-                "mt-8 inline-flex gap-2 shadow-none",
-              )}
+              href="/how-it-works"
+              className="mt-12 inline-flex items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-zinc-900"
             >
-              Start 14-day free trial
+              See the full path
               <ArrowRight className="size-4" />
             </Link>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <SiteFooter />
-    </div>
+        {/* Features teaser */}
+        <section className="border-t border-zinc-200/80 bg-[var(--landing-wash)]">
+          <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+              Features
+            </p>
+            <h2 className="landing-display mt-3 max-w-2xl text-3xl tracking-tight text-zinc-900 sm:text-4xl">
+              Everything the client needs, in one place they will actually use.
+            </h2>
+
+            <ul className="mt-14 grid gap-12 sm:grid-cols-3 sm:gap-10">
+              <Feature
+                title="Private project rooms"
+                body="Each engagement gets its own space for status, files, and messages that stay out of the inbox."
+              />
+              <Feature
+                title="Permissioned files"
+                body="Upload freely. Share only the versions your client should see and download."
+              />
+              <Feature
+                title="Stripe invoices"
+                body="Send payment requests from the same workspace. Money lands in your connected account."
+              />
+            </ul>
+            <Link
+              href="/features"
+              className="mt-12 inline-flex items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-zinc-900"
+            >
+              Explore all features
+              <ArrowRight className="size-4" />
+            </Link>
+          </div>
+        </section>
+
+        {/* Pricing teaser */}
+        <section className="border-t border-zinc-200/80 bg-[var(--landing-surface)]">
+          <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+              Pricing
+            </p>
+            <h2 className="landing-display mt-3 max-w-xl text-3xl tracking-tight text-zinc-900 sm:text-4xl">
+              Simple pricing that pays for itself on the first invoice.
+            </h2>
+            <div className="landing-pricing-panel mt-12 max-w-md border-t border-zinc-200/80 pt-8">
+              <p className="landing-display text-sm tracking-wide text-primary">
+                Portal Pro
+              </p>
+              <p className="mt-4 flex items-baseline gap-2">
+                <span className="landing-display text-5xl tracking-tight text-zinc-900">
+                  $25
+                </span>
+                <span className="text-zinc-500">/ month</span>
+              </p>
+              <p className="mt-4 text-sm leading-relaxed text-zinc-500">
+                14-day free trial, then $25/mo. Plus a ~1% platform fee on client
+                invoice payments processed through Portal.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center gap-4">
+                <Link
+                  href={authHref("signup")}
+                  className={cn(
+                    buttonVariants({ size: "lg" }),
+                    "inline-flex gap-2 shadow-none",
+                  )}
+                >
+                  Start free trial
+                  <ArrowRight className="size-4" />
+                </Link>
+                <Link
+                  href="/pricing"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-900"
+                >
+                  Full pricing details
+                  <ArrowRight className="size-4" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Closing CTA */}
+        <section className="border-t border-zinc-200/80 bg-[var(--landing-wash)]">
+          <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
+            <div className="max-w-xl">
+              <h2 className="landing-display text-3xl tracking-tight text-zinc-900 sm:text-4xl">
+                Ready for a cleaner client relationship?
+              </h2>
+              <p className="mt-4 max-w-md text-base text-zinc-500">
+                Create your workspace in minutes. Invite a client when you are
+                ready.
+              </p>
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Link
+                  href={authHref("signup")}
+                  className={cn(
+                    buttonVariants({ size: "lg" }),
+                    "inline-flex gap-2 shadow-none",
+                  )}
+                >
+                  Start 14-day free trial
+                  <ArrowRight className="size-4" />
+                </Link>
+                <nav
+                  aria-label="Explore"
+                  className="flex flex-wrap gap-4 text-sm text-zinc-500"
+                >
+                  {MARKETING_NAV.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="hover:text-zinc-900"
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+            </div>
+          </div>
+        </section>
+      </MarketingShell>
+    </>
   );
 }
 
@@ -437,7 +414,7 @@ function Step({
 }) {
   return (
     <li className="landing-step border-t border-zinc-200/80 pt-6">
-      <p className="font-[family-name:var(--font-display)] text-sm tracking-wide text-primary">
+      <p className="landing-display text-sm tracking-wide text-primary">
         {number}
       </p>
       <h3 className="mt-3 text-base font-semibold text-zinc-900">{title}</h3>

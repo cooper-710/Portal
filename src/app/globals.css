@@ -236,8 +236,20 @@
   animation: landing-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Syne display: give descenders (g, y, p, q) room; never clip headings */
+.landing-display {
+  font-family: var(--font-display), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.2;
+  overflow: visible;
+  padding-block: 0.06em;
+  text-rendering: optimizeLegibility;
+}
+
 .landing-brand {
   animation: landing-brand-in 1.05s cubic-bezier(0.22, 1, 0.36, 1) both;
+  /* Single-word hero mark: still room for any glyph metrics without looking loose */
+  line-height: 1.05;
+  overflow: visible;
 }
 
 .landing-delay-1 {
