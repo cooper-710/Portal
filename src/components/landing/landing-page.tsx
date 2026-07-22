@@ -9,7 +9,6 @@ import {
   MARKETING_NAV,
   MarketingShell,
 } from "@/components/landing/marketing-shell";
-import { PortalBrand } from "@/components/portal-brand";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -57,11 +56,9 @@ export function LandingPage() {
 
           <div className="relative z-10 mx-auto flex min-h-[calc(100svh-3.5rem)] w-full max-w-6xl flex-col justify-center px-4 pb-24 pt-10 sm:px-6 sm:pb-28 sm:pt-12">
             <div className="max-w-2xl">
-              <PortalBrand
-                size="hero"
-                className="landing-brand gap-3 sm:gap-5"
-                nameClassName="landing-display text-[clamp(3.5rem,12vw,7.5rem)] tracking-[-0.04em] text-zinc-900"
-              />
+              <p className="landing-brand landing-display text-[clamp(3.5rem,12vw,7.5rem)] tracking-[-0.04em] text-zinc-900">
+                Portal
+              </p>
               <h1 className="landing-fade-up landing-delay-1 mt-7 max-w-xl text-2xl font-medium tracking-tight text-zinc-900 sm:text-3xl lg:text-[2.15rem] lg:leading-snug">
                 The client workspace your business actually runs on.
               </h1>
