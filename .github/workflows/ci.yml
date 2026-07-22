@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  smoke:
+    name: Typecheck, test & build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      # Dummy values so Next.js can compile server modules that read env at build time.
+      # Do not use real secrets in CI.
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci-anon
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ci-service-role
+      STRIPE_SECRET_KEY: sk_test_ci_dummy_key_not_real
+      STRIPE_WEBHOOK_SECRET: whsec_ci_dummy_not_real
+      STRIPE_SAAS_PRICE_ID: price_ci_dummy
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_ci_dummy
+      NEXT_PUBLIC_APP_URL: http://localhost:3001
+      PORTAL_PRO_TRIAL_DAYS: "14"
+      STRIPE_PLATFORM_FEE_PERCENT: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
