@@ -1168,6 +1168,118 @@ export async function updateProjectPhase(formData: FormData) {
   return { success: true as const };
 }
 
+export async function updateProject(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+
+  if (!projectId) {
+    return { error: "Project not found." };
+  }
+
+  if (!title) {
+    return { error: "Project title is required." };
+  }
+
+  if (title.length > 120) {
+    return { error: "Keep the project title under 120 characters." };
+  }
+
+  const auth = await requireSubscribedFreelancer();
+  if ("error" in auth) {
+    return { error: auth.error };
+  }
+
+  const { supabase, user } = auth;
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("id", projectId)
+    .eq("freelancer_id", user.id)
+    .maybeSingle();
+
+  if (!project) {
+    return { error: "Project not found." };
+  }
+
+  const { error } = await supabase
+    .from("projects")
+    .update({ title })
+    .eq("id", projectId)
+    .eq("freelancer_id", user.id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/projects");
+  revalidatePath(`/dashboard/projects/${projectId}`);
+  revalidatePath("/dashboard/invoices");
+  return { success: true as const };
+}
+
+export async function deleteProject(formData: FormData) {
+  const projectId = String(formData.get("projectId") ?? "").trim();
+
+  if (!projectId) {
+    return { error: "Project not found." };
+  }
+
+  const auth = await requireSubscribedFreelancer();
+  if ("error" in auth) {
+    return { error: auth.error };
+  }
+
+  const { supabase, user } = auth;
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("id", projectId)
+    .eq("freelancer_id", user.id)
+    .maybeSingle();
+
+  if (!project) {
+    return { error: "Project not found." };
+  }
+
+  // Best-effort storage cleanup before cascade deletes asset rows.
+  const { data: assets } = await supabase
+    .from("assets")
+    .select("file_url")
+    .eq("project_id", projectId);
+
+  const paths = (assets ?? [])
+    .map((asset) => asset.file_url)
+    .filter((path): path is string => Boolean(path));
+
+  if (paths.length > 0) {
+    const chunkSize = 100;
+    for (let i = 0; i < paths.length; i += chunkSize) {
+      await supabase.storage
+        .from("project-assets")
+        .remove(paths.slice(i, i + chunkSize));
+    }
+  }
+
+  const { error } = await supabase
+    .from("projects")
+    .delete()
+    .eq("id", projectId)
+    .eq("freelancer_id", user.id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/projects");
+  revalidatePath("/dashboard/invoices");
+  revalidatePath(`/dashboard/projects/${projectId}`);
+  return { success: true as const };
+}
+
 export async function uploadAsset(formData: FormData) {
   const projectId = String(formData.get("projectId") ?? "");
   const file = formData.get("file");

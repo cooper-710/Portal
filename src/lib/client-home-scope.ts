@@ -7,6 +7,7 @@ import type { Asset, BusinessBrand, Invoice, Project } from "@/types/database";
 
 export type FreelancerProject = Project & {
   client?: { email: string; full_name: string | null } | null;
+  pendingInvoiceCount?: number;
 };
 
 export type ClientProject = Project & {

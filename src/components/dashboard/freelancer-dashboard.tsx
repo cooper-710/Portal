@@ -26,6 +26,7 @@ import {
 } from "@/components/dashboard/latest-deliverables";
 import { NewProjectDialog } from "@/components/dashboard/new-project-dialog";
 import { PaymentDueCalendar } from "@/components/dashboard/payment-due-calendar";
+import { ProjectOwnerActions } from "@/components/dashboard/project-owner-actions";
 import { ProjectPhaseSelector } from "@/components/dashboard/project-phase-selector";
 import {
   InvoiceStatusBadge,
@@ -323,31 +324,41 @@ export function FreelancerDashboard({
                         key={project.id}
                         className="rounded-xl border border-zinc-200/80 bg-zinc-50/40 p-3.5 transition-all hover:border-blue-200 hover:bg-white hover:shadow-sm"
                       >
-                        <button
-                          type="button"
-                          onClick={() =>
-                            router.push(`/dashboard/projects/${project.id}`)
-                          }
-                          className="group w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <p className="truncate text-sm font-semibold text-zinc-900 transition-colors group-hover:text-blue-700">
-                                  {project.title}
+                        <div className="flex items-start justify-between gap-3">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              router.push(`/dashboard/projects/${project.id}`)
+                            }
+                            className="group min-w-0 flex-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="truncate text-sm font-semibold text-zinc-900 transition-colors group-hover:text-blue-700">
+                                    {project.title}
+                                  </p>
+                                  <ProjectStatusBadge status={project.status} />
+                                </div>
+                                <p className="mt-1 truncate text-xs text-zinc-500">
+                                  {clientLabel}
                                 </p>
-                                <ProjectStatusBadge status={project.status} />
                               </div>
-                              <p className="mt-1 truncate text-xs text-zinc-500">
-                                {clientLabel}
-                              </p>
+                              <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 transition-colors group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-700">
+                                Open
+                                <ArrowUpRight className="size-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                              </span>
                             </div>
-                            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-zinc-200 bg-white px-2 py-0.5 text-[11px] font-medium text-zinc-500 transition-colors group-hover:border-blue-200 group-hover:bg-blue-50 group-hover:text-blue-700">
-                              Open
-                              <ArrowUpRight className="size-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                            </span>
-                          </div>
-                        </button>
+                          </button>
+                          <ProjectOwnerActions
+                            project={project}
+                            pendingInvoiceCount={
+                              project.pendingInvoiceCount ?? 0
+                            }
+                            onMessage={setMessage}
+                            compact
+                          />
+                        </div>
                         <div className="mt-3 border-t border-zinc-200/70 pt-3">
                           <ProjectPhaseSelector
                             projectId={project.id}
@@ -400,30 +411,41 @@ export function FreelancerDashboard({
                           );
 
                           return (
-                            <li key={project.id}>
+                            <li
+                              key={project.id}
+                              className="flex items-center justify-between gap-2 rounded-xl border border-zinc-200/60 bg-zinc-50/30 px-3 py-2.5 transition-all hover:border-zinc-300 hover:bg-white"
+                            >
                               <button
                                 type="button"
                                 onClick={() =>
                                   router.push(`/dashboard/projects/${project.id}`)
                                 }
-                                className="group flex w-full items-center justify-between gap-3 rounded-xl border border-zinc-200/60 bg-zinc-50/30 px-3 py-2.5 text-left transition-all hover:border-zinc-300 hover:bg-white"
+                                className="group min-w-0 flex-1 text-left"
                               >
-                                <div className="min-w-0">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <p className="truncate text-sm font-medium text-zinc-700 transition-colors group-hover:text-zinc-900">
-                                      {project.title}
-                                    </p>
-                                    <ProjectStatusBadge status={project.status} />
-                                  </div>
-                                  <p className="mt-0.5 truncate text-xs text-zinc-400">
-                                    {clientLabel}
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="truncate text-sm font-medium text-zinc-700 transition-colors group-hover:text-zinc-900">
+                                    {project.title}
                                   </p>
+                                  <ProjectStatusBadge status={project.status} />
                                 </div>
-                                <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-zinc-400 transition-colors group-hover:text-blue-700">
+                                <p className="mt-0.5 truncate text-xs text-zinc-400">
+                                  {clientLabel}
+                                </p>
+                              </button>
+                              <div className="flex shrink-0 items-center gap-1.5">
+                                <ProjectOwnerActions
+                                  project={project}
+                                  pendingInvoiceCount={
+                                    project.pendingInvoiceCount ?? 0
+                                  }
+                                  onMessage={setMessage}
+                                  compact
+                                />
+                                <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-zinc-400">
                                   Open
                                   <ArrowUpRight className="size-3" />
                                 </span>
-                              </button>
+                              </div>
                             </li>
                           );
                         })}

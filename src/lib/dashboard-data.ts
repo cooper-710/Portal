@@ -154,12 +154,23 @@ export async function loadFreelancerWorkspace(profileId: string) {
     }));
   }
 
+  const pendingInvoiceCountByProject = new Map<string, number>();
+  for (const invoice of invoices) {
+    if (invoice.status !== "pending") continue;
+    pendingInvoiceCountByProject.set(
+      invoice.project_id,
+      (pendingInvoiceCountByProject.get(invoice.project_id) ?? 0) + 1,
+    );
+  }
+
   return {
     projects: projects.map((project) => ({
       ...project,
       client: project.client_id
         ? (clientsById.get(project.client_id) ?? null)
         : null,
+      pendingInvoiceCount:
+        pendingInvoiceCountByProject.get(project.id) ?? 0,
     })) as FreelancerProject[],
     invoices: invoices.map((invoice) => ({
       ...invoice,

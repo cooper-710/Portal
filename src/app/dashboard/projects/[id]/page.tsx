@@ -6,6 +6,7 @@ import { ClientEmailEditor } from "@/components/dashboard/client-email-editor";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { FileVault } from "@/components/dashboard/file-vault";
 import { ProjectInvoicesPanel } from "@/components/dashboard/project-invoices-panel";
+import { ProjectOwnerActions } from "@/components/dashboard/project-owner-actions";
 import { ProjectPhaseSelector } from "@/components/dashboard/project-phase-selector";
 import {
   FreelancerLockedPreview,
@@ -100,6 +101,9 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
   const assets = (assetRows ?? []) as Asset[];
   const invoices = (invoiceRows ?? []) as Invoice[];
+  const pendingInvoiceCount = invoices.filter(
+    (invoice) => invoice.status === "pending",
+  ).length;
 
   let resolvedClientEmail = project.client_email ?? "";
   let resolvedClientName: string | null = null;
@@ -188,7 +192,14 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
               </p>
             </div>
             {isFreelancer ? (
-              <div className="w-full max-w-xs shrink-0">
+              <div className="flex w-full max-w-xs shrink-0 flex-col gap-3">
+                <div className="flex justify-end">
+                  <ProjectOwnerActions
+                    project={project}
+                    pendingInvoiceCount={pendingInvoiceCount}
+                    redirectOnDelete="/dashboard/projects"
+                  />
+                </div>
                 <ProjectPhaseSelector
                   projectId={project.id}
                   status={project.status}
