@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import {
@@ -11,6 +11,7 @@ import {
   DashboardCardHeader,
   ScrollPane,
 } from "@/components/dashboard/dashboard-card";
+import { Button } from "@/components/ui/button";
 import type { InvoiceWithProject } from "@/lib/dashboard-data";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -30,7 +31,12 @@ type PaymentDueCalendarProps = {
   /** Owner links to project; client links to invoices by default. */
   linkMode?: "project" | "invoices";
   className?: string;
-  compact?: boolean;
+  /**
+   * When set, list items show Pay now and call this with the invoice id
+   * (client checkout flow) instead of an Open link.
+   */
+  onPayInvoice?: (invoiceId: string) => void;
+  payingId?: string | null;
 };
 
 function parseDueDate(value: string) {
@@ -98,7 +104,8 @@ export function PaymentDueCalendar({
   invoices,
   linkMode = "project",
   className,
-  compact = false,
+  onPayInvoice,
+  payingId = null,
 }: PaymentDueCalendarProps) {
   const items = useMemo(
     () => invoicesToPaymentDueItems(invoices, linkMode),
@@ -220,17 +227,9 @@ export function PaymentDueCalendar({
 
       <DashboardCardBody
         scrollable={false}
-        className={cn(
-          "flex min-h-0 flex-1 flex-col gap-4",
-          !compact && "lg:flex-row lg:items-stretch",
-        )}
+        className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row lg:items-stretch"
       >
-        <div
-          className={cn(
-            "flex min-h-0 flex-1 flex-col justify-center",
-            !compact && "lg:min-w-0 lg:flex-[1.1]",
-          )}
-        >
+        <div className="flex min-h-0 flex-1 flex-col justify-center lg:min-w-0 lg:flex-[1.1]">
           <div className="mb-2 grid grid-cols-7 gap-1 text-center text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
               <span key={day}>{day}</span>
@@ -256,142 +255,170 @@ export function PaymentDueCalendar({
 
               const cellClass = cn(
                 "relative flex min-h-0 flex-col items-center justify-center rounded-lg border text-xs transition-colors",
+                "cursor-pointer hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
                 hasDue
                   ? isPast
-                    ? "border-amber-200 bg-amber-50 text-amber-950"
-                    : "border-blue-200 bg-blue-50 text-blue-950"
+                    ? "border-amber-200 bg-amber-50 text-amber-950 hover:brightness-[0.98]"
+                    : "border-blue-200 bg-blue-50 text-blue-950 hover:brightness-[0.98]"
                   : "border-transparent text-zinc-600",
                 isToday && !isSelected && "ring-2 ring-blue-500/40",
                 isSelected &&
                   "ring-2 ring-blue-600 ring-offset-1 ring-offset-white",
-                hasDue &&
-                  "cursor-pointer hover:brightness-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
               );
 
-              if (hasDue) {
-                const countLabel =
-                  dayItems.length === 1
-                    ? "1 payment due"
-                    : `${dayItems.length} payments due`;
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    role="gridcell"
-                    aria-pressed={isSelected}
-                    aria-label={`${formatDayAria(key)}, ${countLabel}. ${
-                      isSelected ? "Selected. Activate to clear." : "Activate to show invoices."
-                    }`}
-                    onClick={() => toggleDay(key)}
-                    className={cellClass}
-                    title={dayItems
-                      .map(
-                        (item) =>
-                          `${formatMoney(item.amount, item.currency)} · ${item.projectTitle}`,
-                      )
-                      .join(", ")}
-                  >
-                    <span className="font-medium tabular-nums">{day}</span>
+              const countLabel = hasDue
+                ? dayItems.length === 1
+                  ? "1 payment due"
+                  : `${dayItems.length} payments due`
+                : "no payments due";
+
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  role="gridcell"
+                  aria-pressed={isSelected}
+                  aria-label={`${formatDayAria(key)}, ${countLabel}. ${
+                    isSelected ? "Selected. Activate to clear." : "Activate to show invoices."
+                  }`}
+                  onClick={() => toggleDay(key)}
+                  className={cellClass}
+                  title={
+                    hasDue
+                      ? dayItems
+                          .map(
+                            (item) =>
+                              `${formatMoney(item.amount, item.currency)} · ${item.projectTitle}`,
+                          )
+                          .join(", ")
+                      : undefined
+                  }
+                >
+                  <span className="font-medium tabular-nums">{day}</span>
+                  {hasDue ? (
                     <span
                       className={cn(
                         "mt-0.5 size-1.5 rounded-full",
                         isPast ? "bg-amber-500" : "bg-blue-600",
                       )}
                     />
-                  </button>
-                );
-              }
-
-              return (
-                <div
-                  key={key}
-                  role="gridcell"
-                  className={cellClass}
-                  aria-label={formatDayAria(key)}
-                >
-                  <span className="font-medium tabular-nums">{day}</span>
-                </div>
+                  ) : null}
+                </button>
               );
             })}
           </div>
-          {items.length > 0 && !compact ? (
-            <p className="mt-2 shrink-0 text-[11px] text-zinc-400">
-              Click a highlighted day to see due invoices.
-            </p>
-          ) : items.length > 0 && compact ? (
-            <p className="mt-2 shrink-0 text-[11px] text-zinc-400">
-              Highlighted days have unpaid invoices due.
-            </p>
-          ) : null}
         </div>
 
-        {!compact ? (
-          <ScrollPane className="flex min-h-0 min-w-0 flex-1 flex-col lg:max-h-full">
-            <div className="mb-2 flex shrink-0 items-center justify-between gap-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
-                {listHeading}
-              </p>
-              {selectedDay ? (
-                <button
-                  type="button"
-                  onClick={() => setSelectedDay(null)}
-                  className="text-[11px] font-medium text-blue-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
-                >
-                  Show all
-                </button>
-              ) : null}
-            </div>
-            {items.length === 0 ? (
-              <EmptyState
-                icon={CalendarDays}
-                className="border-0 bg-transparent py-4"
-                title="Nothing due"
-                description="Unpaid invoices with due dates will appear on this calendar."
-              />
-            ) : listItems.length === 0 && !selectedDay && overdue.length === 0 ? (
-              <p className="text-sm text-zinc-500">No payments due this month.</p>
-            ) : listItems.length === 0 && selectedDay ? (
-              <p className="text-sm text-zinc-500">No payments due on this day.</p>
-            ) : (
-              <ul className="grid gap-2">
-                {listItems.map((item) => {
-                  const date = parseDueDate(item.dueDate);
-                  const isPast = Boolean(date && date < today);
+        <ScrollPane className="flex min-h-0 min-w-0 flex-1 flex-col lg:max-h-full">
+          <div className="mb-2 flex shrink-0 items-center justify-between gap-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-400">
+              {listHeading}
+            </p>
+            {selectedDay ? (
+              <button
+                type="button"
+                onClick={() => setSelectedDay(null)}
+                className="text-[11px] font-medium text-blue-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1"
+              >
+                Show all
+              </button>
+            ) : null}
+          </div>
+          {items.length === 0 ? (
+            <EmptyState
+              icon={CalendarDays}
+              className="border-0 bg-transparent py-4"
+              title="Nothing due"
+              description="Unpaid invoices with due dates will appear on this calendar."
+            />
+          ) : selectedDay && (selectedItems?.length ?? 0) === 0 ? (
+            <EmptyState
+              icon={CalendarDays}
+              className="border-0 bg-transparent py-4"
+              title="Nothing due this day"
+              description={`No unpaid invoices are due on ${formatShortDate(selectedDay)}.`}
+            />
+          ) : listItems.length === 0 && !selectedDay && overdue.length === 0 ? (
+            <p className="text-sm text-zinc-500">No payments due this month.</p>
+          ) : (
+            <ul className="grid gap-2">
+              {listItems.map((item) => {
+                const date = parseDueDate(item.dueDate);
+                const isPast = Boolean(date && date < today);
+                const rowClass = cn(
+                  "flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 transition-all",
+                  isPast
+                    ? "border-amber-200/80 bg-amber-50/50"
+                    : "border-zinc-200/80 bg-zinc-50/40",
+                );
+
+                if (onPayInvoice) {
                   return (
-                    <li key={item.id}>
-                      <Link
-                        href={item.href}
-                        className={cn(
-                          "group flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 transition-all hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
-                          isPast
-                            ? "border-amber-200/80 bg-amber-50/50 hover:border-amber-300"
-                            : "border-zinc-200/80 bg-zinc-50/40 hover:border-blue-200 hover:bg-white",
-                        )}
+                    <li key={item.id} className={rowClass}>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-zinc-900">
+                          {formatMoney(item.amount, item.currency)}
+                          <span className="font-medium text-zinc-500">
+                            {" · "}
+                            {item.label}
+                          </span>
+                        </p>
+                        <p className="truncate text-[11px] text-zinc-500">
+                          {item.projectTitle} · {formatShortDate(item.dueDate)}
+                          {isPast ? " · overdue" : ""}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="shrink-0 bg-[color:var(--brand-primary,#2563eb)] text-white shadow-sm hover:opacity-90"
+                        disabled={payingId === item.id}
+                        onClick={() => onPayInvoice(item.id)}
                       >
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-zinc-900">
-                            {formatMoney(item.amount, item.currency)}
-                            <span className="font-medium text-zinc-500">
-                              {" · "}
-                              {item.label}
-                            </span>
-                          </p>
-                          <p className="truncate text-[11px] text-zinc-500">
-                            {item.projectTitle} · {formatShortDate(item.dueDate)}
-                            {isPast ? " · overdue" : ""}
-                          </p>
-                        </div>
-                        <span className="shrink-0 text-[11px] font-medium text-blue-700 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-                          Open
-                        </span>
-                      </Link>
+                        {payingId === item.id ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : null}
+                        Pay now
+                      </Button>
                     </li>
                   );
-                })}
-              </ul>
-            )}
-          </ScrollPane>
-        ) : null}
+                }
+
+                return (
+                  <li key={item.id}>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        rowClass,
+                        "group hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1",
+                        isPast
+                          ? "hover:border-amber-300"
+                          : "hover:border-blue-200 hover:bg-white",
+                      )}
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-zinc-900">
+                          {formatMoney(item.amount, item.currency)}
+                          <span className="font-medium text-zinc-500">
+                            {" · "}
+                            {item.label}
+                          </span>
+                        </p>
+                        <p className="truncate text-[11px] text-zinc-500">
+                          {item.projectTitle} · {formatShortDate(item.dueDate)}
+                          {isPast ? " · overdue" : ""}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-[11px] font-medium text-blue-700 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                        Open
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </ScrollPane>
       </DashboardCardBody>
     </DashboardCard>
   );

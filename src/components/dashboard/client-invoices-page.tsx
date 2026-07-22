@@ -73,7 +73,12 @@ export function ClientInvoicesPage({
         </p>
       ) : null}
 
-      <PaymentDueCalendar invoices={invoices} linkMode="invoices" />
+      <PaymentDueCalendar
+        invoices={invoices}
+        linkMode="invoices"
+        onPayInvoice={(invoiceId) => void payInvoice(invoiceId)}
+        payingId={payingId}
+      />
 
       <section
         className={cn(

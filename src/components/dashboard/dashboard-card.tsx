@@ -55,7 +55,7 @@ export function DashboardCardHeader({
   return (
     <div
       className={cn(
-        "sticky top-0 z-10 shrink-0 border-b border-zinc-200/60 bg-inherit px-4 py-4 sm:px-5",
+        "shrink-0 border-b border-zinc-200/60 bg-inherit px-4 py-4 sm:px-5",
         className,
       )}
     >
@@ -66,50 +66,6 @@ export function DashboardCardHeader({
 
 function isOverflowing(el: HTMLElement) {
   return el.scrollHeight > el.clientHeight + 1;
-}
-
-function scrollPageBy(deltaY: number) {
-  const scrollingElement =
-    (document.scrollingElement as HTMLElement | null) ??
-    document.documentElement;
-  scrollingElement.scrollTop += deltaY;
-}
-
-/**
- * Attach a non-passive wheel listener so we can pass scroll to the page
- * when the pane is not overflowed or the wheel would not move it.
- */
-function useWheelPassThrough(
-  ref: RefObject<HTMLDivElement | null>,
-  enabled: boolean,
-) {
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || !enabled) return;
-
-    const onWheel = (event: globalThis.WheelEvent) => {
-      if (!isOverflowing(el)) {
-        // overflow-y is hidden in this case; nothing to do.
-        return;
-      }
-
-      const { scrollTop, scrollHeight, clientHeight } = el;
-      const deltaY = event.deltaY;
-      if (deltaY === 0) return;
-
-      const atTop = scrollTop <= 0;
-      const atBottom = scrollTop + clientHeight >= scrollHeight - 1;
-      const scrollingDown = deltaY > 0;
-
-      if ((scrollingDown && atBottom) || (!scrollingDown && atTop)) {
-        event.preventDefault();
-        scrollPageBy(deltaY);
-      }
-    };
-
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
-  }, [ref, enabled]);
 }
 
 function useOverflowNeedsScroll(
@@ -158,8 +114,8 @@ type DashboardCardBodyProps = {
 };
 
 /**
- * Card body that only enables overflow scrolling when content actually overflows,
- * and passes mouse-wheel to the page when not scrollable or when already at an edge.
+ * Card body that only enables overflow scrolling when content actually overflows.
+ * Overscroll is contained so wheel gestures do not chain to the page.
  */
 export function DashboardCardBody({
   children,
@@ -168,7 +124,6 @@ export function DashboardCardBody({
 }: DashboardCardBodyProps) {
   const ref = useRef<HTMLDivElement>(null);
   const { needsScroll } = useOverflowNeedsScroll(ref, scrollable);
-  useWheelPassThrough(ref, scrollable && needsScroll);
 
   return (
     <div
@@ -192,13 +147,12 @@ type ScrollPaneProps = {
 };
 
 /**
- * Nested scroll region with the same overflow detection and wheel pass-through
- * as DashboardCardBody (e.g. calendar agenda list).
+ * Nested scroll region with overflow detection (e.g. calendar agenda list).
+ * Overscroll stays inside the pane — no page scroll chaining.
  */
 export function ScrollPane({ children, className }: ScrollPaneProps) {
   const ref = useRef<HTMLDivElement>(null);
   const { needsScroll } = useOverflowNeedsScroll(ref, true);
-  useWheelPassThrough(ref, needsScroll);
 
   return (
     <div

@@ -367,7 +367,8 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
         <PaymentDueCalendar
           invoices={home.invoices}
           linkMode="invoices"
-          compact
+          onPayInvoice={(invoiceId) => void payInvoice(invoiceId)}
+          payingId={payingId}
         />
 
         <DashboardCard className="border-zinc-200/80 bg-white">
