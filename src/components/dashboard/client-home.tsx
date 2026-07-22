@@ -32,7 +32,10 @@ import {
 } from "@/components/dashboard/status-badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { businessDisplayName } from "@/lib/branding";
-import type { ClientHomeData } from "@/lib/dashboard-data";
+import {
+  scopeClientHomeData,
+  type ClientHomeData,
+} from "@/lib/dashboard-data";
 import { displayName, formatMoney, isCompletedProject } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { PaymentKind, Profile, ProjectStatus } from "@/types/database";
@@ -73,6 +76,9 @@ function paymentKindBadge(kind: PaymentKind | null | undefined) {
 export function ClientHome({ profile, home }: ClientHomeProps) {
   const router = useRouter();
   const [projects, setProjects] = useState(home.projects);
+  const [filterProjectId, setFilterProjectId] = useState<string | null>(
+    home.selectedProjectId,
+  );
   const [error, setError] = useState<string | null>(null);
   const [payingId, setPayingId] = useState<string | null>(null);
   const [reviewNote, setReviewNote] = useState("");
@@ -81,6 +87,10 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
   useEffect(() => {
     setProjects(home.projects);
   }, [home.projects]);
+
+  useEffect(() => {
+    setFilterProjectId(home.selectedProjectId);
+  }, [home.selectedProjectId]);
 
   const projectIdsKey = home.projects
     .map((project) => project.id)
@@ -115,34 +125,39 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
     };
   }, [projectIdsKey, router]);
 
-  const brandName = businessDisplayName(home.brand, "Your portal");
-  const welcome =
-    home.brand?.welcome_message?.trim() ||
-    `Welcome back, ${displayName(profile)}.`;
+  const scoped = scopeClientHomeData(
+    { ...home, projects },
+    filterProjectId,
+  );
   const activeProjects = projects.filter(
     (item) => !isCompletedProject(item.status),
   );
-  const filterProjectId = home.selectedProjectId;
   const project =
-    (filterProjectId
-      ? projects.find((item) => item.id === filterProjectId)
-      : null) ??
-    home.activeProject ??
+    scoped.activeProject ??
     activeProjects[0] ??
     projects[0] ??
     null;
-  const invoicesHref = filterProjectId
-    ? `/dashboard/invoices?project=${filterProjectId}`
-    : "/dashboard/invoices";
-
-  const pendingInvoices = home.invoices.filter(
+  const brandName = businessDisplayName(scoped.brand, "Your portal");
+  const welcome =
+    scoped.brand?.welcome_message?.trim() ||
+    `Welcome back, ${displayName(profile)}.`;
+  const invoices = scoped.invoices;
+  const allDeliverables = scoped.allDeliverables;
+  const activity = scoped.activity;
+  const vaultAssets = scoped.assets;
+  const pendingInvoices = invoices.filter(
     (invoice) => invoice.status === "pending",
   );
-  const nextAction = home.nextAction;
-  const openReviews = home.actions.filter(
+  const amountDueCents = scoped.amountDueCents;
+  const nextPaymentDate = scoped.nextPaymentDate;
+  const nextAction = scoped.nextAction;
+  const openReviews = scoped.actions.filter(
     (action) =>
       action.status === "open" && action.action_type === "review_deliverable",
   );
+  const invoicesHref = filterProjectId
+    ? `/dashboard/invoices?project=${filterProjectId}`
+    : "/dashboard/invoices";
 
   async function payInvoice(invoiceId: string) {
     setPayingId(invoiceId);
@@ -235,6 +250,7 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
               }))}
               value={filterProjectId}
               basePath="/dashboard"
+              onChange={setFilterProjectId}
             />
           ) : null}
           <p className="text-xs text-zinc-500">
@@ -326,14 +342,13 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
       </section>
 
       <div className="grid items-start gap-5 lg:grid-cols-3 lg:gap-6">
-        {/* Amount due */}
         <section className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm sm:p-5">
           <div className="flex items-center gap-2 text-xs font-medium text-zinc-500">
             <CircleDollarSign className="size-3.5 text-[color:var(--brand-primary)]" />
             Amount due
           </div>
           <p className="mt-2 text-3xl font-semibold tracking-tight text-zinc-900">
-            {formatMoney(home.amountDueCents)}
+            {formatMoney(amountDueCents)}
           </p>
           <p className="mt-1 text-xs text-zinc-500">
             {pendingInvoices.length} unpaid invoice
@@ -347,28 +362,24 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
           </Link>
         </section>
 
-        {/* Next payment date */}
         <section className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm sm:p-5">
           <div className="flex items-center gap-2 text-xs font-medium text-zinc-500">
             <CalendarDays className="size-3.5 text-[color:var(--brand-accent)]" />
             Next payment
           </div>
           <p className="mt-2 text-3xl font-semibold tracking-tight text-zinc-900">
-            {home.nextPaymentDate
-              ? formatShortDate(home.nextPaymentDate)
-              : "-"}
+            {nextPaymentDate ? formatShortDate(nextPaymentDate) : "-"}
           </p>
           <p className="mt-1 text-xs text-zinc-500">
-            {home.nextPaymentDate
+            {nextPaymentDate
               ? "Earliest unpaid due date"
               : "No upcoming payment dates"}
           </p>
         </section>
 
-        {/* Project status */}
         <section className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm sm:p-5">
           <div className="flex items-center gap-2 text-xs font-medium text-zinc-500">
-            <FolderKanban className="size-3.5 text-[color:var(--brand-primary)]" />
+            <FolderKanban className="size-3.5 text-zinc-400" />
             {filterProjectId ? "Current project" : "Focus project"}
           </div>
           <p className="mt-2 truncate text-lg font-semibold text-zinc-900">
@@ -403,7 +414,7 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
       </div>
 
       <PaymentDueCalendar
-        invoices={home.invoices}
+        invoices={invoices}
         linkMode="invoices"
         onPayInvoice={(invoiceId) => void payInvoice(invoiceId)}
         payingId={payingId}
@@ -427,7 +438,7 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
           <p className="mt-1 text-xs text-zinc-500">
             {pendingInvoices.length === 0
               ? "Nothing outstanding"
-              : `${pendingInvoices.length} unpaid · ${formatMoney(home.amountDueCents)} due`}
+              : `${pendingInvoices.length} unpaid · ${formatMoney(amountDueCents)} due`}
           </p>
         </DashboardCardHeader>
         <DashboardCardBody>
@@ -484,9 +495,8 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
         </DashboardCardBody>
       </DashboardCard>
 
-      <LatestDeliverables items={home.allDeliverables} />
+      <LatestDeliverables items={allDeliverables} />
 
-      {/* Deliverable reviews */}
       {openReviews.length > 0 ? (
         <section
           id="deliverable-reviews"
@@ -554,17 +564,16 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
         </section>
       ) : null}
 
-      {/* Recent activity */}
       <section className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm sm:p-5">
         <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-900">
           <Clock3 className="size-4 text-zinc-500" />
           Recent activity
         </div>
-        {home.activity.length === 0 ? (
+        {activity.length === 0 ? (
           <p className="text-sm text-zinc-500">No recent activity yet.</p>
         ) : (
           <ul className="divide-y divide-zinc-100">
-            {home.activity.slice(0, 8).map((item) => (
+            {activity.slice(0, 8).map((item) => (
               <li
                 key={item.id}
                 className="flex items-start justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
@@ -586,7 +595,6 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
         )}
       </section>
 
-      {/* File vault for focus / filtered project */}
       <section className="space-y-3">
         <div>
           <h2 className="text-lg font-semibold tracking-tight text-zinc-900">
@@ -601,7 +609,7 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
           </p>
         </div>
         <div className="rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm sm:p-5">
-          <FileVault projectId={project.id} assets={home.assets} />
+          <FileVault projectId={project.id} assets={vaultAssets} />
         </div>
       </section>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CircleDollarSign, CreditCard, Loader2, Receipt } from "lucide-react";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
@@ -34,11 +34,32 @@ export function ClientInvoicesPage({
 }: ClientInvoicesPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [payingId, setPayingId] = useState<string | null>(null);
+  const [allInvoices, setAllInvoices] = useState(invoices);
+  const [filterProjectId, setFilterProjectId] = useState(selectedProjectId);
 
-  const pendingInvoices = invoices.filter((invoice) => invoice.status === "pending");
-  const paidInvoices = invoices.filter((invoice) => invoice.status === "paid");
-  const pendingTotal = pendingInvoices.reduce((sum, invoice) => sum + invoice.amount, 0);
-  const paidTotal = paidInvoices.reduce((sum, invoice) => sum + invoice.amount, 0);
+  useEffect(() => {
+    setAllInvoices(invoices);
+    setFilterProjectId(selectedProjectId);
+  }, [invoices, selectedProjectId]);
+
+  const visibleInvoices = filterProjectId
+    ? allInvoices.filter((invoice) => invoice.project_id === filterProjectId)
+    : allInvoices;
+
+  const pendingInvoices = visibleInvoices.filter(
+    (invoice) => invoice.status === "pending",
+  );
+  const paidInvoices = visibleInvoices.filter(
+    (invoice) => invoice.status === "paid",
+  );
+  const pendingTotal = pendingInvoices.reduce(
+    (sum, invoice) => sum + invoice.amount,
+    0,
+  );
+  const paidTotal = paidInvoices.reduce(
+    (sum, invoice) => sum + invoice.amount,
+    0,
+  );
 
   async function payInvoice(invoiceId: string) {
     setPayingId(invoiceId);
@@ -80,7 +101,8 @@ export function ClientInvoicesPage({
         {projects.length > 0 ? (
           <ProjectFilter
             projects={projects}
-            value={selectedProjectId}
+            value={filterProjectId}
+            onChange={setFilterProjectId}
             basePath="/dashboard/invoices"
           />
         ) : null}
@@ -101,7 +123,7 @@ export function ClientInvoicesPage({
       ) : null}
 
       <PaymentDueCalendar
-        invoices={invoices}
+        invoices={visibleInvoices}
         linkMode="invoices"
         onPayInvoice={(invoiceId) => void payInvoice(invoiceId)}
         payingId={payingId}

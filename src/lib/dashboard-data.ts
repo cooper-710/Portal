@@ -38,6 +38,7 @@ export type ClientActivityItem = {
   title: string;
   description: string;
   at: string;
+  projectId?: string | null;
   projectTitle?: string | null;
 };
 
@@ -46,6 +47,7 @@ export type ClientUpcomingItem = {
   label: string;
   date: string;
   kind: "invoice_due" | "action_due";
+  projectId?: string | null;
   href?: string;
 };
 
@@ -241,13 +243,6 @@ export async function loadClientWorkspace(
       ? selectedProjectId
       : null;
 
-  const vaultProjectRow =
-    (filterProjectId
-      ? projects.find((project) => project.id === filterProjectId)
-      : null) ??
-    projects.find((project) => !isCompletedProject(project.status)) ??
-    projects[0];
-
   const freelancerIds = [
     ...new Set(projects.map((project) => project.freelancer_id)),
   ];
@@ -269,8 +264,8 @@ export async function loadClientWorkspace(
     projects.map((project) => [project.id, project.title]),
   );
 
-  const scopedProjectIds = filterProjectId ? [filterProjectId] : projectIds;
-
+  // Always load every project’s data so the client can filter instantly
+  // without an RSC round-trip when the project switcher changes.
   const [
     { data: assetRows },
     { data: allAssetRows },
@@ -280,27 +275,27 @@ export async function loadClientWorkspace(
     supabase
       .from("assets")
       .select("*")
-      .eq("project_id", vaultProjectRow.id)
+      .in("project_id", projectIds)
       .order("created_at", { ascending: false }),
     supabase
       .from("assets")
       .select("*")
-      .in("project_id", scopedProjectIds)
+      .in("project_id", projectIds)
       .eq("visibility", "deliverable")
       .order("created_at", { ascending: false })
-      .limit(12),
+      .limit(48),
     supabase
       .from("invoices")
       .select("*")
-      .in("project_id", scopedProjectIds)
+      .in("project_id", projectIds)
       .order("created_at", { ascending: false }),
     supabase
       .from("client_actions")
       .select("*")
       .eq("client_id", profileId)
-      .in("project_id", scopedProjectIds)
+      .in("project_id", projectIds)
       .order("created_at", { ascending: false })
-      .limit(40),
+      .limit(80),
   ]);
 
   const invoices = (invoiceRows ?? []) as Invoice[];
@@ -359,15 +354,14 @@ export async function loadClientWorkspace(
     null;
 
   const upcoming: ClientUpcomingItem[] = [];
-  for (const invoice of datedPending.slice(0, 5)) {
+  for (const invoice of datedPending.slice(0, 8)) {
     upcoming.push({
       id: `inv-${invoice.id}`,
       label: `${invoice.title?.trim() || "Payment"} · ${formatMoney(invoice.amount, invoice.currency)}`,
       date: invoice.due_date!,
       kind: "invoice_due",
-      href: filterProjectId
-        ? `/dashboard/invoices?project=${filterProjectId}`
-        : "/dashboard/invoices",
+      projectId: invoice.project_id,
+      href: "/dashboard/invoices",
     });
   }
   for (const action of actionsWithLinks.filter(
@@ -378,25 +372,21 @@ export async function loadClientWorkspace(
       label: action.title,
       date: action.due_at!.slice(0, 10),
       kind: "action_due",
-      href: filterProjectId
-        ? `/dashboard?project=${filterProjectId}`
-        : "/dashboard",
+      projectId: action.project_id,
+      href: "/dashboard",
     });
   }
   upcoming.sort((a, b) => a.date.localeCompare(b.date));
 
-  const activityProjects = filterProjectId
-    ? projects.filter((project) => project.id === filterProjectId)
-    : projects;
-
   const activity: ClientActivityItem[] = [];
-  for (const invoice of invoices.slice(0, 10)) {
+  for (const invoice of invoices.slice(0, 20)) {
     activity.push({
       id: `inv-created-${invoice.id}`,
       kind: "invoice_created",
       title: invoice.status === "paid" ? "Invoice paid" : "Invoice sent",
       description: `${formatMoney(invoice.amount, invoice.currency)} · ${projectTitleById.get(invoice.project_id) ?? "Project"}`,
       at: invoice.status === "paid" ? invoice.updated_at : invoice.created_at,
+      projectId: invoice.project_id,
       projectTitle: projectTitleById.get(invoice.project_id) ?? null,
     });
     if (invoice.status === "paid") {
@@ -406,21 +396,23 @@ export async function loadClientWorkspace(
         title: "Payment received",
         description: `${formatMoney(invoice.amount, invoice.currency)} · ${projectTitleById.get(invoice.project_id) ?? "Project"}`,
         at: invoice.updated_at,
+        projectId: invoice.project_id,
         projectTitle: projectTitleById.get(invoice.project_id) ?? null,
       });
     }
   }
-  for (const asset of assetsAll.slice(0, 8)) {
+  for (const asset of assetsAll.slice(0, 16)) {
     activity.push({
       id: `del-${asset.id}`,
       kind: "deliverable_shared",
       title: "New deliverable",
       description: `${asset.file_name ?? "File"} · ${projectTitleById.get(asset.project_id) ?? "Project"}`,
       at: asset.created_at,
+      projectId: asset.project_id,
       projectTitle: projectTitleById.get(asset.project_id) ?? null,
     });
   }
-  for (const project of activityProjects) {
+  for (const project of projects) {
     if (project.status === "review" || project.status === "in_progress") {
       activity.push({
         id: `phase-${project.id}-${project.updated_at}`,
@@ -428,19 +420,21 @@ export async function loadClientWorkspace(
         title: `Project ${project.status === "review" ? "in review" : "in progress"}`,
         description: project.title,
         at: project.updated_at,
+        projectId: project.id,
         projectTitle: project.title,
       });
     }
   }
   for (const action of actionsWithLinks.filter(
     (item) => item.status === "completed",
-  ).slice(0, 6)) {
+  ).slice(0, 12)) {
     activity.push({
       id: `done-${action.id}`,
       kind: "action_completed",
       title: "Action completed",
       description: action.title,
       at: action.completed_at ?? action.updated_at,
+      projectId: action.project_id,
       projectTitle: action.project?.title ?? null,
     });
   }
@@ -451,19 +445,22 @@ export async function loadClientWorkspace(
     freelancer: freelancersById.get(project.freelancer_id) ?? null,
   })) as ClientProject[];
 
-  const activeProject =
-    clientProjects.find((project) => project.id === vaultProjectRow.id) ??
+  const defaultFocus =
+    clientProjects.find((project) => !isCompletedProject(project.status)) ??
     clientProjects[0] ??
     null;
 
-  // Prefer brand from filtered/vault project; fall back to most recent active.
   const brand =
-    activeProject?.freelancer ??
-    clientProjects.find((project) => !isCompletedProject(project.status))
-      ?.freelancer ??
+    (filterProjectId
+      ? clientProjects.find((project) => project.id === filterProjectId)
+      : null
+    )?.freelancer ??
+    defaultFocus?.freelancer ??
     clientProjects[0]?.freelancer ??
     null;
 
+  // Return the full unscoped workspace. Clients call scopeClientHomeData
+  // for instant ?project= filtering without an RSC refetch.
   return {
     projects: clientProjects,
     selectedProjectId: filterProjectId,
@@ -483,9 +480,107 @@ export async function loadClientWorkspace(
     amountDueCents,
     nextPaymentDate,
     nextAction: pickNextRequiredAction(actionsWithLinks),
-    upcoming: upcoming.slice(0, 6),
+    upcoming: upcoming.slice(0, 12),
+    activity: activity.slice(0, 24),
+    activeProject: defaultFocus,
+  };
+}
+
+/**
+ * Filter already-loaded client workspace data by project (no network / RSC).
+ * Pass null for “All projects”.
+ */
+export function scopeClientHomeData(
+  home: ClientHomeData,
+  selectedProjectId: string | null,
+): ClientHomeData {
+  const filterProjectId =
+    selectedProjectId &&
+    home.projects.some((project) => project.id === selectedProjectId)
+      ? selectedProjectId
+      : null;
+
+  const invoices = filterProjectId
+    ? home.invoices.filter((invoice) => invoice.project_id === filterProjectId)
+    : home.invoices;
+  const actions = filterProjectId
+    ? home.actions.filter((action) => action.project_id === filterProjectId)
+    : home.actions;
+  const allDeliverables = filterProjectId
+    ? home.allDeliverables.filter(
+        (asset) => asset.project_id === filterProjectId,
+      )
+    : home.allDeliverables;
+  const activity = filterProjectId
+    ? home.activity.filter((item) => item.projectId === filterProjectId)
+    : home.activity;
+  const upcoming = filterProjectId
+    ? home.upcoming.filter((item) => item.projectId === filterProjectId)
+    : home.upcoming;
+
+  const focusProject =
+    (filterProjectId
+      ? home.projects.find((project) => project.id === filterProjectId)
+      : null) ??
+    home.projects.find((project) => !isCompletedProject(project.status)) ??
+    home.projects[0] ??
+    null;
+
+  const assets = filterProjectId
+    ? home.assets.filter((asset) => asset.project_id === filterProjectId)
+    : focusProject
+      ? home.assets.filter((asset) => asset.project_id === focusProject.id)
+      : [];
+
+  const pendingInvoices = invoices.filter(
+    (invoice) => invoice.status === "pending",
+  );
+  const amountDueCents = pendingInvoices.reduce(
+    (sum, invoice) => sum + invoice.amount,
+    0,
+  );
+  const datedPending = pendingInvoices
+    .filter((invoice) => invoice.due_date)
+    .sort((a, b) => String(a.due_date).localeCompare(String(b.due_date)));
+  const nextPaymentDate =
+    datedPending[0]?.due_date ??
+    pendingInvoices
+      .slice()
+      .sort((a, b) => a.created_at.localeCompare(b.created_at))[0]
+      ?.created_at?.slice(0, 10) ??
+    null;
+
+  const brand =
+    focusProject?.freelancer ??
+    home.projects.find((project) => !isCompletedProject(project.status))
+      ?.freelancer ??
+    home.projects[0]?.freelancer ??
+    home.brand;
+
+  const invoicesHref = filterProjectId
+    ? `/dashboard/invoices?project=${filterProjectId}`
+    : "/dashboard/invoices";
+  const homeHref = filterProjectId
+    ? `/dashboard?project=${filterProjectId}`
+    : "/dashboard";
+
+  return {
+    ...home,
+    selectedProjectId: filterProjectId,
+    invoices,
+    actions,
+    allDeliverables,
+    assets,
     activity: activity.slice(0, 12),
-    activeProject,
+    upcoming: upcoming.slice(0, 6).map((item) => ({
+      ...item,
+      href: item.kind === "invoice_due" ? invoicesHref : homeHref,
+    })),
+    amountDueCents,
+    nextPaymentDate,
+    nextAction: pickNextRequiredAction(actions),
+    activeProject: focusProject,
+    brand,
   };
 }
 

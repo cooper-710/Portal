@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { FolderKanban } from "lucide-react";
 
 import { Select } from "@/components/ui/select";
@@ -16,18 +15,32 @@ type ProjectFilterProps = {
   /** null = All projects */
   value: string | null;
   className?: string;
-  /** Path to navigate when the filter changes (query `project` is set/cleared). */
+  /** Path used when writing `?project=` via soft history replace. */
   basePath?: string;
+  /** Called immediately when the filter changes (before any navigation). */
+  onChange?: (projectId: string | null) => void;
 };
+
+/** Soft-replace `?project=` without triggering a Next.js RSC navigation. */
+export function softReplaceProjectQuery(
+  basePath: string,
+  projectId: string | null,
+) {
+  const url = projectId ? `${basePath}?project=${projectId}` : basePath;
+  window.history.replaceState(
+    window.history.state,
+    "",
+    url,
+  );
+}
 
 export function ProjectFilter({
   projects,
   value,
   className,
   basePath = "/dashboard",
+  onChange,
 }: ProjectFilterProps) {
-  const router = useRouter();
-
   const options = [
     { value: "", label: "All projects" },
     ...projects.map((project) => ({
@@ -36,10 +49,10 @@ export function ProjectFilter({
     })),
   ];
 
-  function onChange(next: string) {
-    router.push(next ? `${basePath}?project=${next}` : basePath, {
-      scroll: false,
-    });
+  function handleChange(next: string) {
+    const projectId = next || null;
+    softReplaceProjectQuery(basePath, projectId);
+    onChange?.(projectId);
   }
 
   return (
@@ -51,7 +64,7 @@ export function ProjectFilter({
       <Select
         aria-label="Filter by project"
         value={value ?? ""}
-        onChange={onChange}
+        onChange={handleChange}
         options={options}
         branded
         triggerClassName="h-9 font-medium shadow-sm"
