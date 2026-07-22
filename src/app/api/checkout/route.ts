@@ -4,6 +4,7 @@ import Stripe from "stripe";
 import type { Invoice, Project, Profile } from "@/types/database";
 import { logEvent, requestContext } from "@/lib/monitoring";
 import { calculatePlatformApplicationFeeCents } from "@/utils/stripe/application-fee";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 
 export async function POST(request: Request) {
@@ -19,6 +20,13 @@ export async function POST(request: Request) {
         error:
           "Stripe is not configured. Add STRIPE_SECRET_KEY (sk_test_...) to .env.local and restart the server.",
       },
+      { status: 503 },
+    );
+  }
+
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json(
+      { error: "Payment processing is temporarily unavailable." },
       { status: 503 },
     );
   }
@@ -164,7 +172,8 @@ export async function POST(request: Request) {
         ? session.payment_intent
         : session.payment_intent?.id ?? null;
 
-    await supabase
+    const admin = createAdminClient();
+    await admin
       .from("invoices")
       .update({
         stripe_checkout_session_id: session.id,

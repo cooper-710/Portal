@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 
 function safeAppPath(value: string | null, fallback: string) {
@@ -36,7 +37,8 @@ async function syncConnectStatus() {
   const stripe = new Stripe(stripeSecret);
   const account = await stripe.accounts.retrieve(profile.stripe_account_id);
 
-  const { error } = await supabase
+  const admin = createAdminClient();
+  const { error } = await admin
     .from("users")
     .update({
       stripe_charges_enabled: account.charges_enabled ?? false,

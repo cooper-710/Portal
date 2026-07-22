@@ -9,6 +9,7 @@ import {
 import { createClient } from "@/utils/supabase/server";
 import { validateCriticalEnv } from "@/utils/env";
 import { logEvent, requestContext } from "@/lib/monitoring";
+import { createAdminClient } from "@/utils/supabase/admin";
 
 /**
  * Create a Stripe Checkout Session for Portal Pro (14-day trial, then monthly).
@@ -119,7 +120,8 @@ export async function POST(request: Request) {
       });
       customerId = customer.id;
 
-      const { error } = await supabase
+      const admin = createAdminClient();
+      const { error } = await admin
         .from("users")
         .update({ stripe_customer_id: customerId })
         .eq("id", user.id);

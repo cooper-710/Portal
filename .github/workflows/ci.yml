@@ -44,6 +44,15 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      - name: Start local Supabase
+        run: npx supabase start
+
+      - name: Migration reset
+        run: npm run test:migrations
+
+      - name: Database and RLS tests
+        run: npm run test:rls
+
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
@@ -52,3 +61,7 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Stop local Supabase
+        if: always()
+        run: npx supabase stop --no-backup

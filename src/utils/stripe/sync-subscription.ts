@@ -3,7 +3,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database, PlatformSubscriptionStatus } from "@/types/database";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { createClient } from "@/utils/supabase/server";
 
 type UsersClient = SupabaseClient<Database>;
 
@@ -60,41 +59,25 @@ function subscriptionPayload(
 }
 
 /**
- * Prefer service role (webhooks). Fall back to the caller's authenticated
- * client so Checkout return-path sync works without SUPABASE_SERVICE_ROLE_KEY
- * (users may update their own subscription columns via RLS).
- * When requireAdmin is true (webhook path), never fall back, fail loudly.
+ * Subscription and entitlement fields are server-managed. All writes require
+ * the service role, including Checkout return-path reconciliation.
  */
 async function resolveUsersClient(
   preferred?: UsersClient | null,
   requireAdmin = false,
 ): Promise<
-  | { ok: true; client: UsersClient; via: "admin" | "user" }
+  | { ok: true; client: UsersClient }
   | { ok: false; error: string }
 > {
+  void preferred;
+  void requireAdmin;
   if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return { ok: true, client: createAdminClient(), via: "admin" };
+    return { ok: true, client: createAdminClient() };
   }
-  if (requireAdmin) {
-    return {
-      ok: false,
-      error:
-        "Missing SUPABASE_SERVICE_ROLE_KEY. Webhook subscription sync cannot proceed.",
-    };
-  }
-  if (preferred) {
-    return { ok: true, client: preferred, via: "user" };
-  }
-  try {
-    const userClient = await createClient();
-    return { ok: true, client: userClient, via: "user" };
-  } catch {
-    return {
-      ok: false,
-      error:
-        "Missing SUPABASE_SERVICE_ROLE_KEY and no authenticated Supabase client available.",
-    };
-  }
+  return {
+    ok: false,
+    error: "Missing SUPABASE_SERVICE_ROLE_KEY for subscription sync.",
+  };
 }
 
 export async function syncPlatformSubscription(
@@ -102,9 +85,9 @@ export async function syncPlatformSubscription(
   options?: {
     customerId?: string | null;
     freelancerId?: string | null;
-    /** Authenticated server client for return-path sync without service role. */
+    /** Legacy call-site option; financial writes still require service role. */
     supabase?: UsersClient | null;
-    /** Webhooks must require service-role writes (no silent user-client fallback). */
+    /** Retained for call-site clarity; all paths now require service role. */
     requireAdmin?: boolean;
   },
 ) {
@@ -116,7 +99,7 @@ export async function syncPlatformSubscription(
     return { ok: false as const, error: resolved.error };
   }
 
-  const { client, via } = resolved;
+  const { client } = resolved;
   const customerId =
     options?.customerId ??
     (typeof subscription.customer === "string"
@@ -152,20 +135,6 @@ export async function syncPlatformSubscription(
   }
 
   if (freelancerId) {
-    // User-scoped client can only update the signed-in row (RLS).
-    if (via === "user") {
-      const {
-        data: { user },
-      } = await client.auth.getUser();
-      if (!user || user.id !== freelancerId) {
-        return {
-          ok: false as const,
-          error:
-            "Authenticated session does not match freelancer_id for subscription sync.",
-        };
-      }
-    }
-
     if (await alreadySynced({ column: "id", value: freelancerId })) {
       return { ok: true as const, alreadySynced: true as const };
     }
@@ -190,37 +159,6 @@ export async function syncPlatformSubscription(
   }
 
   if (customerId) {
-    if (via === "user") {
-      // Without freelancer id, only safe to update the signed-in user's row
-      // when their stripe_customer_id already matches.
-      const {
-        data: { user },
-      } = await client.auth.getUser();
-      if (!user) {
-        return { ok: false as const, error: "Not authenticated for subscription sync." };
-      }
-      if (await alreadySynced({ column: "id", value: user.id })) {
-        return { ok: true as const, alreadySynced: true as const };
-      }
-      const { data, error } = await client
-        .from("users")
-        .update(payload)
-        .eq("id", user.id)
-        .eq("stripe_customer_id", customerId)
-        .select("id")
-        .maybeSingle();
-      if (error) {
-        return { ok: false as const, error: error.message };
-      }
-      if (!data) {
-        return {
-          ok: false as const,
-          error: "No matching user row for Stripe customer (user sync).",
-        };
-      }
-      return { ok: true as const };
-    }
-
     if (await alreadySynced({ column: "stripe_customer_id", value: customerId })) {
       return { ok: true as const, alreadySynced: true as const };
     }

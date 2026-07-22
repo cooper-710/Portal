@@ -1,7 +1,6 @@
 import Stripe from "stripe";
 
 import { createAdminClient } from "@/utils/supabase/admin";
-import { createClient } from "@/utils/supabase/server";
 
 function paymentIntentIdFromSession(session: Stripe.Checkout.Session) {
   return typeof session.payment_intent === "string"
@@ -11,14 +10,14 @@ function paymentIntentIdFromSession(session: Stripe.Checkout.Session) {
 
 /**
  * Mark an invoice paid from a verified Stripe Checkout session.
- * Prefers the service-role client (webhook); falls back to authenticated RPC
- * on Checkout return paths. Webhooks must pass requireAdmin so a missing
- * SUPABASE_SERVICE_ROLE_KEY fails loudly instead of silently no-oping.
+ * Uses the service-role client for all payment-state writes. Authenticated
+ * users are never allowed to mark invoices paid or persist Stripe identifiers.
  */
 export async function markInvoicePaidFromSession(
   session: Stripe.Checkout.Session,
   options?: { preferAdmin?: boolean; requireAdmin?: boolean },
 ) {
+  void options;
   const invoiceId = session.metadata?.invoice_id;
   if (!invoiceId) {
     return { ok: false as const, error: "Missing invoice_id in session metadata." };
@@ -29,83 +28,58 @@ export async function markInvoicePaidFromSession(
   }
 
   const paymentIntentId = paymentIntentIdFromSession(session);
-  const requireAdmin = options?.requireAdmin === true;
-  const preferAdmin =
-    requireAdmin ||
-    (options?.preferAdmin ?? Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY));
-
-  if (preferAdmin) {
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      return {
-        ok: false as const,
-        error:
-          "Missing SUPABASE_SERVICE_ROLE_KEY. Webhook/admin invoice updates cannot proceed.",
-      };
-    }
-
-    const admin = createAdminClient();
-
-    // Idempotency: Stripe may deliver the same event more than once.
-    const { data: existing, error: existingError } = await admin
-      .from("invoices")
-      .select("id, status, stripe_checkout_session_id")
-      .eq("id", invoiceId)
-      .maybeSingle();
-
-    if (existingError) {
-      return { ok: false as const, error: existingError.message };
-    }
-    if (!existing) {
-      return { ok: false as const, error: "Invoice not found for session metadata." };
-    }
-    if (
-      existing.status === "paid" &&
-      (existing.stripe_checkout_session_id === session.id ||
-        existing.stripe_checkout_session_id != null)
-    ) {
-      return { ok: true as const, invoiceId, alreadyPaid: true as const };
-    }
-
-    const { error } = await admin
-      .from("invoices")
-      .update({
-        status: "paid",
-        stripe_checkout_session_id: session.id,
-        stripe_payment_intent_id: paymentIntentId,
-      })
-      .eq("id", invoiceId);
-
-    if (error) {
-      return { ok: false as const, error: error.message };
-    }
-
-    await admin
-      .from("client_actions")
-      .update({
-        status: "completed",
-        completed_at: new Date().toISOString(),
-      })
-      .eq("invoice_id", invoiceId)
-      .eq("status", "open");
-
-    return { ok: true as const, invoiceId };
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return {
+      ok: false as const,
+      error:
+        "Missing SUPABASE_SERVICE_ROLE_KEY. Payment-state writes cannot proceed.",
+    };
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.rpc("mark_invoice_paid", {
-    p_invoice_id: invoiceId,
-    p_checkout_session_id: session.id,
-    p_payment_intent_id: paymentIntentId,
-  });
+  const admin = createAdminClient();
+
+  // Idempotency: Stripe may deliver the same event more than once.
+  const { data: existing, error: existingError } = await admin
+    .from("invoices")
+    .select("id, status, stripe_checkout_session_id")
+    .eq("id", invoiceId)
+    .maybeSingle();
+
+  if (existingError) {
+    return { ok: false as const, error: existingError.message };
+  }
+  if (!existing) {
+    return { ok: false as const, error: "Invoice not found for session metadata." };
+  }
+  if (
+    existing.status === "paid" &&
+    (existing.stripe_checkout_session_id === session.id ||
+      existing.stripe_checkout_session_id != null)
+  ) {
+    return { ok: true as const, invoiceId, alreadyPaid: true as const };
+  }
+
+  const { error } = await admin
+    .from("invoices")
+    .update({
+      status: "paid",
+      stripe_checkout_session_id: session.id,
+      stripe_payment_intent_id: paymentIntentId,
+    })
+    .eq("id", invoiceId);
 
   if (error) {
     return { ok: false as const, error: error.message };
   }
 
-  const { completeClientActionsForInvoice } = await import(
-    "@/lib/client-actions"
-  );
-  await completeClientActionsForInvoice(supabase, invoiceId);
+  await admin
+    .from("client_actions")
+    .update({
+      status: "completed",
+      completed_at: new Date().toISOString(),
+    })
+    .eq("invoice_id", invoiceId)
+    .eq("status", "open");
 
   return { ok: true as const, invoiceId };
 }
@@ -126,5 +100,8 @@ export async function syncCheckoutSessionById(sessionId: string) {
     };
   }
 
-  return markInvoicePaidFromSession(session, { preferAdmin: false });
+  return markInvoicePaidFromSession(session, {
+    preferAdmin: true,
+    requireAdmin: true,
+  });
 }

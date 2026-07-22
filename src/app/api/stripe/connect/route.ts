@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 
 function getStripe() {
@@ -28,6 +29,13 @@ export async function POST(request: Request) {
   if (!stripe) {
     return NextResponse.json(
       { error: "Stripe is not configured." },
+      { status: 503 },
+    );
+  }
+
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json(
+      { error: "Stripe Connect is temporarily unavailable." },
       { status: 503 },
     );
   }
@@ -81,7 +89,8 @@ export async function POST(request: Request) {
       });
       accountId = account.id;
 
-      const { error } = await supabase
+      const admin = createAdminClient();
+      const { error } = await admin
         .from("users")
         .update({
           stripe_account_id: accountId,
