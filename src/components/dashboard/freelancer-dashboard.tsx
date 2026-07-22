@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowUpRight,
   ChevronDown,
@@ -26,10 +26,15 @@ import {
 } from "@/components/dashboard/latest-deliverables";
 import { NewProjectDialog } from "@/components/dashboard/new-project-dialog";
 import { PaymentDueCalendar } from "@/components/dashboard/payment-due-calendar";
+import {
+  ProjectFilter,
+  softReplaceProjectQuery,
+} from "@/components/dashboard/project-filter";
 import { ProjectOwnerActions } from "@/components/dashboard/project-owner-actions";
 import { ProjectPhaseSelector } from "@/components/dashboard/project-phase-selector";
 import {
   InvoiceStatusBadge,
+  ProjectNamePill,
   ProjectStatusBadge,
 } from "@/components/dashboard/status-badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -46,6 +51,7 @@ type FreelancerDashboardProps = {
   projects: FreelancerProject[];
   invoices: InvoiceWithProject[];
   deliverables: DeliverableListItem[];
+  selectedProjectId?: string | null;
 };
 
 export function FreelancerDashboard({
@@ -53,15 +59,42 @@ export function FreelancerDashboard({
   projects,
   invoices,
   deliverables,
+  selectedProjectId = null,
 }: FreelancerDashboardProps) {
   const router = useRouter();
   const [showCompleted, setShowCompleted] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [filterProjectId, setFilterProjectId] = useState(selectedProjectId);
 
-  const pendingInvoices = invoices.filter((invoice) => invoice.status === "pending");
-  const paidInvoices = invoices.filter((invoice) => invoice.status === "paid");
-  const pendingTotal = pendingInvoices.reduce((sum, invoice) => sum + invoice.amount, 0);
-  const paidTotal = paidInvoices.reduce((sum, invoice) => sum + invoice.amount, 0);
+  useEffect(() => {
+    setFilterProjectId(selectedProjectId);
+  }, [selectedProjectId]);
+
+  const visibleInvoices = filterProjectId
+    ? invoices.filter((invoice) => invoice.project_id === filterProjectId)
+    : invoices;
+  const pendingInvoices = visibleInvoices.filter(
+    (invoice) => invoice.status === "pending",
+  );
+  const paidInvoices = visibleInvoices.filter(
+    (invoice) => invoice.status === "paid",
+  );
+  const pendingTotal = pendingInvoices.reduce(
+    (sum, invoice) => sum + invoice.amount,
+    0,
+  );
+  const paidTotal = paidInvoices.reduce(
+    (sum, invoice) => sum + invoice.amount,
+    0,
+  );
+  const invoicesHref = filterProjectId
+    ? `/dashboard/invoices?project=${filterProjectId}`
+    : "/dashboard/invoices";
+
+  function selectProject(projectId: string) {
+    softReplaceProjectQuery("/dashboard", projectId);
+    setFilterProjectId(projectId);
+  }
   const activeProjects = projects.filter(
     (project) => !isCompletedProject(project.status),
   );
@@ -85,26 +118,39 @@ export function FreelancerDashboard({
           </h1>
           <p className="text-sm text-zinc-500">{displayName(profile)}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <CreateInvoiceDialog
-            projects={projects.map((project) => ({
-              id: project.id,
-              title: project.title,
-            }))}
-            triggerVariant="outline"
-            triggerClassName="border-zinc-200 bg-white shadow-sm hover:border-zinc-300 hover:bg-zinc-50"
-            onCreated={setMessage}
-          />
-          <NewProjectDialog
-            onCreated={(result) => {
-              setMessage(
-                result?.inviteSent
-                  ? "Project created and invite emailed to the client."
-                  : "Project created.",
-              );
-              router.refresh();
-            }}
-          />
+        <div className="flex flex-col items-stretch gap-3 sm:items-end">
+          {projects.length > 0 ? (
+            <ProjectFilter
+              projects={projects.map((project) => ({
+                id: project.id,
+                title: project.title,
+              }))}
+              value={filterProjectId}
+              onChange={setFilterProjectId}
+              basePath="/dashboard"
+            />
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            <CreateInvoiceDialog
+              projects={projects.map((project) => ({
+                id: project.id,
+                title: project.title,
+              }))}
+              triggerVariant="outline"
+              triggerClassName="border-zinc-200 bg-white shadow-sm hover:border-zinc-300 hover:bg-zinc-50"
+              onCreated={setMessage}
+            />
+            <NewProjectDialog
+              onCreated={(result) => {
+                setMessage(
+                  result?.inviteSent
+                    ? "Project created and invite emailed to the client."
+                    : "Project created.",
+                );
+                router.refresh();
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -163,7 +209,7 @@ export function FreelancerDashboard({
                 </div>
               </div>
               <Link
-                href="/dashboard/invoices"
+                href={invoicesHref}
                 className={cn(
                   buttonVariants({ size: "sm" }),
                   "shrink-0 shadow-sm",
@@ -181,41 +227,62 @@ export function FreelancerDashboard({
                 icon={Receipt}
                 className="border-0 bg-transparent py-6"
                 title="No pending invoices"
-                description="Create an invoice when you’re ready to bill a client."
+                description={
+                  filterProjectId
+                    ? "No pending invoices for this project."
+                    : "Create an invoice when you’re ready to bill a client."
+                }
               />
             ) : (
               <ul className="grid gap-2.5">
-                {pendingInvoices.map((invoice) => (
-                  <li
-                    key={invoice.id}
-                    className="group flex w-full items-center justify-between gap-3 rounded-xl border border-amber-200/70 bg-white p-3.5 text-left shadow-sm transition-all hover:border-amber-300 hover:shadow-md"
-                  >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        router.push(`/dashboard/projects/${invoice.project_id}`)
-                      }
-                      className="min-w-0 flex-1 space-y-1 text-left"
+                {pendingInvoices.map((invoice) => {
+                  const projectTitle =
+                    invoice.project?.title ?? "Untitled project";
+                  return (
+                    <li
+                      key={invoice.id}
+                      className="group flex w-full items-center justify-between gap-3 rounded-xl border border-amber-200/70 bg-white p-3.5 text-left shadow-sm transition-all hover:border-amber-300 hover:shadow-md"
                     >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate text-sm font-semibold text-zinc-900">
-                          {formatMoney(invoice.amount, invoice.currency)}
-                        </p>
-                        <InvoiceStatusBadge status="pending" />
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              router.push(
+                                `/dashboard/projects/${invoice.project_id}`,
+                              )
+                            }
+                            className="truncate text-sm font-semibold text-zinc-900 hover:underline"
+                          >
+                            {formatMoney(invoice.amount, invoice.currency)}
+                          </button>
+                          <InvoiceStatusBadge status="pending" />
+                          <ProjectNamePill
+                            title={projectTitle}
+                            onClick={() => selectProject(invoice.project_id)}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            router.push(
+                              `/dashboard/projects/${invoice.project_id}`,
+                            )
+                          }
+                          className="block w-full truncate text-left text-xs text-zinc-500 hover:text-zinc-700"
+                        >
+                          {new Date(invoice.created_at).toLocaleDateString()}
+                        </button>
                       </div>
-                      <p className="truncate text-xs text-zinc-500">
-                        {invoice.project?.title ?? "Untitled project"} ·{" "}
-                        {new Date(invoice.created_at).toLocaleDateString()}
-                      </p>
-                    </button>
-                    <InvoiceOwnerActions
-                      invoice={invoice}
-                      projectTitle={invoice.project?.title}
-                      onMessage={setMessage}
-                      compact
-                    />
-                  </li>
-                ))}
+                      <InvoiceOwnerActions
+                        invoice={invoice}
+                        projectTitle={projectTitle}
+                        onMessage={setMessage}
+                        compact
+                      />
+                    </li>
+                  );
+                })}
               </ul>
             )}
 
@@ -226,29 +293,35 @@ export function FreelancerDashboard({
                     Recently paid
                   </p>
                   <Link
-                    href="/dashboard/invoices"
+                    href={invoicesHref}
                     className="text-[11px] font-medium text-blue-700 hover:underline"
                   >
                     All invoices
                   </Link>
                 </div>
                 <ul className="grid gap-2">
-                  {paidInvoices.slice(0, 3).map((invoice) => (
-                    <li
-                      key={invoice.id}
-                      className="flex items-center justify-between gap-2 rounded-lg border border-zinc-200/80 bg-zinc-50/70 px-3 py-2"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-zinc-800">
-                          {formatMoney(invoice.amount, invoice.currency)}
-                        </p>
-                        <p className="truncate text-[11px] text-zinc-500">
-                          {invoice.project?.title ?? "-"}
-                        </p>
-                      </div>
-                      <InvoiceStatusBadge status="paid" />
-                    </li>
-                  ))}
+                  {paidInvoices.slice(0, 3).map((invoice) => {
+                    const projectTitle = invoice.project?.title ?? "-";
+                    return (
+                      <li
+                        key={invoice.id}
+                        className="flex items-center justify-between gap-2 rounded-lg border border-zinc-200/80 bg-zinc-50/70 px-3 py-2"
+                      >
+                        <div className="min-w-0 space-y-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <p className="truncate text-sm font-medium text-zinc-800">
+                              {formatMoney(invoice.amount, invoice.currency)}
+                            </p>
+                            <ProjectNamePill
+                              title={projectTitle}
+                              onClick={() => selectProject(invoice.project_id)}
+                            />
+                          </div>
+                        </div>
+                        <InvoiceStatusBadge status="paid" />
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             ) : null}
@@ -460,8 +533,16 @@ export function FreelancerDashboard({
       </div>
 
       <div className="grid items-stretch gap-5 lg:grid-cols-2 lg:gap-6">
-        <PaymentDueCalendar invoices={invoices} linkMode="project" />
-        <LatestDeliverables items={deliverables} />
+        <PaymentDueCalendar invoices={visibleInvoices} linkMode="project" />
+        <LatestDeliverables
+          items={
+            filterProjectId
+              ? deliverables.filter(
+                  (item) => item.project_id === filterProjectId,
+                )
+              : deliverables
+          }
+        />
       </div>
     </div>
   );

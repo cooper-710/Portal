@@ -78,3 +78,36 @@ export function InvoiceStatusBadge({
     </span>
   );
 }
+
+/** Compact project chip for invoice rows (pairs visually with status badges). */
+export function ProjectNamePill({
+  title,
+  className,
+  onClick,
+}: {
+  title: string;
+  className?: string;
+  /** When set, renders a button that can drive the project filter. */
+  onClick?: () => void;
+}) {
+  const classes = cn(
+    "inline-flex max-w-[12rem] items-center truncate rounded-full border border-[color:var(--brand-primary,#2563eb)]/25 bg-[color:var(--brand-primary-soft,#2563eb14)] px-2.5 py-1 text-[11px] font-semibold tracking-wide text-[color:var(--brand-primary,#1d4ed8)]",
+    onClick &&
+      "cursor-pointer transition-colors hover:border-[color:var(--brand-primary,#2563eb)]/40 hover:bg-[color:var(--brand-primary,#2563eb)]/10",
+    className,
+  );
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={classes} title={title}>
+        {title}
+      </button>
+    );
+  }
+
+  return (
+    <span className={classes} title={title}>
+      {title}
+    </span>
+  );
+}

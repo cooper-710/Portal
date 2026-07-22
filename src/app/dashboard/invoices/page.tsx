@@ -50,6 +50,7 @@ export default async function DashboardInvoicesPage({
         <FreelancerInvoicesView
           profile={profile}
           connectStatus={params.connect ?? null}
+          selectedProjectId={params.project ?? null}
         />
       ) : (
         <ClientInvoicesView
@@ -64,9 +65,11 @@ export default async function DashboardInvoicesPage({
 async function FreelancerInvoicesView({
   profile,
   connectStatus,
+  selectedProjectId,
 }: {
   profile: Profile;
   connectStatus: string | null;
+  selectedProjectId: string | null;
 }) {
   if (!freelancerHasWorkspaceAccess(profile)) {
     return (
@@ -79,12 +82,18 @@ async function FreelancerInvoicesView({
   }
 
   const { projects, invoices } = await loadFreelancerWorkspace(profile.id);
+  const filterProjectId =
+    selectedProjectId && projects.some((project) => project.id === selectedProjectId)
+      ? selectedProjectId
+      : null;
+
   return (
     <FreelancerInvoicesPage
       profile={profile}
       projects={projects}
       invoices={invoices}
       connectStatus={connectStatus}
+      selectedProjectId={filterProjectId}
     />
   );
 }

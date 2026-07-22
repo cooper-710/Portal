@@ -5,8 +5,14 @@ import { CircleDollarSign, CreditCard, Loader2, Receipt } from "lucide-react";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { PaymentDueCalendar } from "@/components/dashboard/payment-due-calendar";
-import { ProjectFilter } from "@/components/dashboard/project-filter";
-import { InvoiceStatusBadge } from "@/components/dashboard/status-badge";
+import {
+  ProjectFilter,
+  softReplaceProjectQuery,
+} from "@/components/dashboard/project-filter";
+import {
+  InvoiceStatusBadge,
+  ProjectNamePill,
+} from "@/components/dashboard/status-badge";
 import { Button } from "@/components/ui/button";
 import type { InvoiceWithProject } from "@/lib/client-home-scope";
 import { formatMoney, displayName } from "@/lib/format";
@@ -60,6 +66,11 @@ export function ClientInvoicesPage({
     (sum, invoice) => sum + invoice.amount,
     0,
   );
+
+  function selectProject(projectId: string) {
+    softReplaceProjectQuery("/dashboard/invoices", projectId);
+    setFilterProjectId(projectId);
+  }
 
   async function payInvoice(invoiceId: string) {
     setPayingId(invoiceId);
@@ -202,36 +213,43 @@ export function ClientInvoicesPage({
               />
             ) : (
               <ul className="grid gap-2.5">
-                {pendingInvoices.map((invoice) => (
-                  <li
-                    key={invoice.id}
-                    className="flex flex-col gap-3 rounded-xl border border-amber-200/70 bg-white p-3.5 shadow-sm transition-all hover:border-amber-300 hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div className="min-w-0 space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-semibold text-zinc-900">
-                          {formatMoney(invoice.amount, invoice.currency)}
-                        </p>
-                        <InvoiceStatusBadge status="pending" />
-                      </div>
-                      <p className="truncate text-xs text-zinc-500">
-                        {invoice.project?.title ?? "Project invoice"} ·{" "}
-                        {new Date(invoice.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <Button
-                      size="sm"
-                      className="w-full bg-amber-600 text-white shadow-sm hover:bg-amber-700 sm:w-auto"
-                      disabled={payingId === invoice.id}
-                      onClick={() => void payInvoice(invoice.id)}
+                {pendingInvoices.map((invoice) => {
+                  const projectTitle =
+                    invoice.project?.title ?? "Project invoice";
+                  return (
+                    <li
+                      key={invoice.id}
+                      className="flex flex-col gap-3 rounded-xl border border-amber-200/70 bg-white p-3.5 shadow-sm transition-all hover:border-amber-300 hover:shadow-md sm:flex-row sm:items-center sm:justify-between"
                     >
-                      {payingId === invoice.id ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : null}
-                      Pay now
-                    </Button>
-                  </li>
-                ))}
+                      <div className="min-w-0 space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm font-semibold text-zinc-900">
+                            {formatMoney(invoice.amount, invoice.currency)}
+                          </p>
+                          <InvoiceStatusBadge status="pending" />
+                          <ProjectNamePill
+                            title={projectTitle}
+                            onClick={() => selectProject(invoice.project_id)}
+                          />
+                        </div>
+                        <p className="truncate text-xs text-zinc-500">
+                          {new Date(invoice.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        className="w-full bg-amber-600 text-white shadow-sm hover:bg-amber-700 sm:w-auto"
+                        disabled={payingId === invoice.id}
+                        onClick={() => void payInvoice(invoice.id)}
+                      >
+                        {payingId === invoice.id ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : null}
+                        Pay now
+                      </Button>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
@@ -249,23 +267,31 @@ export function ClientInvoicesPage({
               />
             ) : (
               <ul className="grid gap-2">
-                {paidInvoices.map((invoice) => (
-                  <li
-                    key={invoice.id}
-                    className="flex items-center justify-between gap-2 rounded-xl border border-zinc-200/80 bg-zinc-50/70 px-3.5 py-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-zinc-800">
-                        {formatMoney(invoice.amount, invoice.currency)}
-                      </p>
-                      <p className="truncate text-xs text-zinc-500">
-                        {invoice.project?.title ?? "-"} ·{" "}
-                        {new Date(invoice.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <InvoiceStatusBadge status="paid" />
-                  </li>
-                ))}
+                {paidInvoices.map((invoice) => {
+                  const projectTitle = invoice.project?.title ?? "-";
+                  return (
+                    <li
+                      key={invoice.id}
+                      className="flex items-center justify-between gap-2 rounded-xl border border-zinc-200/80 bg-zinc-50/70 px-3.5 py-3"
+                    >
+                      <div className="min-w-0 space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="truncate text-sm font-medium text-zinc-800">
+                            {formatMoney(invoice.amount, invoice.currency)}
+                          </p>
+                          <ProjectNamePill
+                            title={projectTitle}
+                            onClick={() => selectProject(invoice.project_id)}
+                          />
+                        </div>
+                        <p className="truncate text-xs text-zinc-500">
+                          {new Date(invoice.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <InvoiceStatusBadge status="paid" />
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>

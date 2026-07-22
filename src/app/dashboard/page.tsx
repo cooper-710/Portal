@@ -111,7 +111,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </p>
       ) : null}
       {workingProfile.role === "freelancer" ? (
-        <FreelancerView profile={workingProfile} />
+        <FreelancerView
+          profile={workingProfile}
+          selectedProjectId={params.project ?? null}
+        />
       ) : (
         <ClientView
           profile={workingProfile}
@@ -122,7 +125,13 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   );
 }
 
-async function FreelancerView({ profile }: { profile: Profile }) {
+async function FreelancerView({
+  profile,
+  selectedProjectId,
+}: {
+  profile: Profile;
+  selectedProjectId: string | null;
+}) {
   if (!freelancerHasWorkspaceAccess(profile)) {
     return (
       <FreelancerLockedPreview
@@ -137,12 +146,18 @@ async function FreelancerView({ profile }: { profile: Profile }) {
     profile.id,
   );
 
+  const filterProjectId =
+    selectedProjectId && projects.some((project) => project.id === selectedProjectId)
+      ? selectedProjectId
+      : null;
+
   return (
     <FreelancerDashboard
       profile={profile}
       projects={projects}
       invoices={invoices}
       deliverables={deliverables}
+      selectedProjectId={filterProjectId}
     />
   );
 }
