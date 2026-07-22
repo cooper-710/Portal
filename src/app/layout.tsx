@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DM_Sans, Geist_Mono, Syne } from "next/font/google";
+import { DM_Sans, Geist_Mono } from "next/font/google";
 
 import { isProductionRuntime, validateCriticalEnv } from "@/utils/env";
 
@@ -12,11 +12,6 @@ const dmSans = DM_Sans({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const syne = Syne({
-  variable: "--font-display",
   subsets: ["latin"],
 });
 
@@ -81,7 +76,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${dmSans.variable} ${geistMono.variable} ${syne.variable} font-sans antialiased`}
+        className={`${dmSans.variable} ${geistMono.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <ProductionEnvBanner />

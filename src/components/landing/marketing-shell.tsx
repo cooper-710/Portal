@@ -52,7 +52,7 @@ export function MarketingShell({
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 sm:px-6">
           <Link
             href="/"
-            className="font-[family-name:var(--font-display)] text-lg font-semibold leading-none tracking-tight text-zinc-900"
+            className="font-heading text-lg font-bold leading-tight tracking-tight text-zinc-900"
           >
             Portal
           </Link>
@@ -116,9 +116,14 @@ export function MarketingPageHero({
   description,
 }: MarketingPageHeroProps) {
   return (
-    <section className="relative isolate overflow-x-clip border-b border-zinc-200/80">
-      <div aria-hidden className="landing-hero-atmosphere absolute inset-0 opacity-70" />
-      <div aria-hidden className="landing-hero-grid absolute inset-0 opacity-50" />
+    <section className="relative isolate border-b border-zinc-200/80">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 overflow-x-clip"
+      >
+        <div className="landing-hero-atmosphere absolute inset-0 opacity-70" />
+        <div className="landing-hero-grid absolute inset-0 opacity-50" />
+      </div>
       <div className="relative z-10 mx-auto max-w-6xl px-4 pb-14 pt-16 sm:px-6 sm:pb-16 sm:pt-20">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
           {eyebrow}

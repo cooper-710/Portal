@@ -31,7 +31,7 @@ export function SiteFooter({ compact = false }: SiteFooterProps) {
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-5 text-sm text-zinc-500 sm:px-6">
         <Link
           href="/"
-          className="font-[family-name:var(--font-display)] font-semibold tracking-tight text-zinc-800"
+          className="font-heading font-bold tracking-tight text-zinc-800"
         >
           Portal
         </Link>

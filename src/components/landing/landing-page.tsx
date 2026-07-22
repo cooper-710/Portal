@@ -42,11 +42,17 @@ export function LandingPage() {
         {/* Hero: one composition, brand-first. Pulls under sticky header so atmosphere shows through. */}
         <section
           id="top"
-          className="relative isolate -mt-14 min-h-svh overflow-x-clip pt-14"
+          className="relative isolate -mt-14 min-h-svh pt-14"
         >
-          <div aria-hidden className="landing-hero-atmosphere absolute inset-0" />
-          <div aria-hidden className="landing-hero-grid absolute inset-0" />
-          <HeroVisual offsetY={parallaxY} />
+          {/* Clip decorative bleed only — overflow-x-clip on the section would also clip heading descenders */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 overflow-x-clip"
+          >
+            <div className="landing-hero-atmosphere absolute inset-0" />
+            <div className="landing-hero-grid absolute inset-0" />
+            <HeroVisual offsetY={parallaxY} />
+          </div>
 
           <div className="relative z-10 mx-auto flex min-h-[calc(100svh-3.5rem)] w-full max-w-6xl flex-col justify-center px-4 pb-24 pt-10 sm:px-6 sm:pb-28 sm:pt-12">
             <div className="max-w-2xl">
