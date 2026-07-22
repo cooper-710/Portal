@@ -150,7 +150,7 @@ export function FreelancerDashboard({
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200/80 bg-white/80 px-2.5 py-1 text-xs font-medium text-zinc-600 shadow-sm">
                   <CircleDollarSign className="size-3.5 text-amber-600" />
-                  Billing
+                  Invoices
                 </div>
                 <div>
                   <p className="text-xs font-medium text-zinc-500">
