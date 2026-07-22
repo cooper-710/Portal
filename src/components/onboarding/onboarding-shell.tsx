@@ -12,6 +12,7 @@ import {
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { PortalBrand } from "@/components/portal-brand";
 import {
   progressForStep,
   type OnboardingStep,
@@ -87,9 +88,10 @@ export function OnboardingShell({
       />
 
       <header className="relative z-10 mx-auto flex w-full max-w-lg items-center justify-between px-5 pt-8 sm:px-6">
-        <p className="text-sm font-semibold tracking-tight text-zinc-900">
-          Portal
-        </p>
+        <PortalBrand
+          size="sm"
+          nameClassName="text-sm font-semibold tracking-tight text-zinc-900"
+        />
         {progress ? (
           <p className="text-xs font-medium tabular-nums text-zinc-500">
             {progress.current}/{progress.total}

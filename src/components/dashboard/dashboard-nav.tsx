@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { signOut } from "@/app/actions";
+import { PortalBrand } from "@/components/portal-brand";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/types/database";
@@ -76,8 +77,15 @@ export function DashboardNav({
               alt=""
               className="h-7 w-auto max-w-[7rem] object-contain"
             />
-          ) : null}
-          <span className={brandText}>{brandLabel}</span>
+          ) : brandLabel === "Portal" ? (
+            <PortalBrand
+              size="sm"
+              nameClassName={brandText}
+            />
+          ) : (
+            <span className={brandText}>{brandLabel}</span>
+          )}
+          {brandLogoUrl ? <span className={brandText}>{brandLabel}</span> : null}
         </Link>
 
         <nav

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { authHref } from "@/components/auth/auth-modal";
+import { PortalBrand } from "@/components/portal-brand";
 import { SiteFooter } from "@/components/site-footer";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -52,9 +53,12 @@ export function MarketingShell({
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 sm:px-6">
           <Link
             href="/"
-            className="font-heading text-lg font-bold leading-tight tracking-tight text-zinc-900"
+            className="text-zinc-900 transition-opacity hover:opacity-80"
           >
-            Portal
+            <PortalBrand
+              size="sm"
+              nameClassName="font-heading text-lg font-bold leading-tight tracking-tight"
+            />
           </Link>
 
           <nav

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SiteFooter } from "@/components/site-footer";
+import { PortalBrand } from "@/components/portal-brand";
 
 export const metadata: Metadata = {
   title: "Privacy Policy · Portal",
@@ -14,7 +15,10 @@ export default function PrivacyPage() {
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-12 sm:px-6 sm:py-16">
         <p className="text-sm font-semibold tracking-tight">
           <Link href="/" className="text-zinc-900 hover:underline">
-            Portal
+            <PortalBrand
+              size="sm"
+              nameClassName="text-sm font-semibold tracking-tight"
+            />
           </Link>
         </p>
         <h1 className="mt-6 text-3xl font-semibold tracking-tight">Privacy Policy</h1>

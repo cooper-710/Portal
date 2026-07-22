@@ -23,6 +23,7 @@ const appUrl =
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
+  applicationName: "Portal",
   title: {
     default: "Portal: Client Workspace",
     template: "%s · Portal",
@@ -37,12 +38,21 @@ export const metadata: Metadata = {
     siteName: "Portal",
     type: "website",
     locale: "en_US",
+    images: [
+      {
+        url: "/portal-icon.png",
+        width: 1254,
+        height: 1254,
+        alt: "Portal app icon",
+      },
+    ],
   },
   twitter: {
-    card: "summary_large_image",
+    card: "summary",
     title: "Portal: Client Workspace",
     description:
       "Invite clients, share deliverables, and collect payment in one private portal per project.",
+    images: ["/portal-icon.png"],
   },
   robots: {
     index: true,

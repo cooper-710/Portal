@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { PortalBrand } from "@/components/portal-brand";
+
 type SiteFooterProps = {
   /** Compact footer for login / legal pages */
   compact?: boolean;
@@ -19,7 +21,10 @@ export function SiteFooter({
       <footer className="mt-auto border-t border-transparent px-4 py-6">
         <p className="text-center text-xs text-zinc-400">
           <Link href="/" className="hover:text-zinc-600">
-            Portal
+            <PortalBrand
+              size="sm"
+              nameClassName="font-medium"
+            />
           </Link>
           {" · "}
           <Link
@@ -68,9 +73,12 @@ export function SiteFooter({
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-5 text-sm text-zinc-500 sm:px-6">
         <Link
           href="/"
-          className="font-heading font-bold tracking-tight text-zinc-800"
+          className="text-zinc-800 transition-opacity hover:opacity-80"
         >
-          Portal
+          <PortalBrand
+            size="sm"
+            nameClassName="font-heading font-bold tracking-tight"
+          />
         </Link>
         <nav className="flex flex-wrap items-center gap-4">
           {links.map((item) => (
