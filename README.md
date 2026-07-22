@@ -91,6 +91,21 @@ Health check: [http://localhost:3001/api/health](http://localhost:3001/api/healt
 
 Do **not** commit `.env.local` or live secrets. Rotate `SUPABASE_SERVICE_ROLE_KEY` if it was ever exposed.
 
+### Portal Pro promotion codes (optional)
+
+SaaS Checkout already has `allow_promotion_codes: true`. Create coupons in the Stripe Dashboard only (do not hardcode codes in the app). Use **Test mode** for local/`sk_test_…` keys, and **Live mode** for Vercel production/`sk_live_…` keys — codes do not cross modes.
+
+1. Stripe Dashboard → toggle **Test mode** or **Live** to match your keys.
+2. **Product catalog → Coupons → Create coupon**
+   - Percent off: **100%**
+   - Duration: **Forever** (or **Once** if you only want the first invoice free)
+3. After the coupon saves, **Add promotion code** (or open the coupon → Promotion codes)
+   - Code: e.g. `PORTALFOUNDER` (customer-facing)
+   - Optional: set max redemptions / expiry
+4. At Portal Pro Checkout (`/dashboard/billing` → subscribe), expand **Add promotion code** and enter the code.
+
+A 100% forever code makes Portal Pro free for that customer while keeping the subscription active for webhooks and feature gates.
+
 ## Product roles
 
 - **Workspace owner** (internal role id `freelancer`): Portal Pro trial/subscription; create projects; upload files; create invoices; Connect Stripe
