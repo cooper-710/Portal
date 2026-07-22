@@ -34,7 +34,7 @@ export default function HomePage() {
               Portal
             </p>
             <Link
-              href="/login?mode=signin"
+              href="/login"
               className={cn(
                 buttonVariants({ variant: "outline", size: "sm" }),
                 "landing-fade-up landing-delay-1 border-zinc-200 bg-white shadow-sm",
@@ -66,7 +66,7 @@ export default function HomePage() {
                 <ArrowRight className="size-4" />
               </Link>
               <Link
-                href="/login?mode=signin"
+                href="/login"
                 className={cn(
                   buttonVariants({ variant: "outline", size: "lg" }),
                   "border-zinc-200 bg-white/80 shadow-sm",

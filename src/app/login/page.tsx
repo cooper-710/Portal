@@ -14,7 +14,6 @@ type LoginPageProps = {
   searchParams: Promise<{
     next?: string;
     error?: string;
-    mode?: string;
     role?: string;
   }>;
 };
@@ -22,18 +21,12 @@ type LoginPageProps = {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const initialError = params.error ?? null;
-  const initialMode = params.mode === "signin" ? "signin" : "signup";
   const signupRole = params.role === "client" ? "client" : "freelancer";
-  // Explicit ?next= wins. Otherwise: signup freelancers → billing (start trial);
-  // sign-in (and clients) → dashboard — resolvePostAuthPath upgrades/downgrades
-  // freelancers based on subscription status.
+  // Explicit ?next= wins. Otherwise freelancers → billing (start/renew trial);
+  // clients → dashboard. resolvePostAuthPath adjusts for existing subscriptions.
   const explicitNext = params.next?.startsWith("/") ? params.next : null;
   const defaultNext =
-    initialMode === "signin"
-      ? "/dashboard"
-      : signupRole === "freelancer"
-        ? "/dashboard/billing"
-        : "/dashboard";
+    signupRole === "freelancer" ? "/dashboard/billing" : "/dashboard";
   const nextPath = explicitNext ?? defaultNext;
 
   return (
@@ -54,16 +47,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </CardTitle>
           <CardDescription>
             {signupRole === "client"
-              ? "Join the project you were invited to. Continue with Google, or use email and password."
-              : "Continue with Google to start your 14-day free trial ($25/mo after). Email and password still work as a fallback."}
+              ? "Continue with Google to join the project you were invited to."
+              : "Continue with Google to sign in or start your 14-day free trial ($25/mo after)."}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <LoginForm
             nextPath={nextPath}
-            nextPathExplicit={explicitNext != null}
             initialError={initialError}
-            initialMode={initialMode}
             signupRole={signupRole}
           />
         </CardContent>

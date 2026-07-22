@@ -26,7 +26,7 @@ export async function sendProjectInvite(
   params: ProjectInviteParams,
 ): Promise<{ sent: boolean; channel?: "resend" | "supabase"; error?: string }> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
-  const portalLink = `${appUrl}/login?mode=${params.existingClient ? "signin" : "signup"}&role=client&next=${encodeURIComponent("/dashboard")}`;
+  const portalLink = `${appUrl}/login?role=client&next=${encodeURIComponent("/dashboard")}`;
   const brandName =
     params.businessName?.trim() ||
     params.freelancerName ||

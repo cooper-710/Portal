@@ -4,39 +4,15 @@ import { useState } from "react";
 import { AlertTriangle, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  FULL_NAME_MAX_LENGTH,
-  PASSWORD_MIN_LENGTH,
-  validateFullName,
-  validatePassword,
-} from "@/lib/account-validation";
-import {
-  authErrorMessage,
-  isEmailRateLimitError,
-} from "@/utils/supabase/auth-errors";
+import { authErrorMessage } from "@/utils/supabase/auth-errors";
 import { createClient } from "@/utils/supabase/client";
-
-type AuthMode = "signup" | "signin";
 
 type LoginFormProps = {
   nextPath?: string;
-  /** When false, mode switches recalculate next (signup→billing, signin→dashboard). */
-  nextPathExplicit?: boolean;
   initialError?: string | null;
-  initialMode?: AuthMode;
   /** Invite flow: provision as client instead of freelancer workspace. */
   signupRole?: "freelancer" | "client";
 };
-
-function defaultNextForMode(
-  mode: AuthMode,
-  signupRole: "freelancer" | "client",
-) {
-  if (mode === "signin") return "/dashboard";
-  return signupRole === "freelancer" ? "/dashboard/billing" : "/dashboard";
-}
 
 function GoogleGlyph({ className }: { className?: string }) {
   return (
@@ -63,48 +39,23 @@ function GoogleGlyph({ className }: { className?: string }) {
 
 export function LoginForm({
   nextPath = "/dashboard",
-  nextPathExplicit = false,
   initialError = null,
-  initialMode = "signup",
   signupRole = "freelancer",
 }: LoginFormProps) {
-  const [mode, setMode] = useState<AuthMode>(initialMode);
-  const [email, setEmail] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmSent, setConfirmSent] = useState(false);
-  const [showEmailForm, setShowEmailForm] = useState(Boolean(initialError));
-  const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(
     authErrorMessage(initialError),
   );
 
-  function switchMode(next: AuthMode) {
-    setMode(next);
-    setError(null);
-    setMessage(null);
-    setConfirmSent(false);
-    setPassword("");
-  }
-
-  const effectiveNext = nextPathExplicit
-    ? nextPath
-    : defaultNextForMode(mode, signupRole);
-
-  const busy = loading || oauthLoading;
-
   async function continueWithGoogle() {
     setOauthLoading(true);
     setError(null);
-    setMessage(null);
 
     try {
       const supabase = createClient();
       const origin = window.location.origin;
       const params = new URLSearchParams({
-        next: effectiveNext,
+        next: nextPath,
       });
       if (signupRole === "client") {
         params.set("role", "client");
@@ -133,162 +84,8 @@ export function LoginForm({
     }
   }
 
-  async function signUpWithPassword() {
-    const nameError = validateFullName(fullName);
-    if (nameError) {
-      setError(nameError);
-      return false;
-    }
-    const passwordError = validatePassword(password);
-    if (passwordError) {
-      setError(passwordError);
-      return false;
-    }
-
-    const name = fullName.trim();
-    const supabase = createClient();
-    const origin = window.location.origin;
-    const emailRedirectTo = `${origin}/auth/callback?next=${encodeURIComponent(effectiveNext)}`;
-
-    if (confirmSent) {
-      const { error: resendError } = await supabase.auth.resend({
-        type: "signup",
-        email,
-        options: { emailRedirectTo },
-      });
-      if (resendError) {
-        const code = (resendError as { code?: string }).code;
-        if (isEmailRateLimitError({ code, message: resendError.message })) {
-          setError(authErrorMessage("email_rate_limit"));
-        } else {
-          setError(resendError.message);
-        }
-        return false;
-      }
-      setMessage("Confirmation email resent. Check your inbox.");
-      return true;
-    }
-
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo,
-        data: { role: signupRole, full_name: name },
-      },
-    });
-
-    if (signUpError) {
-      const code = (signUpError as { code?: string }).code;
-      if (isEmailRateLimitError({ code, message: signUpError.message })) {
-        setError(authErrorMessage("email_rate_limit"));
-      } else {
-        setError(signUpError.message);
-      }
-      return false;
-    }
-
-    // Confirm email OFF → session returned; mark password set and continue.
-    if (data.session) {
-      await supabase
-        .from("users")
-        .update({ password_set: true, full_name: name })
-        .eq("id", data.session.user.id);
-
-      window.location.assign(
-        `/auth/continue?next=${encodeURIComponent(effectiveNext)}`,
-      );
-      return true;
-    }
-
-    // Confirm email ON → wait for confirmation link (via SMTP once configured).
-    setConfirmSent(true);
-    setMessage(
-      signupRole === "client"
-        ? "Check your email and open the confirmation link to finish joining this project."
-        : "Check your email and open the confirmation link. Then you’ll start your free trial.",
-    );
-    return true;
-  }
-
-  async function signInWithPassword() {
-    const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (signInError) {
-      const msg = signInError.message.toLowerCase();
-      if (msg.includes("invalid login") || msg.includes("invalid credentials")) {
-        setError(
-          "Incorrect email or password. New here? Use Continue with Google, or Sign up with email.",
-        );
-      } else if (
-        isEmailRateLimitError({
-          code: (signInError as { code?: string }).code,
-          message: signInError.message,
-        })
-      ) {
-        setError(authErrorMessage("email_rate_limit"));
-      } else {
-        setError(signInError.message);
-      }
-      return false;
-    }
-
-    window.location.assign(
-      `/auth/continue?next=${encodeURIComponent(effectiveNext)}`,
-    );
-    return true;
-  }
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setLoading(true);
-    setMessage(null);
-    setError(null);
-
-    try {
-      if (mode === "signin") {
-        await signInWithPassword();
-      } else {
-        await signUpWithPassword();
-      }
-    } catch {
-      setError(authErrorMessage("exchange_failed"));
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 gap-1 rounded-lg border border-zinc-200 bg-zinc-100 p-1">
-        <button
-          type="button"
-          onClick={() => switchMode("signup")}
-          className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-            mode === "signup"
-              ? "bg-white text-zinc-900 shadow-sm"
-              : "text-muted-foreground hover:text-zinc-900"
-          }`}
-        >
-          Sign up
-        </button>
-        <button
-          type="button"
-          onClick={() => switchMode("signin")}
-          className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-            mode === "signin"
-              ? "bg-white text-zinc-900 shadow-sm"
-              : "text-muted-foreground hover:text-zinc-900"
-          }`}
-        >
-          Sign in
-        </button>
-      </div>
-
       {error ? (
         <div
           role="alert"
@@ -296,15 +93,13 @@ export function LoginForm({
         >
           <AlertTriangle className="mt-0.5 size-4 shrink-0" />
           <div className="space-y-1">
-            <p className="font-medium">
-              {mode === "signup" ? "Sign-up issue" : "Sign-in issue"}
-            </p>
+            <p className="font-medium">Sign-in issue</p>
             <p>{error}</p>
           </div>
         </div>
       ) : null}
 
-      {mode === "signup" && signupRole === "client" ? (
+      {signupRole === "client" ? (
         <p className="rounded-lg border border-blue-100 bg-blue-50/80 px-3 py-2 text-sm text-blue-900">
           You’re joining as a client for a project invite.
         </p>
@@ -312,9 +107,8 @@ export function LoginForm({
 
       <Button
         type="button"
-        variant="outline"
-        className="h-11 w-full border-zinc-300 bg-white text-zinc-900 hover:bg-zinc-50"
-        disabled={busy}
+        className="h-11 w-full"
+        disabled={oauthLoading}
         onClick={() => void continueWithGoogle()}
       >
         {oauthLoading ? (
@@ -331,123 +125,10 @@ export function LoginForm({
       </Button>
 
       <p className="text-center text-xs text-muted-foreground">
-        {mode === "signup"
-          ? "Uses your Google account — no confirmation email."
-          : "Fastest way back into your workspace."}
+        {signupRole === "client"
+          ? "Use the Google account that matches your invite email when possible."
+          : "New and returning freelancers — one click to your workspace."}
       </p>
-
-      {!showEmailForm ? (
-        <button
-          type="button"
-          className="w-full text-center text-sm text-muted-foreground underline-offset-4 hover:text-zinc-900 hover:underline"
-          onClick={() => setShowEmailForm(true)}
-          disabled={busy}
-        >
-          {mode === "signup"
-            ? "Or sign up with email and password"
-            : "Or sign in with email and password"}
-        </button>
-      ) : (
-        <>
-          <div className="relative py-1">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-zinc-200" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase tracking-wide">
-              <span className="bg-card px-2 text-muted-foreground">
-                Email fallback
-              </span>
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {mode === "signup" ? (
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Your name</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  autoComplete="name"
-                  required
-                  maxLength={FULL_NAME_MAX_LENGTH}
-                  placeholder="Alex Rivera"
-                  value={fullName}
-                  onChange={(event) => setFullName(event.target.value)}
-                />
-              </div>
-            ) : null}
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Work email</Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                required
-                placeholder="you@company.com"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">
-                {mode === "signup" ? "Create password" : "Password"}
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete={
-                  mode === "signup" ? "new-password" : "current-password"
-                }
-                required
-                minLength={PASSWORD_MIN_LENGTH}
-                placeholder={
-                  mode === "signup"
-                    ? `At least ${PASSWORD_MIN_LENGTH} characters`
-                    : "Your password"
-                }
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-              {mode === "signup" && !confirmSent ? (
-                <p className="text-xs text-muted-foreground">
-                  {signupRole === "freelancer"
-                    ? "Creates your workspace. If email confirmation is on, you’ll confirm once, then start your free trial."
-                    : "Creates your client account. If email confirmation is on, you’ll confirm once, then open your project."}
-                </p>
-              ) : mode === "signin" ? (
-                <p className="text-xs text-muted-foreground">
-                  Prefer Google above when you can — no password to remember.
-                </p>
-              ) : null}
-            </div>
-
-            <Button type="submit" className="w-full" disabled={busy}>
-              {loading ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  {mode === "signin" ? "Signing in…" : "Creating account…"}
-                </>
-              ) : mode === "signin" ? (
-                "Sign in with email"
-              ) : confirmSent ? (
-                "Resend confirmation email"
-              ) : signupRole === "client" ? (
-                "Join as client with email"
-              ) : (
-                "Create workspace with email"
-              )}
-            </Button>
-
-            {message ? (
-              <p className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
-                {message}
-              </p>
-            ) : null}
-          </form>
-        </>
-      )}
     </div>
   );
 }
