@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/card";
 import { formatMoney, displayName, projectClientLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Asset, ClientAction, Invoice, Profile, Project } from "@/types/database";
+import { isInvoiceOutstanding, type Asset, type ClientAction, type Invoice, type Profile, type Project } from "@/types/database";
 import { freelancerHasWorkspaceAccess } from "@/utils/stripe/subscription";
 import { createClient } from "@/utils/supabase/server";
 
@@ -123,7 +123,7 @@ export default async function ProjectPage({ params, searchParams }: ProjectPageP
   const approvalActions = (approvalRows ?? []) as ClientAction[];
   const deliverableReviewActions = (deliverableReviewRows ?? []) as ClientAction[];
   const pendingInvoiceCount = invoices.filter(
-    (invoice) => invoice.status === "pending",
+    (invoice) => isInvoiceOutstanding(invoice.status),
   ).length;
 
   let resolvedClientEmail = project.client_email ?? "";

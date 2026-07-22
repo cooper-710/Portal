@@ -20,7 +20,10 @@ create type public.project_status as enum (
   'in_progress',
   'review'
 );
-create type public.invoice_status as enum ('pending', 'paid');
+create type public.invoice_status as enum (
+  'pending', 'paid', 'processing', 'canceled',
+  'partially_refunded', 'refunded', 'disputed'
+);
 create type public.asset_visibility as enum ('internal', 'deliverable');
 create type public.asset_review_status as enum ('pending', 'approved', 'changes_requested');
 create type public.payment_kind as enum (
@@ -141,6 +144,13 @@ create table public.invoices (
   recurrence_frequency public.recurrence_frequency,
   stripe_payment_intent_id text unique,
   stripe_checkout_session_id text unique,
+  amount_paid integer not null default 0 check (amount_paid >= 0),
+  amount_refunded integer not null default 0 check (amount_refunded >= 0),
+  stripe_charge_id text,
+  stripe_dispute_id text,
+  dispute_status text check (dispute_status in ('open', 'won', 'lost')),
+  payment_status_updated_at timestamptz,
+  last_payment_event_created_at bigint,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -170,6 +180,25 @@ create table public.stripe_webhook_events (
   processed_at timestamptz not null default now()
 );
 
+create table public.invoice_payment_events (
+  id uuid primary key default gen_random_uuid(),
+  invoice_id uuid not null references public.invoices (id) on delete cascade,
+  stripe_event_id text not null unique,
+  event_type text not null,
+  stripe_object_id text,
+  outcome text not null,
+  invoice_status public.invoice_status,
+  amount_paid integer check (amount_paid is null or amount_paid >= 0),
+  amount_refunded integer check (amount_refunded is null or amount_refunded >= 0),
+  stripe_charge_id text,
+  stripe_dispute_id text,
+  failure_code text,
+  failure_message text,
+  occurred_at timestamptz not null,
+  recorded_at timestamptz not null default now(),
+  metadata jsonb not null default '{}'::jsonb
+);
+
 -- ---------------------------------------------------------------------------
 -- Indexes (columns used in RLS + common filters)
 -- ---------------------------------------------------------------------------
@@ -186,6 +215,10 @@ create index invoices_due_date_idx on public.invoices (due_date);
 create index invoices_payment_kind_idx on public.invoices (payment_kind);
 create index invoices_parent_invoice_id_idx on public.invoices (parent_invoice_id);
 create index invoices_series_key_idx on public.invoices (series_key);
+create unique index invoices_stripe_charge_id_uidx on public.invoices (stripe_charge_id)
+  where stripe_charge_id is not null;
+create index invoice_payment_events_invoice_occurred_idx
+  on public.invoice_payment_events (invoice_id, occurred_at desc);
 create index client_actions_client_id_idx on public.client_actions (client_id);
 create index client_actions_project_id_idx on public.client_actions (project_id);
 create index client_actions_status_idx on public.client_actions (status);
@@ -453,10 +486,25 @@ alter table public.assets enable row level security;
 alter table public.invoices enable row level security;
 alter table public.client_actions enable row level security;
 alter table public.stripe_webhook_events enable row level security;
+alter table public.invoice_payment_events enable row level security;
 
 -- stripe_webhook_events: service_role only (no anon/authenticated policies)
 revoke all on table public.stripe_webhook_events from anon, authenticated;
 grant all on table public.stripe_webhook_events to service_role;
+
+revoke all on table public.invoice_payment_events from anon, authenticated;
+grant select on table public.invoice_payment_events to authenticated;
+grant all on table public.invoice_payment_events to service_role;
+
+create policy "Project members can view invoice payment events"
+  on public.invoice_payment_events for select to authenticated
+  using (
+    exists (
+      select 1 from public.invoices i
+      where i.id = invoice_payment_events.invoice_id
+        and public.is_project_member(i.project_id)
+    )
+  );
 
 -- users
 create policy "Users can view their own profile"
@@ -651,6 +699,13 @@ create policy "Freelancers can create invoices"
     status = 'pending'
     and stripe_payment_intent_id is null
     and stripe_checkout_session_id is null
+    and amount_paid = 0
+    and amount_refunded = 0
+    and stripe_charge_id is null
+    and stripe_dispute_id is null
+    and dispute_status is null
+    and payment_status_updated_at is null
+    and last_payment_event_created_at is null
     and
     exists (
       select 1

@@ -13,13 +13,15 @@ import {
   type InvoiceWithProject,
 } from "@/lib/client-home-scope";
 import { formatMoney, isCompletedProject } from "@/lib/format";
-import type {
-  Asset,
-  BusinessBrand,
-  ClientAction,
-  Invoice,
-  Profile,
-  Project,
+import {
+  isInvoiceOutstanding,
+  isInvoiceSettled,
+  type Asset,
+  type BusinessBrand,
+  type ClientAction,
+  type Invoice,
+  type Profile,
+  type Project,
 } from "@/types/database";
 import { createClient } from "@/utils/supabase/server";
 
@@ -312,7 +314,7 @@ export async function loadClientWorkspace(
   });
 
   const pendingInvoices = invoices.filter(
-    (invoice) => invoice.status === "pending",
+    (invoice) => isInvoiceOutstanding(invoice.status),
   );
   const amountDueCents = pendingInvoices.reduce(
     (sum, invoice) => sum + invoice.amount,
@@ -360,13 +362,13 @@ export async function loadClientWorkspace(
     activity.push({
       id: `inv-created-${invoice.id}`,
       kind: "invoice_created",
-      title: invoice.status === "paid" ? "Invoice paid" : "Invoice sent",
+      title: isInvoiceSettled(invoice.status) ? "Invoice paid" : "Invoice sent",
       description: `${formatMoney(invoice.amount, invoice.currency)} · ${projectTitleById.get(invoice.project_id) ?? "Project"}`,
-      at: invoice.status === "paid" ? invoice.updated_at : invoice.created_at,
+      at: isInvoiceSettled(invoice.status) ? invoice.updated_at : invoice.created_at,
       projectId: invoice.project_id,
       projectTitle: projectTitleById.get(invoice.project_id) ?? null,
     });
-    if (invoice.status === "paid") {
+    if (isInvoiceSettled(invoice.status)) {
       activity.push({
         id: `inv-paid-${invoice.id}`,
         kind: "invoice_paid",

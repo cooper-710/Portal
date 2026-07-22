@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import type { InvoiceWithProject } from "@/lib/client-home-scope";
 import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { isInvoiceOutstanding } from "@/types/database";
 
 export type PaymentDueItem = {
   id: string;
@@ -84,7 +85,7 @@ export function invoicesToPaymentDueItems(
   linkMode: "project" | "invoices" = "project",
 ): PaymentDueItem[] {
   return invoices
-    .filter((invoice) => invoice.status === "pending" && invoice.due_date)
+    .filter((invoice) => isInvoiceOutstanding(invoice.status) && invoice.due_date)
     .map((invoice) => ({
       id: invoice.id,
       dueDate: invoice.due_date!,

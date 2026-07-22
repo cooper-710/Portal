@@ -21,7 +21,24 @@ export type AssetVisibility = "internal" | "deliverable";
 
 export type AssetReviewStatus = "pending" | "approved" | "changes_requested";
 
-export type InvoiceStatus = "pending" | "paid";
+export type InvoiceStatus =
+  | "pending"
+  | "processing"
+  | "paid"
+  | "canceled"
+  | "partially_refunded"
+  | "refunded"
+  | "disputed";
+
+export type InvoiceDisputeStatus = "open" | "won" | "lost";
+
+export function isInvoiceOutstanding(status: InvoiceStatus) {
+  return status === "pending" || status === "processing" || status === "canceled";
+}
+
+export function isInvoiceSettled(status: InvoiceStatus) {
+  return !isInvoiceOutstanding(status);
+}
 
 export type PaymentKind =
   | "standard"
@@ -183,8 +200,34 @@ export type Invoice = {
   recurrence_frequency: RecurrenceFrequency | null;
   stripe_payment_intent_id: string | null;
   stripe_checkout_session_id: string | null;
+  amount_paid: number;
+  amount_refunded: number;
+  stripe_charge_id: string | null;
+  stripe_dispute_id: string | null;
+  dispute_status: InvoiceDisputeStatus | null;
+  payment_status_updated_at: string | null;
+  last_payment_event_created_at: number | null;
   created_at: string;
   updated_at: string;
+};
+
+export type InvoicePaymentEvent = {
+  id: string;
+  invoice_id: string;
+  stripe_event_id: string;
+  event_type: string;
+  stripe_object_id: string | null;
+  outcome: string;
+  invoice_status: InvoiceStatus | null;
+  amount_paid: number | null;
+  amount_refunded: number | null;
+  stripe_charge_id: string | null;
+  stripe_dispute_id: string | null;
+  failure_code: string | null;
+  failure_message: string | null;
+  occurred_at: string;
+  recorded_at: string;
+  metadata: Record<string, unknown>;
 };
 
 export type ClientAction = {
@@ -252,6 +295,15 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["stripe_webhook_events"]["Insert"]>;
         Relationships: [];
       };
+      invoice_payment_events: {
+        Row: InvoicePaymentEvent;
+        Insert: Omit<InvoicePaymentEvent, "id" | "recorded_at"> & {
+          id?: string;
+          recorded_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["invoice_payment_events"]["Insert"]>;
+        Relationships: [];
+      };
       projects: {
         Row: Project;
         Insert: {
@@ -301,6 +353,13 @@ export type Database = {
           recurrence_frequency?: RecurrenceFrequency | null;
           stripe_payment_intent_id?: string | null;
           stripe_checkout_session_id?: string | null;
+          amount_paid?: number;
+          amount_refunded?: number;
+          stripe_charge_id?: string | null;
+          stripe_dispute_id?: string | null;
+          dispute_status?: InvoiceDisputeStatus | null;
+          payment_status_updated_at?: string | null;
+          last_payment_event_created_at?: number | null;
           created_at?: string;
           updated_at?: string;
         };

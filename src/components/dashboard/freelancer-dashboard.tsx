@@ -44,7 +44,7 @@ import type {
 } from "@/lib/client-home-scope";
 import { formatMoney, isCompletedProject, displayName, projectClientLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Profile } from "@/types/database";
+import { isInvoiceOutstanding, isInvoiceSettled, type Profile } from "@/types/database";
 
 type FreelancerDashboardProps = {
   profile: Profile;
@@ -74,10 +74,10 @@ export function FreelancerDashboard({
     ? invoices.filter((invoice) => invoice.project_id === filterProjectId)
     : invoices;
   const pendingInvoices = visibleInvoices.filter(
-    (invoice) => invoice.status === "pending",
+    (invoice) => isInvoiceOutstanding(invoice.status),
   );
   const paidInvoices = visibleInvoices.filter(
-    (invoice) => invoice.status === "paid",
+    (invoice) => isInvoiceSettled(invoice.status),
   );
   const pendingTotal = pendingInvoices.reduce(
     (sum, invoice) => sum + invoice.amount,

@@ -23,7 +23,13 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import type { ClientProject, InvoiceWithProject } from "@/lib/client-home-scope";
 import { formatMoney, isCompletedProject, displayName } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Asset, Profile, ProjectStatus } from "@/types/database";
+import {
+  isInvoiceOutstanding,
+  isInvoiceSettled,
+  type Asset,
+  type Profile,
+  type ProjectStatus,
+} from "@/types/database";
 import { createClient } from "@/utils/supabase/client";
 
 type ClientDashboardProps = {
@@ -119,8 +125,8 @@ export function ClientDashboard({
     }
   }, [viewingCompleted]);
 
-  const pendingInvoices = invoices.filter((invoice) => invoice.status === "pending");
-  const paidInvoices = invoices.filter((invoice) => invoice.status === "paid");
+  const pendingInvoices = invoices.filter((invoice) => isInvoiceOutstanding(invoice.status));
+  const paidInvoices = invoices.filter((invoice) => isInvoiceSettled(invoice.status));
   const pendingTotal = pendingInvoices.reduce((sum, invoice) => sum + invoice.amount, 0);
   const previewActive = activeProjects.slice(0, 4);
 

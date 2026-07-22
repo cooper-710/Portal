@@ -39,7 +39,7 @@ import {
 } from "@/lib/client-home-scope";
 import { displayName, formatMoney, isCompletedProject } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { PaymentKind, Profile, ProjectStatus } from "@/types/database";
+import { isInvoiceOutstanding, type PaymentKind, type Profile, type ProjectStatus } from "@/types/database";
 import { friendlyCheckoutError } from "@/utils/billing-errors";
 import { createClient } from "@/utils/supabase/client";
 
@@ -145,7 +145,7 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
   const activity = scoped.activity;
   const vaultAssets = scoped.assets;
   const pendingInvoices = invoices.filter(
-    (invoice) => invoice.status === "pending",
+    (invoice) => isInvoiceOutstanding(invoice.status),
   );
   const amountDueCents = scoped.amountDueCents;
   const nextPaymentDate = scoped.nextPaymentDate;

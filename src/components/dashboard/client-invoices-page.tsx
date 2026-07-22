@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import type { InvoiceWithProject } from "@/lib/client-home-scope";
 import { formatMoney, displayName } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Profile } from "@/types/database";
+import { isInvoiceOutstanding, isInvoiceSettled, type Profile } from "@/types/database";
 import { friendlyCheckoutError } from "@/utils/billing-errors";
 
 type ProjectOption = {
@@ -54,10 +54,10 @@ export function ClientInvoicesPage({
     : allInvoices;
 
   const pendingInvoices = visibleInvoices.filter(
-    (invoice) => invoice.status === "pending",
+    (invoice) => isInvoiceOutstanding(invoice.status),
   );
   const paidInvoices = visibleInvoices.filter(
-    (invoice) => invoice.status === "paid",
+    (invoice) => isInvoiceSettled(invoice.status),
   );
   const pendingTotal = pendingInvoices.reduce(
     (sum, invoice) => sum + invoice.amount,

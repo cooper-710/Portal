@@ -27,6 +27,21 @@ const invoiceStyles: Record<InvoiceStatus, string> = {
   pending:
     "border-amber-300/70 bg-amber-100 text-amber-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]",
   paid: "border-emerald-300/70 bg-emerald-100 text-emerald-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]",
+  processing: "border-sky-300/70 bg-sky-100 text-sky-900",
+  canceled: "border-zinc-300 bg-zinc-100 text-zinc-700",
+  partially_refunded: "border-violet-300 bg-violet-100 text-violet-900",
+  refunded: "border-violet-300 bg-violet-100 text-violet-900",
+  disputed: "border-red-300 bg-red-100 text-red-900",
+};
+
+const invoiceLabels: Record<InvoiceStatus, string> = {
+  pending: "Pending",
+  processing: "Processing",
+  paid: "Paid",
+  canceled: "Canceled",
+  partially_refunded: "Partially refunded",
+  refunded: "Refunded",
+  disputed: "Disputed",
 };
 
 function labelize(value: string) {
@@ -71,10 +86,16 @@ export function InvoiceStatusBadge({
       <span
         className={cn(
           "size-1.5 rounded-full",
-          status === "pending" ? "bg-amber-500" : "bg-emerald-500",
+          status === "paid"
+            ? "bg-emerald-500"
+            : status === "pending"
+              ? "bg-amber-500"
+              : status === "disputed"
+                ? "bg-red-500"
+                : "bg-current",
         )}
       />
-      {status === "pending" ? "Pending" : "Paid"}
+      {invoiceLabels[status]}
     </span>
   );
 }

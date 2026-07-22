@@ -4,6 +4,7 @@ import Stripe from "stripe";
 import type { Invoice, Project, Profile } from "@/types/database";
 import { logEvent, requestContext } from "@/lib/monitoring";
 import { calculatePlatformApplicationFeeCents } from "@/utils/stripe/application-fee";
+import { invoiceCheckoutIdempotencyKey } from "@/utils/stripe/invoice-payment-lifecycle";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 
@@ -90,8 +91,11 @@ export async function POST(request: Request) {
     );
   }
 
-  if (invoice.status === "paid") {
-    return NextResponse.json({ error: "Invoice is already paid." }, { status: 400 });
+  if (!["pending", "canceled"].includes(invoice.status)) {
+    return NextResponse.json(
+      { error: `Invoice cannot be paid while its status is ${invoice.status}.` },
+      { status: 400 },
+    );
   }
 
   const { data: freelancerRow } = await supabase
@@ -165,27 +169,77 @@ export async function POST(request: Request) {
       },
       success_url: `${appUrl}/dashboard/invoices?paid=1&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl}/dashboard/invoices?canceled=1`,
-    });
+    }, { idempotencyKey: invoiceCheckoutIdempotencyKey(invoice) });
 
     const paymentIntentId =
       typeof session.payment_intent === "string"
         ? session.payment_intent
         : session.payment_intent?.id ?? null;
 
+    if (!session.url) {
+      if (session.status === "open") await stripe.checkout.sessions.expire(session.id);
+      throw new Error("Stripe did not return a checkout URL.");
+    }
+
     const admin = createAdminClient();
-    await admin
+    const checkoutCreatedAt = session.created || Math.floor(Date.now() / 1000);
+    const { data: persistedInvoice, error: persistenceError } = await admin
       .from("invoices")
       .update({
         stripe_checkout_session_id: session.id,
         stripe_payment_intent_id: paymentIntentId,
+        status: "processing",
+        payment_status_updated_at: new Date(checkoutCreatedAt * 1000).toISOString(),
+        last_payment_event_created_at: checkoutCreatedAt,
       })
-      .eq("id", invoice.id);
+      .eq("id", invoice.id)
+      .select("id")
+      .maybeSingle();
 
-    if (!session.url) {
-      return NextResponse.json(
-        { error: "Stripe did not return a checkout URL." },
-        { status: 500 },
+    if (persistenceError || !persistedInvoice) {
+      try {
+        if (session.status === "open") await stripe.checkout.sessions.expire(session.id);
+      } catch (expireError) {
+        console.error("[invoice checkout] failed to expire unpersisted session", expireError);
+      }
+      throw new Error(
+        `Checkout Session persistence failed: ${persistenceError?.message ?? "invoice row was not updated"}`,
       );
+    }
+
+    const { error: attemptError } = await admin.from("invoice_payment_events").insert({
+      invoice_id: invoice.id,
+      stripe_event_id: `portal:checkout-created:${session.id}`,
+      event_type: "portal.checkout.created",
+      stripe_object_id: session.id,
+      outcome: "processing",
+      invoice_status: "processing",
+      amount_paid: 0,
+      amount_refunded: 0,
+      stripe_charge_id: null,
+      stripe_dispute_id: null,
+      failure_code: null,
+      failure_message: null,
+      occurred_at: new Date(checkoutCreatedAt * 1000).toISOString(),
+      metadata: { idempotency_key: invoiceCheckoutIdempotencyKey(invoice) },
+    });
+    if (attemptError && attemptError.code !== "23505") {
+      try {
+        if (session.status === "open") await stripe.checkout.sessions.expire(session.id);
+      } finally {
+        await admin
+          .from("invoices")
+          .update({
+            status: "pending",
+            stripe_checkout_session_id: null,
+            stripe_payment_intent_id: null,
+            payment_status_updated_at: null,
+            last_payment_event_created_at: null,
+          })
+          .eq("id", invoice.id)
+          .eq("stripe_checkout_session_id", session.id);
+      }
+      throw new Error(`Checkout attempt persistence failed: ${attemptError.message}`);
     }
 
     logEvent("info", "invoice_checkout_created", {

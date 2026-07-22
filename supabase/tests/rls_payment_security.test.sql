@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(21);
+select plan(37);
 
 -- Column grants are the first line of defense for system-managed state.
 select ok(not has_column_privilege('authenticated', 'public.users', 'subscription_status', 'update'), 'subscription status is not user-writable');
@@ -17,8 +17,19 @@ select ok(has_column_privilege('authenticated', 'public.users', 'full_name', 'up
 select ok(not has_column_privilege('authenticated', 'public.invoices', 'status', 'update'), 'invoice payment status is not user-writable');
 select ok(not has_column_privilege('authenticated', 'public.invoices', 'stripe_payment_intent_id', 'update'), 'payment intent id is not user-writable');
 select ok(not has_column_privilege('authenticated', 'public.invoices', 'stripe_checkout_session_id', 'update'), 'Checkout session id is not user-writable');
+select ok(not has_column_privilege('authenticated', 'public.invoices', 'amount_paid', 'update'), 'amount paid is not user-writable');
+select ok(not has_column_privilege('authenticated', 'public.invoices', 'amount_refunded', 'update'), 'amount refunded is not user-writable');
+select ok(not has_column_privilege('authenticated', 'public.invoices', 'stripe_charge_id', 'update'), 'charge id is not user-writable');
+select ok(not has_column_privilege('authenticated', 'public.invoices', 'stripe_dispute_id', 'update'), 'dispute id is not user-writable');
+select ok(not has_column_privilege('authenticated', 'public.invoices', 'dispute_status', 'update'), 'dispute outcome is not user-writable');
+select ok(not has_column_privilege('authenticated', 'public.invoices', 'payment_status_updated_at', 'update'), 'payment status timestamp is not user-writable');
+select ok(not has_column_privilege('authenticated', 'public.invoices', 'last_payment_event_created_at', 'update'), 'payment event ordering timestamp is not user-writable');
 select ok(has_column_privilege('authenticated', 'public.invoices', 'amount', 'update'), 'pending invoice amount remains owner-editable');
 select ok(not has_function_privilege('authenticated', 'public.mark_invoice_paid(uuid,text,text)', 'execute'), 'authenticated users cannot execute payment-state RPC');
+select ok(has_table_privilege('authenticated', 'public.invoice_payment_events', 'select'), 'project members can read payment history');
+select ok(not has_table_privilege('authenticated', 'public.invoice_payment_events', 'insert'), 'authenticated users cannot create payment history');
+select ok(not has_table_privilege('authenticated', 'public.invoice_payment_events', 'update'), 'authenticated users cannot rewrite payment history');
+select ok(not has_table_privilege('authenticated', 'public.invoice_payment_events', 'delete'), 'authenticated users cannot delete payment history');
 
 -- Synthetic tenants. Inserting auth users exercises the production profile trigger.
 insert into auth.users (
@@ -45,6 +56,12 @@ values
 insert into public.client_actions (id, project_id, client_id, freelancer_id, action_type, title)
 values ('b3000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000002', 'review_project', 'Tenant B approval');
 
+insert into public.invoice_payment_events (
+  invoice_id, stripe_event_id, event_type, outcome, occurred_at
+) values
+  ('a2000000-0000-0000-0000-000000000001', 'evt_tenant_a', 'payment_intent.succeeded', 'succeeded', now()),
+  ('b2000000-0000-0000-0000-000000000002', 'evt_tenant_b', 'payment_intent.payment_failed', 'failed', now());
+
 -- Act as owner A through the same JWT context PostgREST uses.
 select set_config(
   'request.jwt.claims',
@@ -57,6 +74,36 @@ select throws_ok(
   $$update public.users set subscription_status = 'active' where id = '10000000-0000-0000-0000-000000000001'$$,
   '42501', null,
   'owner cannot self-grant an active subscription'
+);
+
+select throws_ok(
+  $$insert into public.invoice_payment_events (invoice_id, stripe_event_id, event_type, outcome, occurred_at) values ('a2000000-0000-0000-0000-000000000001', 'evt_forged', 'charge.refunded', 'refunded', now())$$,
+  '42501', null,
+  'owner cannot forge payment history'
+);
+
+select throws_ok(
+  $$update public.invoice_payment_events set outcome = 'refunded' where stripe_event_id = 'evt_tenant_a'$$,
+  '42501', null,
+  'owner cannot rewrite payment history'
+);
+
+select throws_ok(
+  $$delete from public.invoice_payment_events where stripe_event_id = 'evt_tenant_a'$$,
+  '42501', null,
+  'owner cannot delete payment history'
+);
+
+select throws_ok(
+  $$insert into public.invoices (project_id, amount, amount_paid, status, title) values ('a0000000-0000-0000-0000-000000000001', 5000, 5000, 'paid', 'Forged paid invoice')$$,
+  '42501', null,
+  'owner cannot create an invoice with forged payment state'
+);
+
+select is(
+  (select count(*)::integer from public.invoice_payment_events),
+  1,
+  'owner sees payment history only for their own tenant'
 );
 
 select throws_ok(

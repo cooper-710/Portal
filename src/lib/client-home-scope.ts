@@ -3,7 +3,7 @@ import {
   type ClientActionWithLinks,
 } from "@/lib/client-action-helpers";
 import { isCompletedProject } from "@/lib/format";
-import type { Asset, BusinessBrand, Invoice, Project } from "@/types/database";
+import { isInvoiceOutstanding, type Asset, type BusinessBrand, type Invoice, type Project } from "@/types/database";
 
 export type FreelancerProject = Project & {
   client?: { email: string; full_name: string | null } | null;
@@ -105,7 +105,7 @@ export function scopeClientHomeData(
       : [];
 
   const pendingInvoices = invoices.filter(
-    (invoice) => invoice.status === "pending",
+    (invoice) => isInvoiceOutstanding(invoice.status),
   );
   const amountDueCents = pendingInvoices.reduce(
     (sum, invoice) => sum + invoice.amount,

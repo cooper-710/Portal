@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-import { markInvoicePaidFromSession } from "@/utils/stripe/sync-invoice";
+import { handleInvoiceStripeEvent } from "@/utils/stripe/invoice-payment-lifecycle";
 import {
   clearPlatformSubscription,
   syncPlatformSubscription,
@@ -180,14 +180,11 @@ export async function POST(request: Request) {
           });
         }
 
-        const result = await markInvoicePaidFromSession(session, {
-          preferAdmin: true,
-          requireAdmin: true,
-        });
+        const result = await handleInvoiceStripeEvent(stripe, event);
 
         if (!result.ok) {
           console.error(
-            `[stripe webhook] ${event.id} mark invoice paid failed:`,
+            `[stripe webhook] ${event.id} invoice lifecycle sync failed:`,
             result.error,
           );
           return fail(500, {
@@ -197,15 +194,41 @@ export async function POST(request: Request) {
           });
         }
 
+        if (!("invoiceId" in result)) {
+          return NextResponse.json({ received: true, handled: false });
+        }
+
         console.info(
-          `[stripe webhook] ${event.id} invoice paid invoice=${result.invoiceId}` +
-            ("alreadyPaid" in result && result.alreadyPaid ? " (idempotent)" : ""),
+          `[stripe webhook] ${event.id} invoice lifecycle synced invoice=${result.invoiceId}`,
         );
         return NextResponse.json({
           received: true,
           handled: true,
           invoiceId: result.invoiceId,
-          alreadyPaid: "alreadyPaid" in result ? result.alreadyPaid : false,
+          duplicate: "duplicate" in result ? result.duplicate : false,
+        });
+      }
+      case "checkout.session.async_payment_succeeded":
+      case "checkout.session.async_payment_failed":
+      case "checkout.session.expired":
+      case "payment_intent.succeeded":
+      case "payment_intent.payment_failed":
+      case "payment_intent.canceled":
+      case "charge.refunded":
+      case "charge.dispute.created":
+      case "charge.dispute.updated":
+      case "charge.dispute.closed": {
+        const result = await handleInvoiceStripeEvent(stripe, event);
+        if (!result.ok) {
+          console.error(`[stripe webhook] ${event.id} invoice lifecycle sync failed:`, result.error);
+          return fail(500, { received: true, handled: false, error: result.error });
+        }
+        return NextResponse.json({
+          received: true,
+          handled: !("ignored" in result && result.ignored),
+          invoiceId: "invoiceId" in result ? result.invoiceId : undefined,
+          duplicate: "duplicate" in result ? result.duplicate : false,
+          outOfOrder: "outOfOrder" in result ? result.outOfOrder : false,
         });
       }
       case "customer.subscription.created":

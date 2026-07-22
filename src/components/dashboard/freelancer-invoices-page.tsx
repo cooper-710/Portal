@@ -33,7 +33,7 @@ import type {
 } from "@/lib/client-home-scope";
 import { formatMoney, displayName } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { Profile } from "@/types/database";
+import { isInvoiceOutstanding, isInvoiceSettled, type Profile } from "@/types/database";
 
 type FreelancerInvoicesPageProps = {
   profile: Profile;
@@ -63,10 +63,10 @@ export function FreelancerInvoicesPage({
     : invoices;
 
   const pendingInvoices = visibleInvoices.filter(
-    (invoice) => invoice.status === "pending",
+    (invoice) => isInvoiceOutstanding(invoice.status),
   );
   const paidInvoices = visibleInvoices.filter(
-    (invoice) => invoice.status === "paid",
+    (invoice) => isInvoiceSettled(invoice.status),
   );
   const pendingTotal = pendingInvoices.reduce(
     (sum, invoice) => sum + invoice.amount,
