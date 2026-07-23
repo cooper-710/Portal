@@ -57,7 +57,7 @@ export function LandingPage() {
           <div className="relative z-10 mx-auto flex min-h-[calc(100svh-3.5rem)] w-full max-w-6xl flex-col justify-center px-4 pb-24 pt-10 sm:px-6 sm:pb-28 sm:pt-12">
             <div className="max-w-2xl">
               <p className="landing-brand landing-display text-[clamp(3.5rem,12vw,7.5rem)] tracking-[-0.04em] text-zinc-900">
-                Portal
+                Finalia
               </p>
               <h1 className="landing-fade-up landing-delay-1 mt-7 max-w-xl text-2xl font-medium tracking-tight text-zinc-900 sm:text-3xl lg:text-[2.15rem] lg:leading-snug">
                 The client workspace your business actually runs on.
@@ -172,7 +172,7 @@ export function LandingPage() {
             </h2>
             <div className="landing-pricing-panel mt-12 max-w-md border-t border-zinc-200/80 pt-8">
               <p className="landing-display text-sm tracking-wide text-primary">
-                Portal Pro
+                Finalia Pro
               </p>
               <p className="mt-4 flex items-baseline gap-2">
                 <span className="landing-display text-5xl tracking-tight text-zinc-900">
@@ -182,7 +182,7 @@ export function LandingPage() {
               </p>
               <p className="mt-4 text-sm leading-relaxed text-zinc-500">
                 14-day free trial, then $25/mo. Plus a ~1% platform fee on client
-                invoice payments processed through Portal.
+                invoice payments processed through Finalia.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <Link

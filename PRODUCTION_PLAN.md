@@ -1,15 +1,15 @@
-# Portal: Production Plan
+# Finalia: Production Plan
 
 Turn this client workspace into a live product that charges workspace owners (SaaS) and takes a cut of client invoice payments (Connect application fees).
 
-**Pricing (locked):** Portal Pro **$25/mo** after a **14-day free trial**, plus an ~**1% platform fee** on client invoice payments (configurable via `STRIPE_PLATFORM_FEE_PERCENT`).
+**Pricing (locked):** Finalia Pro **$25/mo** after a **14-day free trial**, plus an ~**1% platform fee** on client invoice payments (configurable via `STRIPE_PLATFORM_FEE_PERCENT`).
 
 ---
 
 ## 1. Product positioning
 
 ### What you sell
-**Portal** is a branded client workspace for pros, sellers, and studios: invite clients, share deliverables in a private vault, track project phases, and collect invoice payments via Stripe Connect.
+**Finalia** is a branded client-operations workspace for pros, sellers, and studios: invite clients, share deliverables in a private vault, track project phases, and collect invoice payments via Stripe Connect.
 
 ### Who buys
 Solo sellers and small studios (design, web, video, marketing) who currently juggle email + Drive + Stripe invoices and want one client-facing place.
@@ -23,7 +23,7 @@ Solo sellers and small studios (design, web, video, marketing) who currently jug
 Workspace owners receive net invoice funds on their connected Express account. Platform SaaS billing is separate (platform Stripe Customer + Subscription on the workspace owner).
 
 ### What “done” means for v1 launch
-A workspace owner can sign up → set password → start trial → customize portal (or skip) → connect Stripe → invite a client → upload deliverables → send an invoice → client pays → webhook marks paid → platform keeps SaaS + fee. Legal pages exist. Deploy is reproducible on Vercel + Supabase + Stripe live mode.
+A workspace owner can sign up → set password → start trial → customize the client workspace (or skip) → connect Stripe → invite a client → upload deliverables → send an invoice → client pays → webhook marks paid → platform keeps SaaS + fee. Legal pages exist. Deploy is reproducible on Vercel + Supabase + Stripe live mode.
 
 ---
 
@@ -32,13 +32,13 @@ A workspace owner can sign up → set password → start trial → customize por
 ### Already working in this codebase
 - **Auth:** Google-only signup and sign-in through Supabase OAuth with PKCE `/auth/callback`; invited clients join with Google. Legacy password and confirmation routes remain for recovery compatibility.
 - **Roles:** `freelancer` / `client` in `public.users` (not JWT `user_metadata` for authz).
-- **Onboarding path:** password → Portal Pro trial (if needed) → customize portal (save or skip) → dashboard with getting-started checklist.
+- **Onboarding path:** password → Finalia Pro trial (if needed) → customize workspace (save or skip) → dashboard with getting-started checklist.
 - **Projects & invites:** Create project, invite by email (Resend + Supabase invite fallback).
 - **File vault:** Storage + RLS; freelancer-only uploads; clients see deliverables only.
-- **Invoices:** Create/pay via Stripe Checkout destination charges + application fee (`/api/checkout`).
+- **Invoices:** Create/pay via connected-account Stripe Checkout direct charges + application fee (`/api/checkout`).
 - **Retainers/recurring:** Labeled in UI as **scheduled invoices** (dated series), not Connect subscriptions.
 - **Stripe Connect:** Express onboard (`/api/stripe/connect`), return/refresh routes, `account.updated` webhook sync.
-- **Portal Pro gate:** Freelancers need `subscription_status` in `active`/`trialing` (`freelancerHasWorkspaceAccess`); Checkout at `/api/saas-checkout` with `trial_period_days`.
+- **Finalia Pro gate:** Freelancers need `subscription_status` in `active`/`trialing` (`freelancerHasWorkspaceAccess`); Checkout at `/api/saas-checkout` with `trial_period_days`.
 - **Billing portal:** `/api/saas-portal` for manage/cancel.
 - **Webhooks:** `/api/webhooks/stripe`, signature verification, service-role required, event-id claim table + content-level invoice/subscription idempotency.
 - **Return-path sync:** Checkout success URLs + `/api/saas-sync` reconcile if webhook lags.
@@ -69,7 +69,7 @@ A workspace owner can sign up → set password → start trial → customize por
 | README run/deploy | **DONE** | Local 3001, Vercel, Stripe webhook URL, Auth redirects |
 | CI smoke (`tsc` + tests + build) | **DONE** | `.github/workflows/ci.yml` + `npm run verify` |
 | Friendly billing/checkout errors | **DONE** | Mapped messages in billing + client pay UX |
-| Customize portal onboarding | **DONE** | `/onboarding/portal` with Save & Skip; flag `portal_setup_completed_at` |
+| Customize workspace onboarding | **DONE** | legacy route `/onboarding/portal` with Save & Skip; flag `portal_setup_completed_at` |
 | Getting-started checklist | **DONE** | Connect / first project / business name on dashboard |
 | Live Stripe keys / domain / prod Supabase | **USER-MUST-DO** | Operator must configure (see Launch sequence) |
 | Rotate any leaked service role | **USER-MUST-DO** | If key was ever committed or shared |
@@ -98,17 +98,17 @@ See also: [scripts/production-checklist.md](./scripts/production-checklist.md).
 
 Do these in order on launch day.
 
-1. **Domain:** Point DNS (A/CNAME) at Vercel for `app.yourdomain.com` (or apex).
+1. **Domain:** Point `finalia.app` DNS at Vercel.
 2. **Supabase production project:** Apply `schema.sql` if not already. Confirm RLS enabled on all `public` tables + storage policies.
-3. **Supabase Auth URLs:** Site URL = `https://YOUR_DOMAIN`. Redirect URLs include:
-   - `https://YOUR_DOMAIN/auth/callback`
-   - `https://YOUR_DOMAIN/auth/confirm`
-   - `https://YOUR_DOMAIN/**` (optional catch-all for next paths)
-4. **Vercel project:** Import repo; Framework = Next.js; set all env vars from `.env.example` with **live** values. Set `NEXT_PUBLIC_APP_URL=https://YOUR_DOMAIN`.
-5. **Stripe live mode:** Switch Dashboard to Live. Create Portal Pro Product/Price ($25/mo); copy Price ID → `STRIPE_SAAS_PRICE_ID`. Enable Connect (Express). Enable Customer Portal.
-6. **Stripe webhook (live):** Endpoint: `https://YOUR_DOMAIN/api/webhooks/stripe`. Events: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `account.updated`. Copy signing secret → `STRIPE_WEBHOOK_SECRET`.
+3. **Supabase Auth URLs:** Site URL = `https://finalia.app`. Redirect URLs include:
+   - `https://finalia.app/auth/callback`
+   - `https://finalia.app/auth/confirm`
+   - `https://finalia.app/**` (optional catch-all for next paths)
+4. **Vercel project:** Import repo; Framework = Next.js; set all env vars from `.env.example` with **live** values. Set `NEXT_PUBLIC_APP_URL=https://finalia.app`.
+5. **Stripe live mode:** Switch Dashboard to Live. Create Finalia Pro Product/Price ($25/mo); copy Price ID → `STRIPE_SAAS_PRICE_ID`. Enable Connect (Express). Enable Customer Portal.
+6. **Stripe webhook (live):** Endpoint: `https://finalia.app/api/webhooks/stripe`. Events: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `account.updated`. Copy signing secret → `STRIPE_WEBHOOK_SECRET`.
 7. **Env keys:** `STRIPE_SECRET_KEY=sk_live_…`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_…`, `SUPABASE_SERVICE_ROLE_KEY` (server-only, never `NEXT_PUBLIC_`), anon URL/key, Resend if using invites.
-8. **Deploy & smoke:** Hit `https://YOUR_DOMAIN/api/health` → `ok: true`. Sign up test workspace owner → password → trial → customize (or skip) → Connect → invoice → client pay.
+8. **Deploy & smoke:** Hit `https://finalia.app/api/health` → `ok: true`. Sign up test workspace owner → password → trial → customize (or skip) → Connect → invoice → client pay.
 9. **Post-deploy:** Watch Stripe webhook delivery log and Vercel function logs for 24h.
 
 ---
@@ -124,8 +124,8 @@ Freelancer signs up
   → /onboarding/portal (customize or skip) → dashboard
 
 Client pays invoice
-  → /api/checkout (Payment Checkout + transfer_data.destination + application_fee_amount)
-  → Stripe: charge on platform, transfer net to Connect account, keep fee
+  → /api/checkout (Payment Checkout on connected account + application_fee_amount)
+  → Stripe: direct charge on connected account; Finalia receives its application fee
   → webhook markInvoicePaidFromSession → invoices.status = paid
 
 Freelancer payouts
@@ -137,9 +137,9 @@ Freelancer payouts
 - Invoice Checkout + fee: `src/app/api/checkout/route.ts`, `src/utils/stripe/application-fee.ts`
 - Webhooks: `src/app/api/webhooks/stripe/route.ts`
 - Sync: `src/utils/stripe/sync-invoice.ts`, `src/utils/stripe/sync-subscription.ts`
-- Portal setup: `src/app/onboarding/portal/`, `users.portal_setup_completed_at`
+- Finalia setup: `src/app/onboarding/portal/`, `users.portal_setup_completed_at`
 
-**Connect note:** v1 uses destination charges with application fees. Recurring client retainers via Connect subscriptions remain **P1**; UI labels scheduled invoices clearly.
+**Connect note:** v1 uses connected-account direct charges with application fees. Recurring client retainers via Connect subscriptions remain **P1**; UI labels scheduled invoices clearly.
 
 ---
 
@@ -173,7 +173,7 @@ Freelancer payouts
 
 ## Manual items the operator still owns (USER-MUST-DO)
 
-1. Buy/configure production domain on Vercel.
+1. Finish configuring `finalia.app` on Vercel and verify DNS/SSL.
 2. Create/use production Supabase project; set Auth redirect URLs (and optionally enable leaked-password protection).
 3. Switch Stripe to **live** keys and live webhook endpoint (do **not** put live keys in committed files).
 4. Create live `$25/mo` Price and set `STRIPE_SAAS_PRICE_ID`.

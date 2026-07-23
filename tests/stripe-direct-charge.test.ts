@@ -20,11 +20,11 @@ const checkoutArgs = {
   amount: 10_000,
   currency: "usd",
   applicationFeeAmount: 100,
-  appUrl: "https://portal.example.test",
+  appUrl: "https://finalia.example.test",
 };
 
 describe("Stripe direct-charge isolation", () => {
-  it("creates Checkout on the merchant account with only Portal's application fee", () => {
+  it("creates Checkout on the merchant account with only Finalia's application fee", () => {
     const params = buildDirectChargeCheckoutSession(checkoutArgs);
     const paymentIntent = params.payment_intent_data as Record<string, unknown>;
 

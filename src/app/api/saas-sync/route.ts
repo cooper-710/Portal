@@ -5,7 +5,7 @@ import { reconcilePlatformSubscriptionFromStripe } from "@/utils/stripe/sync-sub
 import { createClient } from "@/utils/supabase/server";
 
 /**
- * Re-pull Portal Pro status from Stripe into `users` for the signed-in freelancer.
+ * Re-pull Finalia Pro status from Stripe into `users` for the signed-in freelancer.
  * Useful when Checkout return sync / webhooks did not write (e.g. missing service role).
  */
 export async function POST() {
@@ -28,7 +28,7 @@ export async function POST() {
 
   if (!profile || profile.role !== "freelancer") {
     return NextResponse.json(
-      { error: "Only workspace owners can refresh Portal Pro." },
+      { error: "Only workspace owners can refresh Finalia Pro." },
       { status: 403 },
     );
   }

@@ -97,7 +97,7 @@ export function PortalSetupForm({ profile, nextPath }: PortalSetupFormProps) {
           autoFocus
         />
         <p className="text-xs text-zinc-500">
-          Shown on your clients’ portal home.
+          Shown on your clients’ workspace home.
         </p>
       </div>
 
@@ -155,7 +155,7 @@ export function PortalSetupForm({ profile, nextPath }: PortalSetupFormProps) {
           onChange={(event) => setWelcomeMessage(event.target.value)}
           rows={3}
           maxLength={280}
-          placeholder="Welcome to your project portal. Status, files, and payments live here."
+          placeholder="Welcome to your project workspace. Status, files, and payments live here."
           className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-zinc-400 focus:ring-2"
         />
       </div>

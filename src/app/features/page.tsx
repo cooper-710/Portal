@@ -32,12 +32,12 @@ const FEATURE_GROUPS = [
     points: [
       "Owner uploads without worrying about premature access",
       "Release files when they are ready for the client",
-      "Downloads happen in-portal, not as scattered attachments",
+      "Downloads happen in Finalia, not as scattered attachments",
     ],
   },
   {
     title: "Invoices and Stripe Connect",
-    body: "Send payment requests from the same workspace. Funds go to your connected Stripe account. Portal takes a small platform fee on those payments.",
+    body: "Send payment requests from the same workspace. Funds go to your connected Stripe account. Finalia takes a small platform fee on those payments.",
     points: [
       "Create and send invoices without leaving the project",
       "Client pays in place with a familiar Stripe checkout",
@@ -79,7 +79,7 @@ export default function FeaturesPage() {
       <MarketingPageHero
         eyebrow="Features"
         title="Everything the client needs, in one place they will use."
-        description="Portal is a private workspace for sharing deliverables, collecting payment, and keeping the relationship clear from invite to close."
+        description="Finalia is a private workspace for sharing deliverables, collecting payment, and keeping the relationship clear from invite to close."
       />
 
       {FEATURE_GROUPS.map((group, index) => (
@@ -116,7 +116,7 @@ export default function FeaturesPage() {
             See pricing, then try it on a real project.
           </h2>
           <p className="mt-4 text-base text-zinc-500">
-            Portal Pro is $25/mo after a 14-day trial, with a clear ~1% fee on
+            Finalia Pro is $25/mo after a 14-day trial, with a clear ~1% fee on
             client invoice payments.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">

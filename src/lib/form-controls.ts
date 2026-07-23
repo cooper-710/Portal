@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-/** Shared classes for native `<select>` to match Portal inputs (zinc / blue). */
+/** Shared classes for native `<select>` to match Finalia inputs (zinc / blue). */
 export function nativeSelectClassName(className?: string) {
   return cn(
     "flex h-9 w-full appearance-none rounded-lg border border-zinc-200 bg-white bg-[length:1rem] bg-[right_0.65rem_center] bg-no-repeat px-3 pr-9 text-sm text-zinc-900 shadow-sm outline-none transition-[border-color,box-shadow] focus-visible:border-blue-300 focus-visible:ring-2 focus-visible:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60",

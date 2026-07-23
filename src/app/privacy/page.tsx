@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SiteFooter } from "@/components/site-footer";
-import { PortalBrand } from "@/components/portal-brand";
+import { FinaliaBrand } from "@/components/finalia-brand";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy · Portal",
-  description: "How Portal collects, uses, and protects your information.",
+  title: "Privacy Policy · Finalia",
+  description: "How Finalia collects, uses, and protects your information.",
 };
 
 export default function PrivacyPage() {
@@ -15,7 +15,7 @@ export default function PrivacyPage() {
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-12 sm:px-6 sm:py-16">
         <p className="text-sm font-semibold tracking-tight">
           <Link href="/" className="text-zinc-900 hover:underline">
-            <PortalBrand
+            <FinaliaBrand
               size="sm"
               nameClassName="text-sm font-semibold tracking-tight"
             />
@@ -28,7 +28,7 @@ export default function PrivacyPage() {
           <section className="space-y-3">
             <h2 className="text-base font-semibold text-zinc-900">Who we are</h2>
             <p>
-              Portal (“we”, “us”) provides a client workspace for your business:
+              Finalia (“we”, “us”) provides a client workspace for your business:
               projects, file sharing, invoicing, and payments. This policy
               describes how we handle information when you use the service at
               our website and application.
@@ -64,7 +64,7 @@ export default function PrivacyPage() {
           <section className="space-y-3">
             <h2 className="text-base font-semibold text-zinc-900">How we use information</h2>
             <ul className="list-disc space-y-2 pl-5">
-              <li>Provide and improve the Portal product</li>
+              <li>Provide and improve the Finalia product</li>
               <li>Authenticate users and send transactional email (invites, magic links)</li>
               <li>Process SaaS subscriptions and invoice payments via Stripe</li>
               <li>Detect abuse, debug issues, and meet legal obligations</li>
@@ -118,7 +118,7 @@ export default function PrivacyPage() {
             <h2 className="text-base font-semibold text-zinc-900">Contact</h2>
             <p>
               Questions about this policy: use the support email published on
-              your Portal deployment or the address associated with your Stripe /
+              your Finalia deployment or the address associated with your Stripe /
               business account for this product.
             </p>
           </section>

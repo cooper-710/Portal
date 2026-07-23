@@ -17,7 +17,7 @@ export default async function OnboardingBrandingPage() {
   return (
     <OnboardingShell
       step="branding"
-      title="Customize your portal"
+      title="Customize your client workspace"
       description="Give clients a branded first impression. You can change this anytime in Settings."
       hideDefaultActions
     >

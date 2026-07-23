@@ -206,7 +206,7 @@ export async function clearPlatformSubscription(customerId: string) {
 }
 
 /**
- * After Checkout return (before webhook), sync Portal Pro from the session so
+ * After Checkout return (before webhook), sync Finalia Pro from the session so
  * `trialing` / `active` unlocks the workspace immediately.
  */
 export async function syncPlatformCheckoutSessionById(
@@ -270,7 +270,7 @@ export async function syncPlatformCheckoutSessionById(
 }
 
 /**
- * Reconcile Portal Pro from Stripe when DB status looks stale (e.g. webhook /
+ * Reconcile Finalia Pro from Stripe when DB status looks stale (e.g. webhook /
  * return sync never wrote because service role was missing).
  */
 export async function reconcilePlatformSubscriptionFromStripe(options: {

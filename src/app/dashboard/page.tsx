@@ -34,7 +34,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const params = await searchParams;
   const { profile, supabase } = await requireDashboardProfile();
 
-  // After Portal Pro Checkout, sync subscription → trialing/active, then unlock overview.
+  // After Finalia Pro Checkout, sync subscription → trialing/active, then unlock overview.
   if (params.subscribed === "1" && params.session_id) {
     const result = await syncPlatformCheckoutSessionById(params.session_id, {
       freelancerId: profile.id,
@@ -136,7 +136,7 @@ async function FreelancerView({
     return (
       <FreelancerLockedPreview
         title="Overview"
-        subtitle="Unlock Portal Pro to run your client workspace"
+        subtitle="Unlock Finalia Pro to run your client workspace"
         email={displayName(profile)}
       />
     );

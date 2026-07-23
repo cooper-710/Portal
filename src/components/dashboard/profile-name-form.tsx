@@ -59,7 +59,7 @@ export function ProfileNameForm({
           placeholder="Alex Rivera"
         />
         <p className="text-xs text-muted-foreground">
-          Shown to others in the portal. Sign-in stays {email}.
+          Shown to others in Finalia. Sign-in stays {email}.
         </p>
       </div>
 

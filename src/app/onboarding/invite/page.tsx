@@ -15,7 +15,7 @@ export default async function OnboardingInvitePage() {
     <OnboardingShell
       step="invite"
       title="Invite your first client"
-      description="Send a portal link by email. They’ll sign in with Google and land in this project."
+      description="Send a workspace link by email. They’ll sign in with Google and land in this project."
       hideDefaultActions
     >
       <InviteStepForm projects={projects ?? []} />

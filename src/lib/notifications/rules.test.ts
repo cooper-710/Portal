@@ -56,6 +56,7 @@ describe("notification rules", () => {
 
   it("routes channel tests to exactly one requested channel", () => {
     const email = notificationMessage(event("test_notification", { requested_channel: "email" }));
+    expect(email?.title).toBe("Finalia test notification");
     expect(email).toMatchObject({ inApp: false, email: true, push: false });
     const push = notificationMessage(event("test_notification", { requested_channel: "push" }));
     expect(push).toMatchObject({ inApp: false, email: false, push: true });

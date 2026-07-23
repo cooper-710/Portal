@@ -2,21 +2,21 @@
 
 ## Approved test-mode decision
 
-Portal is client-operations software for independent businesses. For client
+Finalia is client-operations software for independent businesses. For client
 invoice payments, each workspace owner is the business the client is paying and
-is responsible for payment support, refunds, and disputes. Portal provides the
+is responsible for payment support, refunds, and disputes. Finalia provides the
 software and receives its disclosed application fee.
 
 Client invoices therefore use direct charges in Stripe test mode:
 
 - Checkout Sessions and their PaymentIntents/Charges exist on the workspace
   owner's connected account;
-- Portal supplies `application_fee_amount` for its approximately 1% fee;
+- Finalia supplies `application_fee_amount` for its approximately 1% fee;
 - Stripe processing fees are deducted according to the connected account's
   Stripe configuration;
 - every Stripe API request and webhook is scoped and validated against the
   invoice's stored connected-account ID;
-- Portal Pro subscriptions remain platform-level Stripe Billing and are not
+- Finalia Pro subscriptions remain platform-level Stripe Billing and are not
   part of the connected-account charge flow.
 
 ## Existing account compatibility

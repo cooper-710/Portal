@@ -1,8 +1,9 @@
 import Image from "next/image";
 
+import { PRODUCT_NAME } from "@/lib/product";
 import { cn } from "@/lib/utils";
 
-type PortalBrandProps = {
+type FinaliaBrandProps = {
   className?: string;
   nameClassName?: string;
   size?: "sm" | "md" | "lg" | "hero";
@@ -15,17 +16,17 @@ const iconSizes = {
   hero: 72,
 } as const;
 
-export function PortalBrand({
+export function FinaliaBrand({
   className,
   nameClassName,
   size = "md",
-}: PortalBrandProps) {
+}: FinaliaBrandProps) {
   const iconSize = iconSizes[size];
 
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
       <Image
-        src="/portal-icon.png"
+        src="/finalia-icon.png"
         width={iconSize}
         height={iconSize}
         sizes={`${iconSize}px`}
@@ -33,7 +34,7 @@ export function PortalBrand({
         className="shrink-0"
         priority={size === "hero"}
       />
-      <span className={nameClassName}>Portal</span>
+      <span className={nameClassName}>{PRODUCT_NAME}</span>
     </span>
   );
 }

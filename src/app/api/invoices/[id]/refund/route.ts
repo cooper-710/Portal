@@ -171,7 +171,7 @@ export async function POST(
         message: persistError.message,
       });
       return NextResponse.json(
-        { error: "Refund started, but Portal could not save its status. Stripe will retry the update." },
+        { error: "Refund started, but Finalia could not save its status. Stripe will retry the update." },
         { status: 500 },
       );
     }

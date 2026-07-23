@@ -16,15 +16,15 @@ type DeleteAccountFormProps = {
 };
 
 const FREELANCER_WARNINGS = [
-  "Any active Portal Pro trial or subscription will be canceled when possible.",
-  "Stripe Connect payout access for this account will no longer work from this portal.",
-  "Outstanding client invoices in this portal will be removed with your projects. This does not erase money already owed outside the app.",
+  "Any active Finalia Pro trial or subscription will be canceled when possible.",
+  "Stripe Connect payout access for this account will no longer work from Finalia.",
+  "Outstanding client invoices in Finalia will be removed with your projects. This does not erase money already owed outside the app.",
   "All of your projects, files, and client access to them will be permanently deleted.",
   "This cannot be undone.",
 ] as const;
 
 const CLIENT_WARNINGS = [
-  "You will lose access to every project and file shared with you in this portal.",
+  "You will lose access to every project and file shared with you in Finalia.",
   "Unpaid invoices you still owe are not erased by deleting your account. The workspace owner may keep their own records.",
   "Projects stay with the workspace owner; your client link is removed.",
   "This cannot be undone.",

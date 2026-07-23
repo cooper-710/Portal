@@ -11,7 +11,7 @@ import {
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { PORTAL_PRO_TRIAL_DAYS } from "@/utils/stripe/subscription";
+import { FINALIA_PRO_TRIAL_DAYS } from "@/utils/stripe/subscription";
 
 export function UpgradeLink({
   label = "Start free trial",
@@ -38,7 +38,7 @@ export function UpgradeLink({
 /** Banner for locked freelancers on dashboard chrome. */
 export function UpgradeBanner({
   className,
-  message = `Portal Pro includes a ${PORTAL_PRO_TRIAL_DAYS}-day free trial, then $25/mo. Start a trial to unlock projects, invoices, and the file vault.`,
+  message = `Finalia Pro includes a ${FINALIA_PRO_TRIAL_DAYS}-day free trial, then $25/mo. Start a trial to unlock projects, invoices, and the file vault.`,
 }: {
   className?: string;
   message?: string;
@@ -147,7 +147,7 @@ export function FreelancerLockedPreview({
               icon={Receipt}
               className="border-0 bg-transparent py-8"
               title="Send invoices to clients"
-              description="Bill clients and get paid to your connected Stripe account, unlocked with Portal Pro."
+              description="Bill clients and get paid to your connected Stripe account, unlocked with Finalia Pro."
             />
           </div>
         </section>
@@ -175,7 +175,7 @@ export function FreelancerLockedPreview({
 
 export function isSubscriptionRequiredError(message: string | null | undefined) {
   if (!message) return false;
-  return /subscribe|portal pro|billing|active plan|free trial|trial/i.test(message);
+  return /subscribe|finalia pro|portal pro|billing|active plan|free trial|trial/i.test(message);
 }
 
 export function SubscriptionErrorNotice({

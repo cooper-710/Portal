@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { FreelancerBillingPage } from "@/components/dashboard/freelancer-billing-page";
 import { requireDashboardProfile } from "@/lib/dashboard-data";
 import { getPlatformFeePercent } from "@/utils/stripe/application-fee";
-import { PORTAL_PRO_TRIAL_DAYS } from "@/utils/stripe/subscription";
+import { FINALIA_PRO_TRIAL_DAYS } from "@/utils/stripe/subscription";
 import { syncPlatformCheckoutSessionById } from "@/utils/stripe/sync-subscription";
 
 type BillingPageProps = {
@@ -46,7 +46,7 @@ export default async function DashboardBillingPage({
 
   let notice: string | null = null;
   if (params.canceled === "1") {
-    notice = `Checkout was canceled. Start a ${PORTAL_PRO_TRIAL_DAYS}-day free trial anytime to unlock Portal Pro.`;
+    notice = `Checkout was canceled. Start a ${FINALIA_PRO_TRIAL_DAYS}-day free trial anytime to unlock Finalia Pro.`;
   }
 
   const { profile: freshProfile } = await requireDashboardProfile();

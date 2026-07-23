@@ -1,4 +1,4 @@
-# Portal: Production-Ready Paid SaaS Launch Plan
+# Finalia: Production-Ready Paid SaaS Launch Plan
 
 > **Status:** planning only. No production services, live Stripe settings, domains, DNS, secrets, or irreversible changes have been made.
 >
@@ -6,16 +6,16 @@
 
 ## 1. Product boundary and launch outcome
 
-Portal is a **client-operations platform, not a CRM**. The product promise and the production acceptance path are:
+Finalia is a **client-operations platform, not a CRM**. The product promise and the production acceptance path are:
 
 `invite → communicate → deliver → review → approve → pay → close out`
 
-Production-ready means that a workspace owner can subscribe to Portal, invite and authenticate a client, move one engagement through that entire path, receive reliable reminders without duplicate or unsafe messages, take payment with clearly assigned Stripe liability, handle refunds/disputes, and close the project with an auditable record. It also means operators can detect, diagnose, and recover from failures without editing production data by hand.
+Production-ready means that a workspace owner can subscribe to Finalia, invite and authenticate a client, move one engagement through that entire path, receive reliable reminders without duplicate or unsafe messages, take payment with clearly assigned Stripe liability, handle refunds/disputes, and close the project with an auditable record. It also means operators can detect, diagnose, and recover from failures without editing production data by hand.
 
 This plan preserves two separate money paths:
 
-1. **Portal subscription:** the workspace owner pays Portal for SaaS access.
-2. **Client invoice payment:** the client pays the workspace owner through Stripe Connect, with any Portal fee and financial responsibility explicitly disclosed.
+1. **Finalia subscription:** the workspace owner pays Finalia for SaaS access.
+2. **Client invoice payment:** the client pays the workspace owner through Stripe Connect, with any Finalia fee and financial responsibility explicitly disclosed.
 
 Pricing is **not considered final merely because the repo currently says $25/month, 14 days, and approximately 1%**. Those values require a business, margin, tax, refund, and Connect-liability approval in Phase 4.
 
@@ -46,7 +46,7 @@ Verification baseline:
 | Monitoring | Structured JSON logs, health endpoint, Vercel Analytics and Speed Insights | No exception/APM product, alert routing, synthetic checks, queue/webhook dashboards, release tracking, or privacy-reviewed product analytics |
 | Security headers/rate limits | Baseline headers; Upstash/Vercel KV option with in-memory fallback | No CSP/HSTS; production rate limiting silently falls back to per-instance memory; abuse and OTP controls need design |
 | Testing/CI | 29 unit tests, public Playwright checks, optional authenticated suites, CI typecheck/test/e2e/build | Critical RLS, migration, webhook, refund/dispute, notification, auth-linking, and full paid journey coverage is missing |
-| Branding/domain | Portal name throughout metadata/UI, icons, custom workspace branding, domain/email setup notes | Final name/trademark/domain decision has not been made; hard-coded product strings and sender fallback remain |
+| Branding/domain | Finalia name throughout metadata/UI, icons, custom workspace branding, domain/email setup notes | Product name and canonical URL are selected; external domain, auth, sender, and payment dashboards still require coordinated cutover |
 
 ## 4. Launch blockers and material risks
 
@@ -55,8 +55,8 @@ Verification baseline:
 1. **Authenticated profiles can write billing and Connect state.** `schema.sql` grants authenticated users update access to `stripe_account_id`, `stripe_charges_enabled`, `stripe_details_submitted`, `stripe_customer_id`, `stripe_subscription_id`, `subscription_status`, and `subscription_current_period_end`; the self-update RLS policy then permits the row update. A user could potentially grant themselves paid access or falsify payout readiness. These columns must be service-role/webhook-only, with separate safe profile-update paths and database tests proving denial.
 
 2. **Connect economics and merchant-of-record claims conflict.** Code creates legacy v1 Express accounts and uses destination charges (`transfer_data.destination` plus `application_fee_amount`), which normally puts the platform in the marketplace-style charge flow. Product copy/terms also say the workspace owner remains merchant of record and funds go “directly” to them. Before more payment code is written, counsel/accounting and the operator must approve one model:
-   - **SaaS/direct charges:** workspace owner owns the client relationship and payment; connected account is merchant of record; Portal takes an application fee.
-   - **Marketplace/destination charges:** Portal controls the charge and accepts the associated fee, negative-balance, refund, and dispute responsibilities.
+   - **SaaS/direct charges:** workspace owner owns the client relationship and payment; connected account is merchant of record; Finalia takes an application fee.
+   - **Marketplace/destination charges:** Finalia controls the charge and accepts the associated fee, negative-balance, refund, and dispute responsibilities.
    The chosen model determines Connect v2 account configuration, dashboard access, onboarding, pricing, terms, support, reserves, and webhook behavior.
 
 3. **Refunds, disputes, reversals, and payment failures are not modeled.** Invoice status only supports `pending` and `paid`. There is no ledger/status history for refunded, partially refunded, disputed, failed, canceled, or chargeback states, and the webhook does not handle them. Launching real payments without this creates financial and customer-support risk.
@@ -86,8 +86,8 @@ These decisions are prerequisites, not implementation details.
 
 | Decision | Recommended starting position | Approver / dependency |
 | --- | --- | --- |
-| Connect model | Treat Portal as SaaS and evaluate **direct charges with Connect v2 merchant accounts** because workspace owners appear to own their client relationships | Operator + payments counsel/accounting + Stripe eligibility review |
-| Portal subscription | Stripe Billing + hosted Checkout + Customer Portal; explicit entitlement state machine separate from raw webhook payloads | Operator; final plans/prices/tax policy |
+| Connect model | Treat Finalia as SaaS and use **direct charges on connected accounts** because workspace owners own their client relationships | Operator + payments counsel/accounting + Stripe eligibility review |
+| Finalia subscription | Stripe Billing + hosted Checkout + Customer Portal; explicit entitlement state machine separate from raw webhook payloads | Operator; final plans/prices/tax policy |
 | Autopilot | Database event/outbox + scheduled worker + channel adapters; rules limited to the core workflow, not CRM sequences | Product approval; hosting/queue choice and cost |
 | In-app notifications | Supabase-backed notification inbox with per-workspace/user scoping and read state | Product + RLS design |
 | Browser push | Standards-based service worker/Push API, VAPID keys in secret storage, opt-in after user value is clear | Product/privacy approval; browser support matrix |
@@ -108,7 +108,7 @@ Deliverables:
 - Confirm the canonical core workflow and v1 definition of **communicate** and **close out**. Recommended v1: project-scoped messages/activity, explicit outstanding-action summary, final approval, payment settlement, archive/export; no contacts pipeline, lead scoring, or sales automation.
 - Choose final product name and run trademark/name screening before purchasing a domain. Record primary name, legal entity display name, support address, sender name, and fallback name.
 - Decide initial customer/geographic scope, supported currencies, minimum/maximum invoice amounts, prohibited businesses/content, and support hours.
-- Approve Portal plans, trial/card requirement, monthly/annual options, cancellation/refund policy, grace/dunning policy, promotions, taxes, and Connect fee formula. Build a unit-economics sheet including Stripe fees, refunds, disputes, SMS, email, storage, bandwidth, support, taxes, and negative-balance exposure.
+- Approve Finalia plans, trial/card requirement, monthly/annual options, cancellation/refund policy, grace/dunning policy, promotions, taxes, and Connect fee formula. Build a unit-economics sheet including Stripe fees, refunds, disputes, SMS, email, storage, bandwidth, support, taxes, and negative-balance exposure.
 - Approve Connect direct-vs-destination charge model and document merchant of record, Stripe fee payer, losses collector, refund source, dispute owner, transfer/payout timing, statement descriptor, and platform fee disclosure.
 - Approve authentication methods and account-linking rules: Google, email, phone OTP, recovery, reauthentication for sensitive actions, duplicate identities, phone recycling, and deletion.
 - Select messaging/queue/monitoring/analytics vendors only after price, data processing, retention, and regional availability review.
@@ -184,20 +184,20 @@ Planned work:
 
 - Update to the approved Stripe API/SDK version and migrate Connect creation/readiness to Accounts v2. Do not use legacy `type: express`, `charges_enabled`, or `payouts_enabled` as the target design.
 - Implement the approved responsibility configuration: dashboard access, fees collector, losses collector, Merchant/Recipient capability, direct/destination/separate charge pattern, and onboarding remediation. Re-check v2 capability status before creating payments/transfers.
-- Prefer Stripe-hosted/embedded onboarding and include account health/notification surfaces; do not collect sensitive Connect KYC data in Portal.
-- Finalize Portal Billing products/prices in a configuration manifest: stable lookup keys, monthly/annual price, currency, trial, promotion rules, grandfathering, cancellation timing, proration, dunning/grace/access behavior, and Customer Portal configuration.
+- Prefer Stripe-hosted/embedded onboarding and include account health/notification surfaces; do not collect sensitive Connect KYC data in Finalia.
+- Finalize Finalia Billing products/prices in a configuration manifest: stable lookup keys, monthly/annual price, currency, trial, promotion rules, grandfathering, cancellation timing, proration, dunning/grace/access behavior, and Customer Portal configuration.
 - Decide tax obligations/registrations before enabling Stripe Tax. “Automatic tax enabled” is not evidence that tax is collected without registrations.
 - Finalize client Checkout: dynamic payment methods, payment-method eligibility/currency, statement descriptors, application fee calculation/caps, idempotency keys, Checkout integration identifier where supported, success UX, and asynchronous payment events. Webhooks, not return URLs, remain authoritative.
 - Expand the financial state model and immutable audit ledger for open, processing, paid, failed, canceled, partially refunded, refunded, disputed, dispute won/lost, transfer reversed, and payout-impact states.
 - Implement webhook handlers for the exact chosen model, including payment success/failure/async results, subscription invoice paid/failed and lifecycle changes, account capability changes, refunds, disputes, transfer reversals where applicable, and Connect account requirements. Verify signatures; reject live/test mismatches; tolerate duplicates and out-of-order events.
 - Add operator refund tooling with authorization, reason, amount bounds, current-state validation, idempotency, confirmation, audit trail, and correct application-fee/transfer reversal behavior. Define who can initiate and fund each refund.
 - Add dispute intake, evidence deadlines, notification/escalation, evidence ownership, document handling, outcome sync, and support runbook. Never promise automatic dispute handling without operational ownership.
-- Add reconciliation jobs/reports comparing Portal invoices/ledger to Stripe sessions, PaymentIntents/charges/refunds/disputes/transfers/subscriptions; alert on mismatches.
+- Add reconciliation jobs/reports comparing Finalia invoices/ledger to Stripe sessions, PaymentIntents/charges/refunds/disputes/transfers/subscriptions; alert on mismatches.
 - Exercise Stripe test clocks/test cards/CLI fixtures for trials, renewals, failed payments, authentication, delayed methods, duplicates, refunds, partial refunds, disputes, capability loss, and webhook downtime.
 
 **Exit criteria:** signed economics/liability memo; test-mode reconciliation is exact; refund/dispute drills pass; webhook replay is safe; terms/pricing/product copy match the implemented charge model.
 
-**Manual checkpoint E:** approve the test evidence and the exact live-mode change sheet. Live products, keys, Connect settings, portal config, or webhooks are still not changed until Phase 7 authorization.
+**Manual checkpoint E:** approve the test evidence and the exact live-mode change sheet. Live products, keys, Connect settings, Stripe customer-portal configuration, or webhooks are still not changed until Phase 7 authorization.
 
 ### Phase 5 — Name, domain, sender identity, branding, and trust
 
@@ -205,7 +205,7 @@ Planned work:
 
 Planned work:
 
-- Complete name/trademark screening and approve canonical product/legal names. Inventory and centralize hard-coded `Portal`, `Portal Pro`, pricing, URLs, sender names, metadata, icons, PDFs, invite copy, legal pages, and Stripe descriptors.
+- Complete trademark screening for Finalia and confirm the canonical legal entity name. Keep product name, Finalia Pro plan name, `https://finalia.app`, sender names, metadata, icons, PDFs, invite copy, legal pages, and Stripe descriptors aligned.
 - Produce a domain shortlist and migration map: apex/marketing/app/auth/API links, canonical URLs, redirects, cookies, Supabase allowlists, Google OAuth origins, Stripe URLs, email links, webhook endpoints, sitemap/robots, analytics, and support docs.
 - Define DNS records and TTL-lowering plan, Vercel domain verification, TLS/HSTS rollout, rollback domain, redirect lifetime, and old-link preservation. **Do not purchase or change DNS without approval.**
 - Choose a dedicated transactional email subdomain and sender addresses (for example invite, notifications, billing, support). Prepare SPF, DKIM, DMARC rollout/reporting, return-path, branded links, unsubscribe/suppression behavior, and separate Supabase Auth SMTP versus app email credentials.
@@ -251,7 +251,7 @@ Preflight change sheet (each line separately approved and recorded):
 6. Add production secrets through platform secret storage, with least privilege and environment separation; use restricted Stripe keys where feasible; record rotation owners. Never commit values.
 7. Create approved live Stripe products/prices and Connect configuration; configure Customer Portal and exact webhook subscriptions; record resource IDs outside source secrets. Do not copy test IDs into live config.
 8. Deploy immutable release; verify liveness/readiness, migrations, release tag, alerts, queues, and webhook signature path.
-9. Run a controlled end-to-end production transaction with approved real accounts and a minimal refundable amount: subscribe → invite → authenticate → communicate → deliver → review → approve → pay → refund if the test protocol requires → close out. Verify Stripe, Portal ledger, emails/SMS/push, and reconciliation.
+9. Run a controlled end-to-end production transaction with approved real accounts and a minimal refundable amount: subscribe → invite → authenticate → communicate → deliver → review → approve → pay → refund if the test protocol requires → close out. Verify Stripe, Finalia ledger, emails/SMS/push, and reconciliation.
 10. Start with a small allowlisted cohort and channel kill switches. Monitor continuously through the agreed observation period before opening signup broadly.
 
 Go/no-go rules:

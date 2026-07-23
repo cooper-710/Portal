@@ -62,7 +62,7 @@ export function GettingStartedChecklist({
     {
       id: "branding",
       title: "Add your business name",
-      description: "Clients see your brand on their portal home.",
+      description: "Clients see your brand on their workspace home.",
       done: brandingDone,
       icon: Palette,
     },

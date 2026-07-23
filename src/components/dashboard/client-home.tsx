@@ -137,7 +137,7 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
     activeProjects[0] ??
     projects[0] ??
     null;
-  const brandName = businessDisplayName(scoped.brand, "Your portal");
+  const brandName = businessDisplayName(scoped.brand, "Your workspace");
   const welcome =
     scoped.brand?.welcome_message?.trim() ||
     `Welcome back, ${displayName(profile)}.`;

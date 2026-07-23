@@ -65,7 +65,7 @@ export function pickOwnerNextAction(
   );
   if (overdue) return {
     title: "Follow up on an overdue invoice",
-    description: "Portal is sending the scheduled reminder; open the invoice to review its status.",
+    description: "Finalia is sending the scheduled reminder; open the invoice to review its status.",
     href: `/dashboard/invoices?project=${encodeURIComponent(overdue.project_id)}`,
     label: "Review invoice",
   };

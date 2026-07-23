@@ -83,7 +83,7 @@ export function buildDirectChargeCheckoutSession(args: {
           unit_amount: args.amount,
           product_data: {
             name: `Invoice, ${args.projectTitle}`,
-            description: `Portal invoice ${args.invoiceId.slice(0, 8)}`,
+            description: `Finalia invoice ${args.invoiceId.slice(0, 8)}`,
           },
         },
       },

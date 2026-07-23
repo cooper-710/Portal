@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+import { appBaseUrl } from "@/lib/product";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 import { directChargeReadiness } from "@/utils/stripe/direct-charge";
@@ -59,7 +60,7 @@ async function syncConnectStatus() {
 }
 
 export async function GET(request: Request) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
+  const appUrl = appBaseUrl();
   const { searchParams } = new URL(request.url);
   const next = safeAppPath(
     searchParams.get("next"),

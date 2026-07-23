@@ -1,13 +1,13 @@
 import Link from "next/link";
 
-import { PortalBrand } from "@/components/portal-brand";
+import { FinaliaBrand } from "@/components/finalia-brand";
 
 type SiteFooterProps = {
   /** Compact footer for login / legal pages */
   compact?: boolean;
   /**
    * marketing: full nav + Sign in
-   * app: Portal / Privacy / Terms / Pricing (logged-in chrome)
+   * app: Finalia / Privacy / Terms / Pricing (logged-in chrome)
    */
   variant?: "marketing" | "app";
 };
@@ -21,7 +21,7 @@ export function SiteFooter({
       <footer className="mt-auto border-t border-transparent px-4 py-6">
         <p className="text-center text-xs text-zinc-400">
           <Link href="/" className="hover:text-zinc-600">
-            <PortalBrand
+            <FinaliaBrand
               size="sm"
               nameClassName="font-medium"
             />
@@ -75,7 +75,7 @@ export function SiteFooter({
           href="/"
           className="text-zinc-800 transition-opacity hover:opacity-80"
         >
-          <PortalBrand
+          <FinaliaBrand
             size="sm"
             nameClassName="font-heading font-bold tracking-tight"
           />

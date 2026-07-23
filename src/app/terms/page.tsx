@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { SiteFooter } from "@/components/site-footer";
-import { PortalBrand } from "@/components/portal-brand";
+import { FinaliaBrand } from "@/components/finalia-brand";
 
 export const metadata: Metadata = {
-  title: "Terms of Service · Portal",
-  description: "Terms governing use of the Portal client workspace.",
+  title: "Terms of Service · Finalia",
+  description: "Terms governing use of the Finalia client workspace.",
 };
 
 export default function TermsPage() {
@@ -15,7 +15,7 @@ export default function TermsPage() {
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-12 sm:px-6 sm:py-16">
         <p className="text-sm font-semibold tracking-tight">
           <Link href="/" className="text-zinc-900 hover:underline">
-            <PortalBrand
+            <FinaliaBrand
               size="sm"
               nameClassName="text-sm font-semibold tracking-tight"
             />
@@ -28,8 +28,8 @@ export default function TermsPage() {
           <section className="space-y-3">
             <h2 className="text-base font-semibold text-zinc-900">Agreement</h2>
             <p>
-              By creating an account or using Portal, you agree to these Terms.
-              If you use Portal on behalf of a business, you represent that you
+              By creating an account or using Finalia, you agree to these Terms.
+              If you use Finalia on behalf of a business, you represent that you
               have authority to bind that business.
             </p>
           </section>
@@ -37,7 +37,7 @@ export default function TermsPage() {
           <section className="space-y-3">
             <h2 className="text-base font-semibold text-zinc-900">The service</h2>
             <p>
-              Portal is a software platform for businesses and studios to invite clients,
+              Finalia is a software platform for businesses and studios to invite clients,
               share project files, track status, and collect invoice payments.
               Features may change as we improve the product. We may suspend
               access for abuse, non-payment, or legal risk.
@@ -58,14 +58,14 @@ export default function TermsPage() {
             <h2 className="text-base font-semibold text-zinc-900">Subscriptions & fees</h2>
             <ul className="list-disc space-y-2 pl-5">
               <li>
-                <span className="font-medium text-zinc-800">Portal Pro</span> is
+                <span className="font-medium text-zinc-800">Finalia Pro</span> is
                 billed at <span className="font-medium text-zinc-800">$25 per month</span>{" "}
                 after a free trial period (default 14 days) unless canceled.
               </li>
               <li>
                 Client invoice payments may include a platform application fee
                 (default about <span className="font-medium text-zinc-800">1%</span>{" "}
-                of the invoice amount) retained by Portal via Stripe Connect.
+                of the invoice amount) retained by Finalia via Stripe Connect.
               </li>
               <li>
                 Payments are processed by Stripe. Your payouts are subject
@@ -77,7 +77,7 @@ export default function TermsPage() {
                 responsible for payment support, refunds, and disputes.
               </li>
               <li>
-                You can manage or cancel your Portal Pro subscription in the
+                You can manage or cancel your Finalia Pro subscription in the
                 Stripe customer portal linked from Billing.
               </li>
             </ul>
@@ -97,7 +97,7 @@ export default function TermsPage() {
           <section className="space-y-3">
             <h2 className="text-base font-semibold text-zinc-900">Acceptable use</h2>
             <p>
-              You may not use Portal for unlawful activity, malware distribution,
+              You may not use Finalia for unlawful activity, malware distribution,
               spam, infringement of others’ rights, or attempts to bypass
               security or billing. We may remove content or terminate accounts
               that violate these Terms.
@@ -107,7 +107,7 @@ export default function TermsPage() {
           <section className="space-y-3">
             <h2 className="text-base font-semibold text-zinc-900">Disclaimers</h2>
             <p>
-              Portal is provided “as is” without warranties of uninterrupted or
+              Finalia is provided “as is” without warranties of uninterrupted or
               error-free operation. We are not a party to contracts
               between you and your clients, and we do not guarantee
               payment outcomes beyond facilitating Stripe Checkout and Connect.
@@ -117,18 +117,18 @@ export default function TermsPage() {
           <section className="space-y-3">
             <h2 className="text-base font-semibold text-zinc-900">Limitation of liability</h2>
             <p>
-              To the fullest extent permitted by law, Portal and its operators
+              To the fullest extent permitted by law, Finalia and its operators
               are not liable for indirect, incidental, or consequential damages,
               or for lost profits or data. Our aggregate liability for claims
               relating to the service is limited to the fees you paid us for
-              Portal Pro in the three months before the claim.
+              Finalia Pro in the three months before the claim.
             </p>
           </section>
 
           <section className="space-y-3">
             <h2 className="text-base font-semibold text-zinc-900">Termination</h2>
             <p>
-              You may stop using Portal and delete your account at any time.
+              You may stop using Finalia and delete your account at any time.
               Provisions that by nature should survive (fees owed, ownership,
               liability limits) will survive termination.
             </p>
@@ -147,7 +147,7 @@ export default function TermsPage() {
             <h2 className="text-base font-semibold text-zinc-900">Contact</h2>
             <p>
               For terms questions, contact the support channel published with
-              your Portal deployment.
+              your Finalia deployment.
             </p>
           </section>
         </div>

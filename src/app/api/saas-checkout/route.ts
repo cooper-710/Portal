@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+import { appBaseUrl } from "@/lib/product";
 import {
   isPlatformSubscriptionActive,
-  PORTAL_PRO_TRIAL_DAYS,
+  FINALIA_PRO_TRIAL_DAYS,
   STRIPE_TRIAL_OFFER_ID,
 } from "@/utils/stripe/subscription";
 import { createClient } from "@/utils/supabase/server";
@@ -12,7 +13,7 @@ import { logEvent, requestContext } from "@/lib/monitoring";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 /**
- * Create a Stripe Checkout Session for Portal Pro (14-day trial, then monthly).
+ * Create a Stripe Checkout Session for Finalia Pro (14-day trial, then monthly).
  *
  * Stripe Trial Offers (`to_…`) are not supported on Checkout, only on the
  * Subscriptions API. We align duration via subscription_data.trial_period_days
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
 
   const stripeSecret = process.env.STRIPE_SECRET_KEY;
   const priceId = process.env.STRIPE_SAAS_PRICE_ID;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
+  const appUrl = appBaseUrl();
 
   let successPath = "/dashboard?subscribed=1";
   let cancelPath = "/dashboard/billing?canceled=1";
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
 
   if (!profile || profile.role !== "freelancer") {
     return NextResponse.json(
-      { error: "Only workspace owners can subscribe to Portal." },
+      { error: "Only workspace owners can subscribe to Finalia." },
       { status: 403 },
     );
   }
@@ -147,7 +148,7 @@ export async function POST(request: Request) {
       },
       subscription_data: {
         // Legacy free trial, required for Checkout (Trial Offer API unsupported here).
-        trial_period_days: PORTAL_PRO_TRIAL_DAYS,
+        trial_period_days: FINALIA_PRO_TRIAL_DAYS,
         metadata: {
           freelancer_id: user.id,
           purpose: "platform_subscription",

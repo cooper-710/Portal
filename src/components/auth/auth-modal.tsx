@@ -37,12 +37,12 @@ function copyForMode(mode: AuthModalMode) {
       return {
         title: "Create your workspace",
         description:
-          "Continue with Google to start your 14-day free trial of Portal Pro.",
+          "Continue with Google to start your 14-day free trial of Finalia Pro.",
       };
     default:
       return {
         title: "Welcome back",
-        description: "Continue with Google to sign in to your Portal workspace.",
+        description: "Continue with Google to sign in to your Finalia workspace.",
       };
   }
 }

@@ -30,7 +30,7 @@ type SelectProps = {
   className?: string;
   triggerClassName?: string;
   contentClassName?: string;
-  /** Prefer brand CSS variables for focus/selected (client portal chrome). */
+  /** Prefer brand CSS variables for focus/selected (client workspace chrome). */
   branded?: boolean;
   "aria-label"?: string;
 };

@@ -128,7 +128,7 @@
     @apply font-sans;
   }
 
-  /* Native form controls: match Portal zinc/blue inputs */
+  /* Native form controls: match Finalia zinc/blue inputs */
   select:not([data-slot="native-select"]) {
     @apply rounded-lg border border-zinc-200 bg-white text-sm text-zinc-900 shadow-sm outline-none;
   }
@@ -264,7 +264,7 @@
 }
 
 /*
- * Marketing display headings use DM Sans (same as the portal), not Syne.
+ * Marketing display headings use DM Sans (same as the app), not Syne.
  * Tailwind text-5xl/6xl default to line-height: 1, which clips descenders (g, p, y, q).
  * Keep line-height ≥ 1.2 and never let parent overflow clip text vertically.
  */

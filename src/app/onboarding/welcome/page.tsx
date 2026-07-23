@@ -7,7 +7,7 @@ export default async function OnboardingWelcomePage() {
   return (
     <OnboardingShell
       step="welcome"
-      title="Welcome to Portal"
+      title="Welcome to Finalia"
       description="One private workspace per project. Invite clients, share deliverables, and get paid without inbox chaos."
       continueLabel="Continue"
       allowSkip

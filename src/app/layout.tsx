@@ -3,6 +3,11 @@ import { DM_Sans, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
+import {
+  appBaseUrl,
+  PRODUCT_NAME,
+  PRODUCT_PLAN_NAME,
+} from "@/lib/product";
 import { isProductionRuntime, validateCriticalEnv } from "@/utils/env";
 
 import "./globals.css";
@@ -17,42 +22,40 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const appUrl =
-  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-  "http://localhost:3001";
+const appUrl = appBaseUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
-  applicationName: "Portal",
+  applicationName: PRODUCT_NAME,
   title: {
-    default: "Portal: Client Workspace",
-    template: "%s · Portal",
+    default: "Finalia: Client Operations",
+    template: `%s · ${PRODUCT_NAME}`,
   },
   description:
-    "Invite clients, share deliverables, and collect Stripe payments. Portal Pro: 14-day free trial, then $25/mo.",
+    `Invite clients, share deliverables, and collect Stripe payments. ${PRODUCT_PLAN_NAME}: 14-day free trial, then $25/mo.`,
   openGraph: {
-    title: "Portal: Client Workspace",
+    title: "Finalia: Client Operations",
     description:
       "The client workspace your business actually runs on. 14-day free trial, then $25/mo.",
     url: appUrl,
-    siteName: "Portal",
+    siteName: PRODUCT_NAME,
     type: "website",
     locale: "en_US",
     images: [
       {
-        url: "/portal-icon.png",
+        url: "/finalia-icon.png",
         width: 1254,
         height: 1254,
-        alt: "Portal app icon",
+        alt: "Finalia app icon",
       },
     ],
   },
   twitter: {
     card: "summary",
-    title: "Portal: Client Workspace",
+    title: "Finalia: Client Operations",
     description:
-      "Invite clients, share deliverables, and collect payment in one private portal per project.",
-    images: ["/portal-icon.png"],
+      "Invite clients, share deliverables, and collect payment in one private workspace per project.",
+    images: ["/finalia-icon.png"],
   },
   robots: {
     index: true,

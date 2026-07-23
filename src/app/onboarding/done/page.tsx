@@ -8,7 +8,7 @@ export default async function OnboardingDonePage() {
     <OnboardingShell
       step="done"
       title="You’re ready"
-      description="Your client portal is set up. Jump into the dashboard to manage projects, files, and invoices."
+      description="Your client workspace is set up. Jump into the dashboard to manage projects, files, and invoices."
       continueLabel="Enter dashboard"
       isFinal
     />

@@ -104,7 +104,7 @@ export function ClientInvoicesPage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
-            Client portal
+            Client workspace
           </p>
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
             Invoices

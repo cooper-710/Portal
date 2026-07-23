@@ -22,7 +22,7 @@ export function businessDisplayName(
     | Pick<BusinessBrand, "business_name" | "full_name" | "email">
     | null
     | undefined,
-  fallback = "Portal",
+  fallback = "Finalia",
 ) {
   const business = brand?.business_name?.trim();
   if (business) return business;

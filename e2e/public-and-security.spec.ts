@@ -2,6 +2,10 @@ import { expect, test } from "@playwright/test";
 
 test("marketing accurately explains the core workflow", async ({ page }) => {
   await page.goto("/");
+  await expect(page).toHaveTitle(/Finalia/);
+  await expect(
+    page.locator('meta[name="application-name"]'),
+  ).toHaveAttribute("content", "Finalia");
   await expect(page.getByRole("heading", { name: /client workspace your business/i })).toBeVisible();
   await expect(page.getByText(/invite clients, share deliverables, and collect payment/i)).toBeVisible();
   await page.goto("/how-it-works");
@@ -10,6 +14,22 @@ test("marketing accurately explains the core workflow", async ({ page }) => {
   await page.goto("/features");
   await expect(page.getByText(/per-deliverable approval and change requests/i)).toBeVisible();
   await expect(page.getByText(/final project acceptance closes the review loop/i)).toBeVisible();
+});
+
+test("PWA metadata uses the Finalia product identity", async ({ request }) => {
+  const response = await request.get("/manifest.webmanifest");
+  expect(response.ok()).toBeTruthy();
+  const manifest = await response.json();
+  expect(manifest).toMatchObject({
+    name: "Finalia: Client Operations",
+    short_name: "Finalia",
+  });
+  expect(manifest.icons).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ src: "/finalia-icon-192.png" }),
+      expect.objectContaining({ src: "/finalia-icon-512.png" }),
+    ]),
+  );
 });
 
 test("protected pages redirect guests into sign in", async ({ page }) => {

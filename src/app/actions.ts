@@ -8,7 +8,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import {
   isPlatformSubscriptionActive,
-  PORTAL_PRO_TRIAL_DAYS,
+  FINALIA_PRO_TRIAL_DAYS,
 } from "@/utils/stripe/subscription";
 import {
   normalizeFullName,
@@ -113,7 +113,7 @@ export async function signOut() {
 /**
  * Permanently delete the signed-in user's account.
  *
- * Freelancer: cancels Portal Pro subscription (best-effort), removes project
+ * Freelancer: cancels Finalia Pro subscription (best-effort), removes project
  * storage objects, then deletes auth user, projects/assets/invoices cascade.
  * Client: unlinks from projects (`client_id` SET NULL); does not delete projects.
  */
@@ -259,7 +259,7 @@ async function requireSubscribedFreelancer() {
   if (!isPlatformSubscriptionActive(profile.subscription_status)) {
     return {
       error:
-        `Start a ${PORTAL_PRO_TRIAL_DAYS}-day free trial of Portal Pro (then $25/mo) to create projects, invoices, and uploads. Open Billing to begin.` as const,
+        `Start a ${FINALIA_PRO_TRIAL_DAYS}-day free trial of Finalia Pro (then $25/mo) to create projects, invoices, and uploads. Open Billing to begin.` as const,
     };
   }
 
@@ -393,7 +393,7 @@ export async function updateBusinessBranding(formData: FormData) {
     .single();
 
   if (!profile || profile.role !== "freelancer") {
-    return { error: "Only workspace owners can edit client portal branding." };
+    return { error: "Only workspace owners can edit client workspace branding." };
   }
 
   let logoUrl: string | null | undefined = undefined;
@@ -488,7 +488,7 @@ export async function updateBusinessBranding(formData: FormData) {
   return { success: true as const };
 }
 
-/** One-click skip for customize-portal onboarding (no branding required). */
+/** One-click skip for legacy workspace-branding onboarding (no branding required). */
 export async function completePortalSetup() {
   const supabase = await createClient();
   const {
@@ -506,7 +506,7 @@ export async function completePortalSetup() {
     .maybeSingle();
 
   if (!profile || profile.role !== "freelancer") {
-    return { error: "Only workspace owners can complete portal setup." };
+    return { error: "Only workspace owners can complete workspace setup." };
   }
 
   const { error } = await supabase
@@ -1470,7 +1470,7 @@ export async function uploadAsset(formData: FormData) {
     return { error: "Only workspace owners can upload files to a project." };
   }
 
-  // Freelancer uploads require Portal Pro trial or paid subscription.
+  // Freelancer uploads require a Finalia Pro trial or paid subscription.
   const { data: profile } = await supabase
     .from("users")
     .select("subscription_status")
@@ -1479,7 +1479,7 @@ export async function uploadAsset(formData: FormData) {
 
   if (!isPlatformSubscriptionActive(profile?.subscription_status)) {
     return {
-      error: `Start a ${PORTAL_PRO_TRIAL_DAYS}-day free trial of Portal Pro (then $25/mo) to upload files. Open Billing to begin.`,
+      error: `Start a ${FINALIA_PRO_TRIAL_DAYS}-day free trial of Finalia Pro (then $25/mo) to upload files. Open Billing to begin.`,
     };
   }
 

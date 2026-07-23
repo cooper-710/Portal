@@ -1,17 +1,19 @@
 import type { Profile, PlatformSubscriptionStatus } from "@/types/database";
 
 /**
- * Free trial length for new Portal Pro subscriptions (Stripe Checkout).
+ * Free trial length for new Finalia Pro subscriptions (Stripe Checkout).
  * Checkout does not support Stripe Trial Offers (`to_…`); use trial_period_days.
  * STRIPE_TRIAL_OFFER_ID is kept in env for Dashboard/API reference only.
  */
-function resolvePortalProTrialDays(): number {
-  const raw = process.env.PORTAL_PRO_TRIAL_DAYS;
+function resolveFinaliaProTrialDays(): number {
+  const raw =
+    process.env.FINALIA_PRO_TRIAL_DAYS ??
+    process.env.PORTAL_PRO_TRIAL_DAYS;
   const parsed = raw ? Number.parseInt(raw, 10) : NaN;
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 14;
 }
 
-export const PORTAL_PRO_TRIAL_DAYS = resolvePortalProTrialDays();
+export const FINALIA_PRO_TRIAL_DAYS = resolveFinaliaProTrialDays();
 
 /** Stripe Trial Offer ID from Dashboard (not attachable via Checkout Sessions). */
 export const STRIPE_TRIAL_OFFER_ID =

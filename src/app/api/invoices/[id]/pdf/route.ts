@@ -47,7 +47,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       status: invoice.amount_paid > 0 ? "paid" : "pending",
       issuedAt: invoice.created_at,
       dueDate: invoice.due_date,
-      businessName: owner.business_name?.trim() || owner.full_name?.trim() || "Portal workspace",
+      businessName: owner.business_name?.trim() || owner.full_name?.trim() || "Finalia workspace",
       ownerName: owner.full_name,
       ownerEmail: owner.email,
       clientName: clientRow?.full_name ?? null,

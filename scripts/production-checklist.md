@@ -14,7 +14,7 @@ Legend: **DONE in repo** = no action for this item. **USER-MUST-DO** = requires 
 - [x] Legal pages + public footer (Privacy/Terms)
 - [x] Friendly billing/checkout errors
 - [x] Workspace getting-started checklist
-- [x] Customize portal onboarding (`portal_setup_completed_at`) with Skip
+- [x] Customize workspace onboarding (legacy `portal_setup_completed_at`) with Skip
 - [x] Retainer/recurring labeled as scheduled invoices
 - [x] Dashboard loading + error boundaries
 - [x] OG / Twitter metadata basics
@@ -30,7 +30,7 @@ Legend: **DONE in repo** = no action for this item. **USER-MUST-DO** = requires 
 
 ## USER-MUST-DO: Pre-deploy
 
-- [ ] Domain purchased and DNS ready for Vercel
+- [ ] `finalia.app` DNS ready for Vercel
 - [ ] Production Supabase project created; `schema.sql` applied (includes `portal_setup_completed_at` + `stripe_webhook_events`)
 - [ ] Supabase Auth Site URL + Redirect URLs set to production domain
 - [ ] (Recommended) Enable Auth leaked-password protection in Supabase Dashboard
@@ -41,14 +41,14 @@ Legend: **DONE in repo** = no action for this item. **USER-MUST-DO** = requires 
 - [ ] Resend domain verified (required to email arbitrary clients; without it invites/confirms only reach your Resend account email)
 - [ ] All env vars from `.env.example` set in Vercel (live keys only in prod project)
 - [ ] Vercel KV or Upstash Redis connected for distributed production rate limiting
-- [ ] `NEXT_PUBLIC_APP_URL` = `https://YOUR_DOMAIN` (no trailing slash)
+- [ ] `NEXT_PUBLIC_APP_URL` = `https://finalia.app` (no trailing slash)
 - [ ] Rotated `SUPABASE_SERVICE_ROLE_KEY` if it was ever exposed
 
 ## USER-MUST-DO: Deploy day
 
 - [ ] Vercel deploy succeeded
-- [ ] `GET https://YOUR_DOMAIN/api/health` returns `"ok": true`
-- [ ] Stripe live webhook → `https://YOUR_DOMAIN/api/webhooks/stripe` (events listed in PRODUCTION_PLAN)
+- [ ] `GET https://finalia.app/api/health` returns `"ok": true`
+- [ ] Stripe live webhook → `https://finalia.app/api/webhooks/stripe` (events listed in PRODUCTION_PLAN)
 - [ ] Webhook signing secret matches Vercel `STRIPE_WEBHOOK_SECRET`
 - [ ] Continue with Google → start trial → guided onboarding → dashboard
 - [ ] Billing shows trialing; workspace unlocks

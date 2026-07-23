@@ -133,7 +133,7 @@ describe("onboarding skip + resume", () => {
     ).toBe(true);
   });
 
-  it("auto-skips branding when portal setup or business name exists", () => {
+  it("auto-skips branding when legacy setup or business name exists", () => {
     expect(
       shouldAutoSkipStep("branding", {
         profile: {

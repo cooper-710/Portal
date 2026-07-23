@@ -65,7 +65,7 @@ export function notificationMessage(event: NotificationEvent): NotificationMessa
       const channel = stringValue(payload, "requested_channel");
       return {
         category: "payments",
-        title: "Portal test notification",
+        title: "Finalia test notification",
         body: `Your ${channel ?? "notification"} channel is working.`,
         href: "/dashboard/settings",
         inApp: channel === "in_app",
@@ -87,7 +87,7 @@ export function notificationMessage(event: NotificationEvent): NotificationMessa
       return {
         category: "invites",
         title: `Reminder: join ${projectName(payload)}`,
-        body: "Your client portal invitation is still waiting.",
+        body: "Your Finalia invitation is still waiting.",
         href: "/login?role=client&next=%2Fdashboard",
         inApp: false,
         email: true,

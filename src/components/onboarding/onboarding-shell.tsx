@@ -12,7 +12,7 @@ import {
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { PortalBrand } from "@/components/portal-brand";
+import { FinaliaBrand } from "@/components/finalia-brand";
 import {
   progressForStep,
   type OnboardingStep,
@@ -88,7 +88,7 @@ export function OnboardingShell({
       />
 
       <header className="relative z-10 mx-auto flex w-full max-w-lg items-center justify-between px-5 pt-8 sm:px-6">
-        <PortalBrand
+        <FinaliaBrand
           size="sm"
           nameClassName="text-sm font-semibold tracking-tight text-zinc-900"
         />

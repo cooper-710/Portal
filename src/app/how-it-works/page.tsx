@@ -25,12 +25,12 @@ const STEPS = [
   {
     number: "02",
     title: "Start the 14-day trial",
-    body: "Portal Pro unlocks during the trial so you can run a real client project before billing starts at $25/mo.",
+    body: "Finalia Pro unlocks during the trial so you can run a real client project before billing starts at $25/mo.",
   },
   {
     number: "03",
     title: "Connect Stripe",
-    body: "Link your Stripe account so invoice payments land with you. Portal never holds client funds.",
+    body: "Link your Stripe account so invoice payments land with you. Finalia never holds client funds.",
   },
   {
     number: "04",
@@ -60,7 +60,7 @@ export default function HowItWorksPage() {
       <MarketingPageHero
         eyebrow="How it works"
         title="From signup to paid, without the email chaos."
-        description="Portal walks you through a short path: trial, Stripe, brand, project, invite, then payment. Each step is one job, done in order."
+        description="Finalia walks you through a short path: trial, Stripe, brand, project, invite, then payment. Each step is one job, done in order."
       />
 
       <MarketingSection>

@@ -141,7 +141,7 @@ export type Profile = {
   stripe_subscription_id: string | null;
   subscription_status: PlatformSubscriptionStatus;
   subscription_current_period_end: string | null;
-  /** Set when freelancer saves or skips customize-portal onboarding. */
+  /** Set when freelancer saves or skips legacy workspace-branding onboarding. */
   portal_setup_completed_at: string | null;
   /** Set when freelancer finishes the guided onboarding wizard. */
   onboarding_completed_at: string | null;

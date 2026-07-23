@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+import { appBaseUrl } from "@/lib/product";
 import { createClient } from "@/utils/supabase/server";
 
 function safeAppPath(value: string | null, fallback: string) {
@@ -12,7 +13,7 @@ function safeAppPath(value: string | null, fallback: string) {
  * Refresh Account Link when onboarding is incomplete / expired.
  */
 export async function GET(request: Request) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
+  const appUrl = appBaseUrl();
   const stripeSecret = process.env.STRIPE_SECRET_KEY;
   const { searchParams } = new URL(request.url);
   const next = safeAppPath(

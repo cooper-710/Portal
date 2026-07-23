@@ -115,7 +115,7 @@ export function SettingsPage({
 
       <SettingsSection
         title="Notifications"
-        description="Choose where Portal sends action reminders and set optional quiet hours."
+        description="Choose where Finalia sends action reminders and set optional quiet hours."
       >
         <NotificationPreferencesForm />
       </SettingsSection>
@@ -123,15 +123,15 @@ export function SettingsPage({
       {isFreelancer ? (
         <>
           <SettingsSection
-            title="Client portal branding"
-            description="Logo, colors, and welcome message apply across all client portals and invite emails."
+            title="Client workspace branding"
+            description="Logo, colors, and welcome message apply across all client workspaces and invite emails."
           >
             <BrandingForm profile={profile} />
           </SettingsSection>
 
           <SettingsSection
             title="Billing"
-            description="Portal Pro unlocks projects, invoices, and the file vault."
+            description="Finalia Pro unlocks projects, invoices, and the file vault."
           >
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="space-y-2">
@@ -148,9 +148,9 @@ export function SettingsPage({
                 <p className="text-sm text-zinc-600">
                   {subscriptionActive
                     ? periodEnd
-                      ? `Portal Pro · current period through ${periodEnd}`
-                      : "Portal Pro is active on this account."
-                    : "No active Portal Pro plan. Start a trial or subscribe from Billing."}
+                      ? `Finalia Pro · current period through ${periodEnd}`
+                      : "Finalia Pro is active on this account."
+                    : "No active Finalia Pro plan. Start a trial or subscribe from Billing."}
                 </p>
               </div>
               <Link
@@ -211,7 +211,7 @@ export function SettingsPage({
         <div className="space-y-1">
           <h2 className="text-sm font-semibold text-red-900">Delete account</h2>
           <p className="text-xs text-zinc-500">
-            Danger zone: permanent removal of this login and portal data tied
+            Danger zone: permanent removal of this login and Finalia data tied
             to you.
           </p>
         </div>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { signOut } from "@/app/actions";
-import { PortalBrand } from "@/components/portal-brand";
+import { FinaliaBrand } from "@/components/finalia-brand";
 import { NotificationCenter } from "@/components/dashboard/notification-center";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -54,7 +54,7 @@ export function DashboardNav({
   role,
   canCreate = true,
   displayLabel,
-  brandLabel = "Portal",
+  brandLabel = "Finalia",
   brandLogoUrl = null,
 }: DashboardNavProps) {
   const pathname = usePathname();
@@ -80,8 +80,8 @@ export function DashboardNav({
               alt=""
               className="h-7 w-auto max-w-[7rem] object-contain"
             />
-          ) : brandLabel === "Portal" ? (
-            <PortalBrand
+          ) : brandLabel === "Finalia" ? (
+            <FinaliaBrand
               size="sm"
               nameClassName={brandText}
             />

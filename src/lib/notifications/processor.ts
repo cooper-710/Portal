@@ -3,6 +3,7 @@ import "server-only";
 import { Resend } from "resend";
 import webpush from "web-push";
 
+import { appBaseUrl, PRODUCT_NAME } from "@/lib/product";
 import { notificationKillSwitches } from "@/lib/notifications/config";
 import { runImmediateDeliveryBatch } from "@/lib/notifications/immediate-batch";
 import { logEvent } from "@/lib/monitoring";
@@ -224,14 +225,14 @@ async function deliverEmail(delivery: NotificationDelivery, event: NotificationE
   const message = notificationMessage(event);
   if (!message) return { skipped: "Notification rule no longer exists." } as const;
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
+  const appUrl = appBaseUrl();
   const href = message.href.startsWith("http") ? message.href : `${appUrl}${message.href}`;
   const resend = new Resend(apiKey);
   const { data, error } = await resend.emails.send({
     from,
     to,
     subject: message.title,
-    html: `<div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;background:#fafafa;padding:28px 16px"><div style="max-width:520px;margin:0 auto;background:#fff;border:1px solid #e4e4e7;border-radius:12px;padding:24px"><p style="font-size:12px;font-weight:700;color:#f97316;margin:0 0 8px">PORTAL</p><h1 style="font-size:20px;color:#18181b;margin:0 0 10px">${escapeHtml(message.title)}</h1><p style="font-size:14px;line-height:1.55;color:#52525b;margin:0 0 18px">${escapeHtml(message.body)}</p><a href="${escapeHtml(href)}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;font-size:14px;font-weight:600;padding:10px 15px;border-radius:8px">Open Portal</a></div></div>`,
+    html: `<div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;background:#fafafa;padding:28px 16px"><div style="max-width:520px;margin:0 auto;background:#fff;border:1px solid #e4e4e7;border-radius:12px;padding:24px"><p style="font-size:12px;font-weight:700;color:#f97316;margin:0 0 8px">${PRODUCT_NAME.toUpperCase()}</p><h1 style="font-size:20px;color:#18181b;margin:0 0 10px">${escapeHtml(message.title)}</h1><p style="font-size:14px;line-height:1.55;color:#52525b;margin:0 0 18px">${escapeHtml(message.body)}</p><a href="${escapeHtml(href)}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;font-size:14px;font-weight:600;padding:10px 15px;border-radius:8px">Open Finalia</a></div></div>`,
   }, { idempotencyKey: delivery.dedupe_key.slice(0, 256) });
   if (error) throw new Error(error.message);
   return { providerId: data?.id ?? null } as const;

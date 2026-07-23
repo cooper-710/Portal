@@ -3,17 +3,17 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data ? event.data.json() : {};
   } catch {
-    data = { title: "Portal", body: event.data?.text() ?? "You have a new update." };
+    data = { title: "Finalia", body: event.data?.text() ?? "You have a new update." };
   }
   event.waitUntil(
-    self.registration.showNotification(data.title || "Portal", {
+    self.registration.showNotification(data.title || "Finalia", {
       body: data.body || "You have a new update.",
-      icon: "/portal-icon-192.png",
-      badge: "/portal-icon-192.png",
+      icon: "/finalia-icon-192.png",
+      badge: "/finalia-icon-192.png",
       data: { url: data.url || "/dashboard" },
       // One stable tag per outbox delivery prevents retries from duplicating a
       // popup without collapsing unrelated events that share a deep link.
-      tag: data.tag || "portal-notification",
+      tag: data.tag || "finalia-notification",
       renotify: true,
     }),
   );

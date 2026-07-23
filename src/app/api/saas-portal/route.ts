@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+import { appBaseUrl } from "@/lib/product";
 import { createClient } from "@/utils/supabase/server";
 
 /**
@@ -8,7 +9,7 @@ import { createClient } from "@/utils/supabase/server";
  */
 export async function POST() {
   const stripeSecret = process.env.STRIPE_SECRET_KEY;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
+  const appUrl = appBaseUrl();
 
   if (!stripeSecret) {
     return NextResponse.json(

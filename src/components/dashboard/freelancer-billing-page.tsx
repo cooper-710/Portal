@@ -20,7 +20,7 @@ import { friendlyBillingError } from "@/utils/billing-errors";
 import {
   formatSubscriptionStatus,
   isPlatformSubscriptionActive,
-  PORTAL_PRO_TRIAL_DAYS,
+  FINALIA_PRO_TRIAL_DAYS,
 } from "@/utils/stripe/subscription";
 
 type BillingPageProps = {
@@ -149,7 +149,7 @@ export function FreelancerBillingPage({
     <div className="mx-auto max-w-3xl space-y-8">
       <div className="space-y-1 text-center sm:text-left">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
-          {active ? "Your plan" : "Unlock Portal"}
+          {active ? "Your plan" : "Unlock Finalia"}
         </p>
         <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 sm:text-4xl">
           {active ? "Billing" : "Start your free trial"}
@@ -157,7 +157,7 @@ export function FreelancerBillingPage({
         <p className="text-sm text-zinc-500 sm:text-base">
           {active
             ? `Signed in as ${displayName(profile)}`
-            : `${PORTAL_PRO_TRIAL_DAYS}-day free trial, then $25/mo. Projects, invoices, and the file vault stay locked until you begin.`}
+            : `${FINALIA_PRO_TRIAL_DAYS}-day free trial, then $25/mo. Projects, invoices, and the file vault stay locked until you begin.`}
         </p>
       </div>
 
@@ -178,7 +178,7 @@ export function FreelancerBillingPage({
             <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
               <div className="space-y-3">
                 <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-blue-800">
-                  Portal Pro
+                  Finalia Pro
                 </span>
                 <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                   <span className="text-5xl font-semibold tracking-tight text-zinc-900">
@@ -187,11 +187,11 @@ export function FreelancerBillingPage({
                   <span className="text-base text-zinc-500">/ month</span>
                 </div>
                 <p className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-900">
-                  Includes {PORTAL_PRO_TRIAL_DAYS}-day free trial
+                  Includes {FINALIA_PRO_TRIAL_DAYS}-day free trial
                 </p>
                 <p className="max-w-sm text-sm leading-relaxed text-zinc-500">
-                  Try the full workspace free for {PORTAL_PRO_TRIAL_DAYS} days.
-                  After the trial, Portal Pro continues at $25/mo unless you
+                  Try the full workspace free for {FINALIA_PRO_TRIAL_DAYS} days.
+                  After the trial, Finalia Pro continues at $25/mo unless you
                   cancel. {feeSentence}
                 </p>
               </div>
@@ -205,7 +205,7 @@ export function FreelancerBillingPage({
                   {loadingCheckout ? (
                     <Loader2 className="size-4 animate-spin" />
                   ) : null}
-                  Start {PORTAL_PRO_TRIAL_DAYS}-day free trial
+                  Start {FINALIA_PRO_TRIAL_DAYS}-day free trial
                 </Button>
                 {canRefresh ? (
                   <Button
@@ -246,7 +246,7 @@ export function FreelancerBillingPage({
 
           <div className="border-t border-zinc-100 bg-zinc-50/80 px-6 py-4 sm:px-8">
             <p className="text-xs text-zinc-500">
-              You won’t be charged during the {PORTAL_PRO_TRIAL_DAYS}-day trial.
+              You won’t be charged during the {FINALIA_PRO_TRIAL_DAYS}-day trial.
               After that, billing is $25/mo. {feeSentence} Cancel anytime in
               Stripe. By starting you agree to our{" "}
               <Link href="/terms" className="underline underline-offset-2">
@@ -270,7 +270,7 @@ export function FreelancerBillingPage({
                   {formatSubscriptionStatus(profile.subscription_status)}
                 </span>
                 <div>
-                  <p className="text-sm font-medium text-zinc-500">Portal Pro</p>
+                  <p className="text-sm font-medium text-zinc-500">Finalia Pro</p>
                   <p className="mt-1 text-3xl font-semibold tracking-tight text-zinc-900">
                     $25<span className="text-lg font-medium text-zinc-500">/mo</span>
                   </p>
@@ -319,7 +319,7 @@ export function FreelancerBillingPage({
               Platform fee on client payments: {feeLabel}
             </p>
             <p className="mt-1 text-sm leading-relaxed text-blue-900/80">
-              You accept the payment on your connected Stripe account. Portal
+              You accept the payment on your connected Stripe account. Finalia
               receives about {feeLabel}; Stripe deducts its processing fees from
               your connected account, and the remaining balance is yours.
             </p>
@@ -346,7 +346,7 @@ export function FreelancerBillingPage({
             Platform fee on client payments: {feeLabel}
           </p>
           <p className="mt-1 text-sm leading-relaxed text-blue-900/80">
-            Separate from the $25/mo Portal Pro subscription. {feeSentence} Funds
+            Separate from the $25/mo Finalia Pro subscription. {feeSentence} Funds
             still go to your connected Stripe account after fees.
           </p>
         </section>

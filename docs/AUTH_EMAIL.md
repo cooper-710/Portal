@@ -1,6 +1,6 @@
-# Auth email setup (Portal)
+# Auth email setup (Finalia)
 
-Portal uses **Supabase Auth** for users. Email delivery is separate:
+Finalia uses **Supabase Auth** for users. Email delivery is separate:
 
 | What | How it sends |
 | --- | --- |
@@ -11,7 +11,7 @@ These are two different pipes. Setting `RESEND_API_KEY` alone does **not** fix S
 
 ---
 
-## Reality check: no domain yet
+## Reality check: the sender domain must be verified
 
 **Without a verified domain in Resend:**
 
@@ -19,11 +19,11 @@ These are two different pipes. Setting `RESEND_API_KEY` alone does **not** fix S
 - You **cannot** send signup confirms or invites to arbitrary client emails.
 - `beth.t@example.com` / `onboarding@resend.dev` are fine as *From* for testing, but delivery is still limited to your own inbox.
 
-**Until you buy + verify a domain:**
+**Until `finalia.app` is verified in Resend:**
 
 1. **Preferred:** use **Continue with Google** (no confirmation email / auth mail rate limits). See [GOOGLE_AUTH.md](./GOOGLE_AUTH.md).
 2. Or turn **Confirm email OFF** in Supabase (see Immediate unblock below) and use password signup.
-3. Later: buy a domain → verify in Resend → configure Supabase SMTP → turn Confirm email back **ON**.
+3. Verify `finalia.app` in Resend → configure Supabase SMTP → turn Confirm email back **ON**.
 
 ---
 
@@ -41,7 +41,7 @@ You are hitting Supabase’s built-in email rate limits / branded mail. Unblock 
 Effect:
 
 - `signUp` with password creates a session immediately (no magic link).
-- Portal’s signup form (name + email + password) can send new workspace owners straight into onboarding / trial.
+- Finalia’s signup form (name + email + password) can send new workspace owners straight into onboarding / trial.
 - **Warn:** leave this off only until custom SMTP works. Re-enable for production once Resend SMTP is live so you verify ownership of addresses.
 
 ### Option 2: Manually confirm users
@@ -51,7 +51,7 @@ Effect:
 
 ---
 
-## B. Proper path: Resend SMTP for Auth (needs a domain)
+## B. Proper path: Resend SMTP for Auth (requires domain verification)
 
 Goal: Supabase Auth emails go through **Resend SMTP** (branded, higher limits), not Supabase’s default mailer.
 
@@ -61,16 +61,16 @@ Goal: Supabase Auth emails go through **Resend SMTP** (branded, higher limits), 
 2. **API Keys** → create a key → store it as `RESEND_API_KEY` in `.env.local` and Vercel (never commit it).
 3. If a key was ever pasted into chat or a shared doc, **rotate it** in Resend and update env vars.
 
-### 2. Buy a domain (~$10/yr)
+### 2. Use the Finalia production domain
 
-You need a domain you control (Cloudflare, Namecheap, Google Domains, etc.).
+Use the production domain you control: `finalia.app`.
 
 - Without it: testing only to your own email.
-- With it: send to any recipient (`noreply@YOUR_DOMAIN`).
+- With it: send to any recipient (`notifications@finalia.app`).
 
 ### 3. Verify the domain in Resend
 
-1. Resend → **Domains** → **Add domain** → enter `YOUR_DOMAIN`.
+1. Resend → **Domains** → **Add domain** → enter `finalia.app`.
 2. Add the DNS records Resend shows (SPF, DKIM, etc.) at your registrar/DNS host.
 3. Wait until Resend shows the domain as **Verified**.
 
@@ -85,8 +85,8 @@ You need a domain you control (Cloudflare, Namecheap, Google Domains, etc.).
 | Port | `465` (SSL) or `587` (STARTTLS) |
 | Username | `resend` |
 | Password | your Resend **API key** |
-| Sender email | `noreply@YOUR_DOMAIN` (must be on the verified domain) |
-| Sender name | `Portal` |
+| Sender email | `notifications@finalia.app` (must be on the verified domain) |
+| Sender name | `Finalia` |
 
 3. Save. Send a test signup to a non-team address to confirm delivery.
 
@@ -99,7 +99,7 @@ Official refs:
 
 Supabase → **Authentication** → **Email Templates**.
 
-Replace default “Supabase” wording with Portal. Prefer the prefetch-safe confirm pattern (see README) so scanners don’t burn one-time links.
+Replace default “Supabase” wording with Finalia. Prefer the prefetch-safe confirm pattern (see README) so scanners don’t burn one-time links.
 
 ### 6. Re-enable Confirm email
 
@@ -107,7 +107,7 @@ After SMTP works:
 
 1. Authentication → Providers → Email → **Confirm email ON**.
 2. Signup still uses password; Supabase emails a confirm link via Resend.
-3. User opens the link → session → continues into Portal.
+3. User opens the link → session → continues into Finalia.
 
 ---
 
@@ -123,10 +123,10 @@ After SMTP works:
 With no verified domain, set:
 
 ```bash
-RESEND_FROM_EMAIL=Portal <beth.t@example.com>
+RESEND_FROM_EMAIL=Finalia <beth.t@example.com>
 ```
 
-Resend will only deliver those invites to **your Resend account email**. Client invites to real client addresses will fail until the domain is verified and `RESEND_FROM_EMAIL` uses `something@YOUR_DOMAIN`.
+Resend will only deliver those invites to **your Resend account email**. Client invites to real client addresses will fail until `finalia.app` is verified and `RESEND_FROM_EMAIL` uses `notifications@finalia.app`.
 
 ---
 
@@ -144,7 +144,7 @@ You do **not** need to remove Supabase Auth, only replace the mail transport via
 
 ## E. Checklist
 
-**Now (no domain)**
+**Before sender-domain verification**
 
 - [ ] Supabase → Confirm email **OFF**
 - [ ] `RESEND_API_KEY` in `.env.local` / Vercel (invites to yourself only)
@@ -152,10 +152,9 @@ You do **not** need to remove Supabase Auth, only replace the mail transport via
 
 **Later (production mail)**
 
-- [ ] Buy domain
-- [ ] Verify domain in Resend
+- [ ] Verify `finalia.app` in Resend
 - [ ] Supabase SMTP → Resend (`smtp.resend.com`, user `resend`, sender on your domain)
-- [ ] Update `RESEND_FROM_EMAIL` to `Portal <noreply@YOUR_DOMAIN>`
+- [ ] Update `RESEND_FROM_EMAIL` to `Finalia <notifications@finalia.app>`
 - [ ] Confirm email **ON**
-- [ ] Customize Auth email templates to say Portal
+- [ ] Customize Auth email templates to say Finalia
 - [ ] Rotate any API key that was exposed in chat

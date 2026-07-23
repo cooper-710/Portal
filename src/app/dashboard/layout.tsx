@@ -73,7 +73,7 @@ export default async function DashboardLayout({
   }
 
   // Clients always inherit the owner's brand. Owners see their own brand in
-  // chrome once they have customized portal branding; otherwise default Portal.
+  // chrome once they have customized workspace branding; otherwise use Finalia.
   const workspaceBrand =
     profile.role === "client"
       ? await loadClientBrand(profile.id)
@@ -87,8 +87,8 @@ export default async function DashboardLayout({
       : undefined;
 
   const brandLabel = workspaceBrand
-    ? businessDisplayName(workspaceBrand, "Portal")
-    : "Portal";
+    ? businessDisplayName(workspaceBrand, "Finalia")
+    : "Finalia";
 
   const brandLogo = logoPublicUrl(workspaceBrand?.logo_url);
 

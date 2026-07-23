@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
 import { authHref } from "@/components/auth/auth-modal";
-import { PortalBrand } from "@/components/portal-brand";
+import { FinaliaBrand } from "@/components/finalia-brand";
 import { SiteFooter } from "@/components/site-footer";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -55,7 +55,7 @@ export function MarketingShell({
             href="/"
             className="text-zinc-900 transition-opacity hover:opacity-80"
           >
-            <PortalBrand
+            <FinaliaBrand
               size="sm"
               nameClassName="font-heading text-lg font-bold leading-tight tracking-tight"
             />

@@ -79,7 +79,7 @@ export function ClientEmailEditor({
         </div>
         <p className="text-xs text-muted-foreground">
           {linked
-            ? "Linked to an existing Portal account. Changing the email will re-invite and re-link."
+            ? "Linked to an existing Finalia account. Changing the email will re-invite and re-link."
             : "Optional. Add or change the email to invite the client to this project."}
         </p>
       </div>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+import { appBaseUrl } from "@/lib/product";
 import type { Invoice, Project, Profile } from "@/types/database";
 import { logEvent, requestContext } from "@/lib/monitoring";
 import { calculatePlatformApplicationFeeCents } from "@/utils/stripe/application-fee";
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
   const { requestId } = requestContext(request);
   logEvent("info", "invoice_checkout_started", { requestId });
   const stripeSecret = process.env.STRIPE_SECRET_KEY;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
+  const appUrl = appBaseUrl();
 
   if (!stripeSecret) {
     return NextResponse.json(

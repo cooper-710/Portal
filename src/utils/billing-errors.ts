@@ -32,7 +32,7 @@ export function friendlyBillingError(
     lower.includes("only freelancers") ||
     lower.includes("only workspace owners")
   ) {
-    return "Only workspace owner accounts can subscribe to Portal Pro.";
+    return "Only workspace owner accounts can subscribe to Finalia Pro.";
   }
 
   if (lower.includes("connect") && lower.includes("stripe")) {

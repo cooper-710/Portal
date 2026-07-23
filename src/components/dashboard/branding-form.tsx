@@ -64,7 +64,7 @@ export function BrandingForm({ profile }: BrandingFormProps) {
       }
       setRemoveLogo(false);
       if (fileRef.current) fileRef.current.value = "";
-      setMessage("Client portal branding saved.");
+      setMessage("Client workspace branding saved.");
       router.refresh();
     });
   }
@@ -81,7 +81,7 @@ export function BrandingForm({ profile }: BrandingFormProps) {
           maxLength={80}
         />
         <p className="text-xs text-zinc-500">
-          Shown on client portals and invite emails. Falls back to your display
+          Shown on client workspaces and invite emails. Falls back to your display
           name.
         </p>
       </div>
@@ -172,7 +172,7 @@ export function BrandingForm({ profile }: BrandingFormProps) {
           onChange={(event) => setWelcomeMessage(event.target.value)}
           rows={3}
           maxLength={280}
-          placeholder="Welcome to your project portal. Status, files, and payments live here."
+          placeholder="Welcome to your project workspace. Status, files, and payments live here."
           className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none ring-zinc-400 focus:ring-2"
         />
         <p className="text-xs text-zinc-500">

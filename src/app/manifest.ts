@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Portal: Client Workspace",
-    short_name: "Portal",
+    name: "Finalia: Client Operations",
+    short_name: "Finalia",
     description:
       "Invite clients, share deliverables, and collect payments in one workspace.",
     start_url: "/dashboard",
@@ -12,12 +12,12 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#2563eb",
     icons: [
       {
-        src: "/portal-icon-192.png",
+        src: "/finalia-icon-192.png",
         sizes: "192x192",
         type: "image/png",
       },
       {
-        src: "/portal-icon-512.png",
+        src: "/finalia-icon-512.png",
         sizes: "512x512",
         type: "image/png",
       },

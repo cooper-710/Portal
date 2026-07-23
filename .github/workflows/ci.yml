@@ -22,7 +22,7 @@ jobs:
       STRIPE_SAAS_PRICE_ID: price_ci_dummy
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_ci_dummy
       NEXT_PUBLIC_APP_URL: http://localhost:3001
-      PORTAL_PRO_TRIAL_DAYS: "14"
+      FINALIA_PRO_TRIAL_DAYS: "14"
       STRIPE_PLATFORM_FEE_PERCENT: "1"
 
     steps:

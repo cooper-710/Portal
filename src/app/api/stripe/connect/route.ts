@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+import { appBaseUrl } from "@/lib/product";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 import { directChargeReadiness } from "@/utils/stripe/direct-charge";
@@ -25,7 +26,7 @@ function safeAppPath(value: unknown, fallback: string) {
  */
 export async function POST(request: Request) {
   const stripe = getStripe();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
+  const appUrl = appBaseUrl();
 
   if (!stripe) {
     return NextResponse.json(

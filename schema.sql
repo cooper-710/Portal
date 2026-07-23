@@ -1,4 +1,4 @@
--- Portal client workspace: Supabase schema
+-- Finalia client workspace: Supabase schema
 -- Run this in the Supabase SQL Editor (or via supabase db query / MCP apply_migration).
 
 -- ---------------------------------------------------------------------------
@@ -68,7 +68,7 @@ create table public.users (
   full_name text,
   role public.user_role not null default 'freelancer',
   password_set boolean not null default false,
-  -- Client portal branding (freelancer business profile)
+  -- Client workspace branding (freelancer business profile)
   business_name text,
   logo_url text,
   brand_primary text check (brand_primary is null or brand_primary ~ '^#[0-9A-Fa-f]{6}$'),
@@ -82,7 +82,7 @@ create table public.users (
   stripe_subscription_id text unique,
   subscription_status public.platform_subscription_status not null default 'none',
   subscription_current_period_end timestamptz,
-  -- Freelancer one-time customize-portal step (set on save or skip)
+  -- Freelancer one-time workspace-customization step (legacy column retained)
   portal_setup_completed_at timestamptz,
   -- Guided full-screen onboarding wizard (freelancers only)
   onboarding_completed_at timestamptz,

@@ -1,6 +1,6 @@
-# Google sign-in (Portal)
+# Google sign-in (Finalia)
 
-Portal supports **Continue with Google** via Supabase Auth (PKCE → `/auth/callback`). Google users get an account email from Google, but **no Supabase confirmation email** is sent.
+Finalia supports **Continue with Google** via Supabase Auth (PKCE → `/auth/callback`). Google users get an account email from Google, but **no Supabase confirmation email** is sent.
 
 Email/password remains available as a secondary fallback on the login page.
 
@@ -16,7 +16,7 @@ Email/password remains available as a secondary fallback on the login page.
 4. Application type: **Web application**.
 5. **Authorized JavaScript origins**
    - `http://localhost:3001`
-   - Your Vercel URL (e.g. `https://your-app.vercel.app`), no path
+   - `https://finalia.app`
 6. **Authorized redirect URIs**, use the **Supabase** callback (not your app URL):
 
    ```text
@@ -34,7 +34,7 @@ Email/password remains available as a secondary fallback on the login page.
    - **Site URL**: production app origin (and use `http://localhost:3001` for local Site URL when developing)
    - **Redirect URLs** include:
      - `http://localhost:3001/auth/callback`
-     - `https://YOUR_VERCEL_DOMAIN/auth/callback`
+     - `https://finalia.app/auth/callback`
      - (optional) `.../auth/confirm` if you use email confirm templates
 
 ### 3. Database trigger (existing projects)
@@ -51,7 +51,7 @@ App-side `syncOAuthProfile` (called from `resolvePostAuthPath`) also sets `passw
 
 1. Login → **Continue with Google** → `signInWithOAuth({ provider: 'google', options: { redirectTo: origin/auth/callback?next=...&role=..., queryParams: { access_type: 'offline', prompt: 'consent' } } })`.
 2. Google → Supabase → browser returns to `/auth/callback?code=...`.
-3. Callback exchanges the PKCE code, then `resolvePostAuthPath` runs (trial / billing / portal customize / dashboard).
+3. Callback exchanges the PKCE code, then `resolvePostAuthPath` runs (trial / billing / workspace customization / dashboard).
 4. Role: default workspace owner (`freelancer`); `?role=client` on the login page is forwarded on the OAuth `redirectTo` so new client invite signups stay clients.
 
 ### Password onboarding skip
@@ -68,6 +68,6 @@ OAuth users are **not** forced through `/onboarding/password`. They can still se
 
 ## Notes
 
-- The account still has an **email** (from Google). Google has already verified it; Portal does not send a Supabase confirmation email for this path.
+- The account still has an **email** (from Google). Google has already verified it; Finalia does not send a Supabase confirmation email for this path.
 - Prefer Google while Confirm-email / SMTP / rate limits are painful; keep email/password for existing users.
 - Official guide: [Login with Google](https://supabase.com/docs/guides/auth/social-login/auth-google)

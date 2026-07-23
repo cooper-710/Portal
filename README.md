@@ -1,6 +1,6 @@
-# Portal: Client Workspace
+# Finalia: Client Operations
 
-B2B client workspace for pros, sellers, and studios. Invite clients, share files in a private vault, collect payments with Stripe Connect, and subscribe to **Portal Pro** ($25/mo after a 14-day trial, plus ~1% on invoice payments).
+B2B client-operations workspace for pros, sellers, and studios. Invite clients, share files in a private vault, collect payments with Stripe Connect, and subscribe to **Finalia Pro** ($25/mo after a 14-day trial, plus ~1% on invoice payments).
 
 See **[PRODUCTION_PLAN.md](./PRODUCTION_PLAN.md)** for positioning, money path, and launch checklist. Operator checklist: **[scripts/production-checklist.md](./scripts/production-checklist.md)**.
 
@@ -50,9 +50,9 @@ Open [http://localhost:3001](http://localhost:3001).
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Client Stripe.js (optional for redirect Checkout) |
 | `STRIPE_WEBHOOK_SECRET` | Verify webhook signatures |
 | `STRIPE_CONNECT_WEBHOOK_SECRET` | Verify test-mode direct-charge events from connected accounts |
-| `STRIPE_SAAS_PRICE_ID` | Portal Pro monthly Price ID |
+| `STRIPE_SAAS_PRICE_ID` | Finalia Pro monthly Price ID |
 | `NEXT_PUBLIC_APP_URL` | Redirects / Checkout URLs (`http://localhost:3001` locally) |
-| `PORTAL_PRO_TRIAL_DAYS` | Trial length (default 14) |
+| `FINALIA_PRO_TRIAL_DAYS` | Trial length (default 14; legacy `PORTAL_PRO_TRIAL_DAYS` remains accepted) |
 | `STRIPE_PLATFORM_FEE_PERCENT` | Application fee % on client invoices (default 1) |
 | `RESEND_API_KEY` | Project invite emails (recommended) |
 | `RESEND_FROM_EMAIL` | Invite From address (needs verified domain for real clients) |
@@ -62,7 +62,7 @@ Open [http://localhost:3001](http://localhost:3001).
 
 **Google authentication:** configure Supabase and Google Cloud using **[docs/GOOGLE_AUTH.md](./docs/GOOGLE_AUTH.md)**. Resend is used for project invitations, not primary sign-in.
 
-Production notes are commented in `.env.example` (live keys, webhook endpoint URL, `NEXT_PUBLIC_APP_URL` = your domain).
+Production notes are commented in `.env.example` (live keys, webhook endpoint URL, `NEXT_PUBLIC_APP_URL=https://finalia.app`).
 
 ### Stripe webhook (local)
 
@@ -74,7 +74,7 @@ stripe listen --forward-connect-to localhost:3001/api/webhooks/stripe
 Copy the platform listener secret into `STRIPE_WEBHOOK_SECRET` and the Connect
 listener secret into `STRIPE_CONNECT_WEBHOOK_SECRET`.
 
-Platform events keep Portal Pro subscriptions in sync. Connected-account events
+Platform events keep Finalia Pro subscriptions in sync. Connected-account events
 drive direct client-invoice payments, refunds, disputes, expiration, and async
 payment outcomes. Checkout return URLs reconcile through the stored connected
 account if a webhook is delayed.
@@ -107,22 +107,22 @@ Health check: [http://localhost:3001/api/health](http://localhost:3001/api/healt
 
 1. **Vercel:** Import this repo. Framework: Next.js. `vercel.json` sets the region; build uses `npm run build`, start via Next defaults on Vercel.
 2. **Env:** Set every required var from `.env.example` in Vercel **Production**:
-   - `NEXT_PUBLIC_APP_URL=https://YOUR_DOMAIN` (no trailing slash)
+   - `NEXT_PUBLIC_APP_URL=https://finalia.app` (no trailing slash)
    - Live Stripe keys (`sk_live_…`, `pk_live_…`)
    - Live `STRIPE_SAAS_PRICE_ID` ($25/mo Price)
    - Production Supabase URL, anon key, **service role** (server-only)
-3. **Supabase Auth:** Site URL = `https://YOUR_DOMAIN`. Redirect URLs must include:
-   - `https://YOUR_DOMAIN/auth/callback`
-   - `https://YOUR_DOMAIN/auth/confirm`
-4. **Stripe Live webhook:** Endpoint: `https://YOUR_DOMAIN/api/webhooks/stripe`  
+3. **Supabase Auth:** Site URL = `https://finalia.app`. Redirect URLs must include:
+   - `https://finalia.app/auth/callback`
+   - `https://finalia.app/auth/confirm`
+4. **Stripe Live webhook:** Endpoint: `https://finalia.app/api/webhooks/stripe`
    Events: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `account.updated`.  
    Paste the signing secret into `STRIPE_WEBHOOK_SECRET`.
 5. **Connect + Customer Portal:** Enable Express Connect and the Customer Portal in Stripe Live.
-6. **Verify:** `GET https://YOUR_DOMAIN/api/health` should return `"ok": true`. Smoke-test signup → trial → Connect → invoice pay.
+6. **Verify:** `GET https://finalia.app/api/health` should return `"ok": true`. Smoke-test signup → trial → Connect → invoice pay.
 
 Do **not** commit `.env.local` or live secrets. Rotate `SUPABASE_SERVICE_ROLE_KEY` if it was ever exposed.
 
-### Portal Pro promotion codes (optional)
+### Finalia Pro promotion codes (optional)
 
 SaaS Checkout already has `allow_promotion_codes: true`. Create coupons in the Stripe Dashboard only (do not hardcode codes in the app). Use **Test mode** for local/`sk_test_…` keys, and **Live mode** for Vercel production/`sk_live_…` keys — codes do not cross modes.
 
@@ -131,22 +131,22 @@ SaaS Checkout already has `allow_promotion_codes: true`. Create coupons in the S
    - Percent off: **100%**
    - Duration: **Forever** (or **Once** if you only want the first invoice free)
 3. After the coupon saves, **Add promotion code** (or open the coupon → Promotion codes)
-   - Code: e.g. `PORTALFOUNDER` (customer-facing)
+   - Code: e.g. `FINALIAFOUNDER` (customer-facing)
    - Optional: set max redemptions / expiry
-4. At Portal Pro Checkout (`/dashboard/billing` → subscribe), expand **Add promotion code** and enter the code.
+4. At Finalia Pro Checkout (`/dashboard/billing` → subscribe), expand **Add promotion code** and enter the code.
 
-A 100% forever code makes Portal Pro free for that customer while keeping the subscription active for webhooks and feature gates.
+A 100% forever code makes Finalia Pro free for that customer while keeping the subscription active for webhooks and feature gates.
 
 ## Product roles
 
-- **Workspace owner** (internal role id `freelancer`): Portal Pro trial/subscription; create projects; upload files; create invoices; Connect Stripe
+- **Workspace owner** (internal role id `freelancer`): Finalia Pro trial/subscription; create projects; upload files; create invoices; Connect Stripe
 - **Client:** view phase, download deliverables, pay invoices (no SaaS subscription)
 
 Role is stored in `public.users` (not trusted from JWT `user_metadata` for authorization).
 
 ## Client invites
 
-When you create a project with a client email, Portal emails a portal link:
+When you create a project with a client email, Finalia emails a workspace link:
 
 1. **Resend** (recommended): `RESEND_API_KEY` + optional `RESEND_FROM_EMAIL`
 2. **Supabase Auth invite** (fallback): needs `SUPABASE_SERVICE_ROLE_KEY`
@@ -163,10 +163,10 @@ Email scanners can consume one-time confirmation links (`otp_expired`). Prefer p
 
 ```html
 <h2>Confirm your email</h2>
-<p>Open Portal, then click Continue. This avoids email scanners using the link first.</p>
+<p>Open Finalia, then click Continue. This avoids email scanners using the link first.</p>
 <p>
   <a href="{{ .SiteURL }}/auth/confirm?confirmation_url={{ .ConfirmationURL }}&next=/dashboard">
-    Continue to Portal
+    Continue to Finalia
   </a>
 </p>
 ```

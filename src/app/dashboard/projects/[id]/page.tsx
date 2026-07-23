@@ -188,7 +188,7 @@ export default async function ProjectPage({ params, searchParams }: ProjectPageP
               href="/dashboard"
               className="font-medium text-zinc-600 transition-colors hover:text-zinc-900"
             >
-              Portal
+              Finalia
             </Link>
             <ChevronRight className="size-3 shrink-0 text-zinc-400" aria-hidden />
             <Link

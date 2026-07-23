@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "Pricing",
   description:
-    "Portal Pro is $25/mo after a 14-day free trial. Plus a ~1% platform fee on client invoice payments.",
+    "Finalia Pro is $25/mo after a 14-day free trial. Plus a ~1% platform fee on client invoice payments.",
 };
 
 const INCLUDED = [
@@ -27,15 +27,15 @@ const INCLUDED = [
 const FEE_POINTS = [
   {
     title: "Subscription",
-    body: "Portal Pro is $25 per month after the trial. That covers the workspace, vault, branding, and client access.",
+    body: "Finalia Pro is $25 per month after the trial. That covers the workspace, vault, branding, and client access.",
   },
   {
     title: "Platform fee on invoices",
-    body: "You accept invoice payments on your connected Stripe account as the merchant of record. Portal receives about 1%; Stripe separately deducts its processing fees from your account.",
+    body: "You accept invoice payments on your connected Stripe account as the merchant of record. Finalia receives about 1%; Stripe separately deducts its processing fees from your account.",
   },
   {
     title: "No surprise add-ons",
-    body: "No per-seat client fees. No charge just to upload files. You pay for Portal Pro, then a small cut only when money moves through an invoice.",
+    body: "No per-seat client fees. No charge just to upload files. You pay for Finalia Pro, then a small cut only when money moves through an invoice.",
   },
 ] as const;
 
@@ -52,7 +52,7 @@ export default function PricingPage() {
         <div className="grid gap-12 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start lg:gap-16">
           <div className="landing-pricing-panel border-t border-zinc-200/80 pt-8">
             <p className="landing-display text-sm tracking-wide text-primary">
-              Portal Pro
+              Finalia Pro
             </p>
             <p className="mt-4 flex items-baseline gap-2">
               <span className="landing-display text-5xl tracking-tight text-zinc-900 sm:text-6xl">
@@ -62,7 +62,7 @@ export default function PricingPage() {
             </p>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-zinc-500">
               14-day free trial, then $25/mo. Plus a ~1% platform fee on client
-              invoice payments processed through Portal.
+              invoice payments processed through Finalia.
             </p>
             <Link
               href="/?auth=signup"
@@ -95,7 +95,7 @@ export default function PricingPage() {
               How the ~1% fee works
             </h2>
             <p className="mt-4 text-sm leading-relaxed text-zinc-500 sm:text-base">
-              Portal is not a payment processor. Stripe handles cards and
+              Finalia is not a payment processor. Stripe handles cards and
               payouts. We charge a small platform fee on invoice payments so the
               product can stay simple and subscription-priced.
             </p>
@@ -129,7 +129,7 @@ export default function PricingPage() {
                 Do I need a card for the trial?
               </dt>
               <dd className="mt-2 text-sm leading-relaxed text-zinc-500">
-                You can explore Portal Pro for 14 days. Billing starts after the
+                You can explore Finalia Pro for 14 days. Billing starts after the
                 trial unless you cancel. Connect Stripe when you are ready to
                 send invoices.
               </dd>
@@ -139,18 +139,18 @@ export default function PricingPage() {
                 Where does client money go?
               </dt>
               <dd className="mt-2 text-sm leading-relaxed text-zinc-500">
-                To your Stripe Connect account. Portal never holds client funds.
+                To your Stripe Connect account. Finalia never holds client funds.
                 The ~1% platform fee is taken on invoice payments processed
                 through the product.
               </dd>
             </div>
             <div className="border-t border-zinc-200/80 pt-6">
               <dt className="text-base font-semibold text-zinc-900">
-                Can clients use Portal for free?
+                Can clients use Finalia for free?
               </dt>
               <dd className="mt-2 text-sm leading-relaxed text-zinc-500">
                 Yes. Invited clients sign in to their project at no charge. Only
-                the workspace owner needs Portal Pro.
+                the workspace owner needs Finalia Pro.
               </dd>
             </div>
           </dl>

@@ -5,6 +5,7 @@ import {
   logoPublicUrl,
   normalizeHexColor,
 } from "@/lib/branding";
+import { appBaseUrl, PRODUCT_NAME } from "@/lib/product";
 import { createAdminClient } from "@/utils/supabase/admin";
 
 type ProjectInviteParams = {
@@ -25,18 +26,18 @@ type ProjectInviteParams = {
 export async function sendProjectInvite(
   params: ProjectInviteParams,
 ): Promise<{ sent: boolean; channel?: "resend" | "supabase"; error?: string }> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3001";
+  const appUrl = appBaseUrl();
   const portalLink = `${appUrl}/login?role=client&next=${encodeURIComponent("/dashboard")}`;
   const brandName =
     params.businessName?.trim() ||
     params.freelancerName ||
-    "Portal";
+    PRODUCT_NAME;
 
   if (process.env.RESEND_API_KEY) {
     try {
       const resend = new Resend(process.env.RESEND_API_KEY);
       const from =
-        process.env.RESEND_FROM_EMAIL ?? "Portal <beth.t@example.com>";
+        process.env.RESEND_FROM_EMAIL ?? "Finalia <beth.t@example.com>";
 
       const { error } = await resend.emails.send({
         from,
@@ -115,7 +116,7 @@ function buildInviteHtml({
   logoUrl: string | null;
   brandPrimary: string;
 }) {
-  const cta = existingClient ? "Open your portal" : "Create your account";
+  const cta = existingClient ? "Open your workspace" : "Create your account";
   const blurb = existingClient
     ? "A new project is waiting for you. Sign in to review files and invoices."
     : "Create your free account to view project updates, shared deliverables, and pay invoices.";
