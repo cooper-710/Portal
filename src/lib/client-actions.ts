@@ -210,6 +210,21 @@ export async function dismissOpenDeliverableActions(
     .eq("status", "open");
 }
 
+export async function dismissOpenProjectDeliverableActions(
+  supabase: Supabase,
+  projectId: string,
+) {
+  await supabase
+    .from("client_actions")
+    .update({
+      status: "dismissed",
+      completed_at: new Date().toISOString(),
+    })
+    .eq("project_id", projectId)
+    .eq("action_type", "review_deliverable")
+    .eq("status", "open");
+}
+
 export async function completeOpenProjectReviewActions(
   supabase: Supabase,
   projectId: string,

@@ -6,6 +6,7 @@ import { ClientEmailEditor } from "@/components/dashboard/client-email-editor";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { FileVault } from "@/components/dashboard/file-vault";
 import { ProjectInvoicesPanel } from "@/components/dashboard/project-invoices-panel";
+import { OwnerFeedbackResolution } from "@/components/dashboard/owner-feedback-resolution";
 import { ProjectOwnerActions } from "@/components/dashboard/project-owner-actions";
 import { ProjectApprovalPanel } from "@/components/dashboard/project-approval-panel";
 import { ProjectPhaseSelector } from "@/components/dashboard/project-phase-selector";
@@ -125,6 +126,14 @@ export default async function ProjectPage({ params, searchParams }: ProjectPageP
   const pendingInvoiceCount = invoices.filter(
     (invoice) => isInvoiceOutstanding(invoice.status),
   ).length;
+  const unresolvedFeedback = assets.filter(
+    (asset) =>
+      asset.review_status === "changes_requested" &&
+      !asset.feedback_resolved_at,
+  );
+  const hasDeliverables = assets.some(
+    (asset) => asset.visibility === "deliverable",
+  );
 
   let resolvedClientEmail = project.client_email ?? "";
   let resolvedClientName: string | null = null;
@@ -282,8 +291,20 @@ export default async function ProjectPage({ params, searchParams }: ProjectPageP
         </Card>
       ) : null}
 
+      {isFreelancer ? (
+        <OwnerFeedbackResolution
+          projectId={project.id}
+          projectStatus={project.status}
+          feedback={unresolvedFeedback}
+          hasDeliverables={hasDeliverables}
+        />
+      ) : null}
+
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <Card className="border-zinc-200/80 shadow-sm">
+        <Card
+          id="project-file-vault"
+          className="scroll-mt-24 border-zinc-200/80 shadow-sm"
+        >
           <CardHeader>
             <CardTitle>File vault</CardTitle>
             <CardDescription>

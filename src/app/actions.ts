@@ -22,10 +22,13 @@ import {
   createReviewDeliverableAction,
   createReviewProjectAction,
   dismissOpenDeliverableActions,
+  dismissOpenProjectDeliverableActions,
 } from "@/lib/client-actions";
 import { displayName } from "@/lib/format";
 import { processNotificationOutbox } from "@/lib/notifications/processor";
 import type { PaymentKind, RecurrenceFrequency } from "@/types/database";
+
+type Supabase = Awaited<ReturnType<typeof createClient>>;
 
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
 const PAYMENT_KINDS = new Set<PaymentKind>([
@@ -55,6 +58,46 @@ async function flushNotifications() {
   } catch (error) {
     console.error("[autopilot] action completed but notification processing failed:", error);
   }
+}
+
+async function markProjectChangeNotificationsRead(
+  supabase: Supabase,
+  userId: string,
+  projectId: string,
+) {
+  await supabase
+    .from("notifications")
+    .update({ read_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .eq("notification_type", "deliverable_changes_requested")
+    .eq("href", `/dashboard/projects/${projectId}`)
+    .is("read_at", null);
+}
+
+async function resolveOutstandingDeliverableFeedback(
+  supabase: Supabase,
+  projectId: string,
+) {
+  const resolvedAt = new Date().toISOString();
+  const { error: reviewedError } = await supabase
+    .from("assets")
+    .update({ feedback_reviewed_at: resolvedAt })
+    .eq("project_id", projectId)
+    .eq("review_status", "changes_requested")
+    .is("feedback_reviewed_at", null)
+    .is("feedback_resolved_at", null);
+
+  if (reviewedError) return { error: reviewedError.message };
+
+  const { error: resolvedError } = await supabase
+    .from("assets")
+    .update({ feedback_resolved_at: resolvedAt })
+    .eq("project_id", projectId)
+    .eq("review_status", "changes_requested")
+    .is("feedback_resolved_at", null);
+
+  if (resolvedError) return { error: resolvedError.message };
+  return { success: true as const };
 }
 
 export async function signOut() {
@@ -1142,6 +1185,49 @@ export async function deleteInvoice(formData: FormData) {
   return { success: true as const };
 }
 
+export async function acknowledgeDeliverableFeedback(formData: FormData) {
+  const assetId = String(formData.get("assetId") ?? "").trim();
+  if (!assetId) return { error: "Choose feedback to review." };
+
+  const auth = await requireSubscribedFreelancer();
+  if ("error" in auth) return { error: auth.error };
+  const { supabase, user } = auth;
+
+  const { data: asset } = await supabase
+    .from("assets")
+    .select("id, project_id, review_status, feedback_resolved_at")
+    .eq("id", assetId)
+    .maybeSingle();
+
+  if (!asset || asset.review_status !== "changes_requested") {
+    return { error: "That change request is no longer open." };
+  }
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("id", asset.project_id)
+    .eq("freelancer_id", user.id)
+    .maybeSingle();
+
+  if (!project) return { error: "Project not found in your workspace." };
+  if (asset.feedback_resolved_at) return { success: true as const };
+
+  const { error } = await supabase
+    .from("assets")
+    .update({ feedback_reviewed_at: new Date().toISOString() })
+    .eq("id", asset.id)
+    .eq("review_status", "changes_requested")
+    .is("feedback_resolved_at", null);
+
+  if (error) return { error: error.message };
+
+  await markProjectChangeNotificationsRead(supabase, user.id, project.id);
+  revalidatePath("/dashboard");
+  revalidatePath(`/dashboard/projects/${project.id}`);
+  return { success: true as const };
+}
+
 export async function updateProjectPhase(formData: FormData) {
   const projectId = String(formData.get("projectId") ?? "").trim();
   const status = String(formData.get("status") ?? "").trim();
@@ -1202,6 +1288,21 @@ export async function updateProjectPhase(formData: FormData) {
     });
   } else {
     await completeOpenProjectReviewActions(supabase, projectId);
+  }
+
+  if (status === "completed") {
+    const feedbackResult = await resolveOutstandingDeliverableFeedback(
+      supabase,
+      projectId,
+    );
+    if ("error" in feedbackResult) {
+      console.error("[feedback] project completed but feedback resolution failed", {
+        projectId,
+        error: feedbackResult.error,
+      });
+    }
+    await dismissOpenProjectDeliverableActions(supabase, projectId);
+    await markProjectChangeNotificationsRead(supabase, user.id, projectId);
   }
 
   await flushNotifications();
@@ -1428,6 +1529,17 @@ export async function uploadAsset(formData: FormData) {
       assetId: asset.id,
       fileName: asset.file_name,
     });
+    const feedbackResult = await resolveOutstandingDeliverableFeedback(
+      supabase,
+      projectId,
+    );
+    if ("error" in feedbackResult) {
+      console.error("[feedback] revised deliverable uploaded but feedback resolution failed", {
+        projectId,
+        error: feedbackResult.error,
+      });
+    }
+    await markProjectChangeNotificationsRead(supabase, user.id, projectId);
   }
 
   await flushNotifications();
@@ -1483,6 +1595,8 @@ export async function updateAssetVisibility(formData: FormData) {
           : null,
       review_note: visibility === "deliverable" ? null : null,
       reviewed_at: null,
+      feedback_reviewed_at: null,
+      feedback_resolved_at: null,
     })
     .eq("id", assetId);
 
@@ -1501,6 +1615,21 @@ export async function updateAssetVisibility(formData: FormData) {
       assetId: asset.id,
       fileName: asset.file_name,
     });
+    const feedbackResult = await resolveOutstandingDeliverableFeedback(
+      supabase,
+      asset.project_id,
+    );
+    if ("error" in feedbackResult) {
+      console.error("[feedback] deliverable shared but feedback resolution failed", {
+        projectId: asset.project_id,
+        error: feedbackResult.error,
+      });
+    }
+    await markProjectChangeNotificationsRead(
+      supabase,
+      user.id,
+      asset.project_id,
+    );
   } else {
     await dismissOpenDeliverableActions(supabase, asset.id);
   }

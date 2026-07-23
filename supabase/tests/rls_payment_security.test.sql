@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(44);
+select plan(47);
 
 -- Column grants are the first line of defense for system-managed state.
 select ok(not has_column_privilege('authenticated', 'public.users', 'subscription_status', 'update'), 'subscription status is not user-writable');
@@ -50,8 +50,8 @@ values
   ('a0000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', null, null, 'Tenant A project'),
   ('b0000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000003', 'client-b@example.test', 'Tenant B project');
 
-insert into public.assets (id, project_id, file_url, file_name, visibility, uploaded_by)
-values ('b1000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', 'b/secret.pdf', 'secret.pdf', 'deliverable', '20000000-0000-0000-0000-000000000002');
+insert into public.assets (id, project_id, file_url, file_name, visibility, uploaded_by, review_status, review_note)
+values ('b1000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', 'b/secret.pdf', 'secret.pdf', 'deliverable', '20000000-0000-0000-0000-000000000002', 'changes_requested', 'Please revise this');
 
 insert into public.invoices (id, project_id, amount, status, title)
 values
@@ -133,6 +133,7 @@ update public.users set full_name = 'Cross-tenant edit' where id = '20000000-000
 update public.projects set title = 'Cross-tenant edit' where id = 'b0000000-0000-0000-0000-000000000002';
 update public.invoices set amount = 1 where id = 'b2000000-0000-0000-0000-000000000002';
 delete from public.assets where id = 'b1000000-0000-0000-0000-000000000002';
+update public.assets set feedback_reviewed_at = now() where id = 'b1000000-0000-0000-0000-000000000002';
 update public.client_actions set status = 'dismissed' where id = 'b3000000-0000-0000-0000-000000000002';
 update public.invoices set amount = 1 where id = 'a2000000-0000-0000-0000-000000000001';
 
@@ -142,8 +143,38 @@ select is((select full_name from public.users where id = '20000000-0000-0000-000
 select is((select title from public.projects where id = 'b0000000-0000-0000-0000-000000000002'), 'Tenant B project', 'other tenant project was not modified');
 select is((select amount from public.invoices where id = 'b2000000-0000-0000-0000-000000000002'), 25000, 'other tenant invoice was not modified');
 select is((select count(*)::integer from public.assets where id = 'b1000000-0000-0000-0000-000000000002'), 1, 'other tenant asset was not deleted');
+select is((select feedback_reviewed_at from public.assets where id = 'b1000000-0000-0000-0000-000000000002'), null, 'other tenant feedback state was not modified');
 select is((select status::text from public.client_actions where id = 'b3000000-0000-0000-0000-000000000002'), 'open', 'other tenant action was not modified');
 select is((select amount from public.invoices where id = 'a2000000-0000-0000-0000-000000000001'), 10000, 'settled invoice amount was not modified by its owner');
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"30000000-0000-0000-0000-000000000003","role":"authenticated","email":"client-b@example.test"}',
+  true
+);
+set local role authenticated;
+select throws_ok(
+  $$update public.assets set feedback_reviewed_at = now() where id = 'b1000000-0000-0000-0000-000000000002'$$,
+  '42501', null,
+  'client cannot acknowledge feedback on behalf of the project owner'
+);
+reset role;
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"20000000-0000-0000-0000-000000000002","role":"authenticated","email":"owner-b@example.test"}',
+  true
+);
+set local role authenticated;
+update public.assets
+set feedback_reviewed_at = now()
+where id = 'b1000000-0000-0000-0000-000000000002';
+reset role;
+
+select ok(
+  (select feedback_reviewed_at is not null from public.assets where id = 'b1000000-0000-0000-0000-000000000002'),
+  'project owner can acknowledge client feedback'
+);
 
 select * from finish();
 rollback;

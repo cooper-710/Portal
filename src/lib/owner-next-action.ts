@@ -12,14 +12,36 @@ export type OwnerNextAction = {
 export function pickOwnerNextAction(
   projects: FreelancerProject[],
   invoices: InvoiceWithProject[],
-  deliverables: Array<Pick<Asset, "project_id" | "review_status">>,
+  deliverables: Array<
+    Pick<
+      Asset,
+      | "project_id"
+      | "review_status"
+      | "feedback_reviewed_at"
+      | "feedback_resolved_at"
+    >
+  >,
 ): OwnerNextAction {
-  const changes = deliverables.find((asset) => asset.review_status === "changes_requested");
+  const activeProjectIds = new Set(
+    projects
+      .filter((project) => !["completed", "archived"].includes(project.status))
+      .map((project) => project.id),
+  );
+  const changes = deliverables.find(
+    (asset) =>
+      asset.review_status === "changes_requested" &&
+      !asset.feedback_resolved_at &&
+      activeProjectIds.has(asset.project_id),
+  );
   if (changes) return {
-    title: "Revise the requested deliverable",
-    description: "Your client left change requests. Upload the next version to keep the project moving.",
-    href: `/dashboard/projects/${changes.project_id}`,
-    label: "Open feedback",
+    title: changes.feedback_reviewed_at
+      ? "Respond to reviewed feedback"
+      : "Review your client’s feedback",
+    description: changes.feedback_reviewed_at
+      ? "Upload a revised deliverable, or complete the project if no new file is needed."
+      : "Read the change request and mark it reviewed before choosing the next step.",
+    href: `/dashboard/projects/${changes.project_id}#deliverable-feedback`,
+    label: changes.feedback_reviewed_at ? "Choose next step" : "Review feedback",
   };
 
   if (projects.length === 0) return {

@@ -183,6 +183,8 @@ export type Asset = {
   review_status: AssetReviewStatus | null;
   review_note: string | null;
   reviewed_at: string | null;
+  feedback_reviewed_at: string | null;
+  feedback_resolved_at: string | null;
   created_at: string;
 };
 
@@ -424,6 +426,8 @@ export type Database = {
           review_status?: AssetReviewStatus | null;
           review_note?: string | null;
           reviewed_at?: string | null;
+          feedback_reviewed_at?: string | null;
+          feedback_resolved_at?: string | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["assets"]["Insert"]>;
