@@ -39,6 +39,7 @@ function isActive(pathname: string, item: NavItem) {
 }
 
 type DashboardNavProps = {
+  userId: string;
   role: UserRole;
   /** False when freelancer lacks trial/paid, nav stays open; product is locked. */
   canCreate?: boolean;
@@ -49,6 +50,7 @@ type DashboardNavProps = {
 };
 
 export function DashboardNav({
+  userId,
   role,
   canCreate = true,
   displayLabel,
@@ -127,7 +129,7 @@ export function DashboardNav({
         ) : null}
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          <NotificationCenter />
+          <NotificationCenter userId={userId} />
           {displayLabel ? (
             <span
               className="hidden max-w-[10rem] truncate text-xs font-medium text-zinc-500 sm:inline"

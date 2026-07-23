@@ -1,6 +1,6 @@
 "use client";
 
-import { BellRing, Loader2 } from "lucide-react";
+import { BellRing, Loader2, Mail, MonitorUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ export function NotificationPreferencesForm() {
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
   const [saving, setSaving] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
+  const [testBusy, setTestBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -101,6 +102,36 @@ export function NotificationPreferencesForm() {
     }
   }
 
+  async function sendTest(channel: "in_app" | "email" | "push") {
+    setTestBusy(channel);
+    setMessage(null);
+    try {
+      const response = await fetch("/api/notifications/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ channel }),
+      });
+      const data = await response.json() as {
+        status?: string;
+        reason?: string | null;
+        error?: string;
+        providerAccepted?: boolean;
+      };
+      if (!response.ok) throw new Error(data.error ?? "Could not send the test notification.");
+      if (data.status === "delivered") {
+        setMessage(channel === "push"
+          ? "Push provider accepted the test. If no popup appears, check this browser’s macOS notification settings and Focus mode."
+          : `${channel === "in_app" ? "In-app" : "Email"} test delivered.`);
+      } else {
+        setMessage(`${channel === "in_app" ? "In-app" : channel === "email" ? "Email" : "Push"} test: ${data.status ?? "unknown"}${data.reason ? ` — ${data.reason}` : ""}`);
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not send the test notification.");
+    } finally {
+      setTestBusy(null);
+    }
+  }
+
   if (!preferences) return <div className="flex h-20 items-center justify-center text-zinc-400"><Loader2 className="size-5 animate-spin" /></div>;
 
   return (
@@ -149,6 +180,24 @@ export function NotificationPreferencesForm() {
             <label className="text-xs text-zinc-500">Timezone<input type="text" className="mt-1 block w-full rounded-lg border border-zinc-200 px-2.5 py-2 text-sm text-zinc-800" value={preferences.timezone} onChange={(event) => setPreferences({ ...preferences, timezone: event.target.value })} /></label>
           </div>
         ) : null}
+      </div>
+
+      <div className="space-y-3 border-t border-zinc-100 pt-4">
+        <div>
+          <p className="text-sm font-medium text-zinc-800">Test notifications</p>
+          <p className="text-xs text-zinc-500">Save your preferences first, then verify each channel separately.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={() => void sendTest("in_app")} disabled={testBusy !== null}>
+            {testBusy === "in_app" ? <Loader2 className="size-3.5 animate-spin" /> : <BellRing className="size-3.5" />} Test in-app
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => void sendTest("email")} disabled={testBusy !== null}>
+            {testBusy === "email" ? <Loader2 className="size-3.5 animate-spin" /> : <Mail className="size-3.5" />} Test email
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => void sendTest("push")} disabled={testBusy !== null}>
+            {testBusy === "push" ? <Loader2 className="size-3.5 animate-spin" /> : <MonitorUp className="size-3.5" />} Test push
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center justify-between gap-3">

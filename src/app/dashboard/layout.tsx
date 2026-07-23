@@ -98,6 +98,7 @@ export default async function DashboardLayout({
       style={brandStyle}
     >
       <DashboardNav
+        userId={profile.id}
         role={profile.role}
         canCreate={canCreate}
         displayLabel={displayName(profile)}

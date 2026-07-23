@@ -14,6 +14,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const reminders = await enqueueScheduledInvoiceReminders();
-  const processed = await processNotificationOutbox({ maxEvents: 100, maxDeliveries: 100 });
+  const processed = await processNotificationOutbox({
+    maxEvents: 100,
+    maxDeliveries: 100,
+    mode: "maintenance",
+  });
   return NextResponse.json({ success: true, reminders, processed });
 }

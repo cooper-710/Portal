@@ -94,11 +94,12 @@ Copy that destination's signing secret—not an event ID—into
 
 The migration-backed notification outbox captures invites, reviews, approvals,
 invoice/payment/refund/dispute state, and project closeout without an AI or
-workflow-builder dependency. The dashboard notification center processes fresh
-events on use; `/api/cron/notifications` adds due/overdue reminders and retries
-channel deliveries daily. Browser push is optional and email uses Resend's
-idempotency key support. See `docs/CLIENT_AUTOPILOT.md` for setup and acceptance
-tests.
+workflow-builder dependency. Business actions and Stripe webhooks process fresh
+events immediately; the bell updates through Supabase Realtime with polling as
+a fallback. `/api/cron/notifications` is reserved for due/overdue reminders,
+retries, and stale-lock recovery. Browser push is optional and email uses
+Resend's idempotency key support. See `docs/CLIENT_AUTOPILOT.md` for setup and
+acceptance tests.
 
 Health check: [http://localhost:3001/api/health](http://localhost:3001/api/health).
 

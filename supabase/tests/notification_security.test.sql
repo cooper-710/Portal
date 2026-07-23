@@ -3,7 +3,17 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(25);
+select plan(26);
+
+select ok(
+  exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'notifications'
+  ),
+  'the RLS-protected user notification stream is enabled for Realtime'
+);
 
 select ok(not has_table_privilege('authenticated', 'public.notification_events', 'select'), 'authenticated users cannot read internal notification events');
 select ok(not has_table_privilege('authenticated', 'public.notification_events', 'insert'), 'authenticated users cannot forge notification events');

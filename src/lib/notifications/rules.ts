@@ -61,6 +61,18 @@ export function notificationMessage(event: NotificationEvent): NotificationMessa
   const note = stringValue(payload, "note");
 
   switch (event.event_type) {
+    case "test_notification": {
+      const channel = stringValue(payload, "requested_channel");
+      return {
+        category: "payments",
+        title: "Portal test notification",
+        body: `Your ${channel ?? "notification"} channel is working.`,
+        href: "/dashboard/settings",
+        inApp: channel === "in_app",
+        email: channel === "email",
+        push: channel === "push",
+      };
+    }
     case "client_invited":
       return {
         category: "invites",

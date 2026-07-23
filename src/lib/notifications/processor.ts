@@ -3,6 +3,9 @@ import "server-only";
 import { Resend } from "resend";
 import webpush from "web-push";
 
+import { notificationKillSwitches } from "@/lib/notifications/config";
+import { runImmediateDeliveryBatch } from "@/lib/notifications/immediate-batch";
+import { logEvent } from "@/lib/monitoring";
 import {
   categoryEnabled,
   defaultNotificationPreferences,
@@ -19,14 +22,32 @@ import type {
 } from "@/types/database";
 import { createAdminClient } from "@/utils/supabase/admin";
 
-const truthy = (value: string | undefined, fallback = true) =>
-  value == null ? fallback : !["0", "false", "off", "disabled"].includes(value.toLowerCase());
+export { notificationKillSwitches } from "@/lib/notifications/config";
 
-export function notificationKillSwitches() {
+class NotificationProviderConfigurationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "NotificationProviderConfigurationError";
+  }
+}
+
+function eventLogDetails(event: NotificationEvent) {
   return {
-    all: truthy(process.env.NOTIFICATIONS_ENABLED),
-    email: truthy(process.env.NOTIFICATION_EMAILS_ENABLED),
-    push: truthy(process.env.NOTIFICATION_PUSH_ENABLED),
+    notificationEventId: event.id,
+    notificationEventType: event.event_type,
+    recipientId: event.recipient_id,
+    projectId: event.project_id,
+    invoiceId: event.invoice_id,
+  };
+}
+
+function deliveryLogDetails(delivery: NotificationDelivery) {
+  return {
+    notificationDeliveryId: delivery.id,
+    notificationEventId: delivery.event_id,
+    recipientId: delivery.user_id,
+    channel: delivery.channel,
+    attempt: delivery.attempt_count + 1,
   };
 }
 
@@ -70,9 +91,14 @@ async function shouldSkipInviteReminder(event: NotificationEvent) {
 
 async function materializeEvent(event: NotificationEvent) {
   const admin = createAdminClient();
+  logEvent("info", "notification_event_captured", eventLogDetails(event));
   const message = notificationMessage(event);
   if (!message || await shouldSkipInviteReminder(event)) {
     await admin.from("notification_events").update({ processed_at: new Date().toISOString() }).eq("id", event.id);
+    logEvent("info", "notification_event_skipped", {
+      ...eventLogDetails(event),
+      reason: message ? "invite_already_accepted" : "no_matching_rule",
+    });
     return;
   }
 
@@ -97,6 +123,17 @@ async function materializeEvent(event: NotificationEvent) {
       .eq("user_id", event.recipient_id)
       .maybeSingle();
     notificationId = data?.id ?? null;
+    logEvent("info", "notification_delivery_delivered", {
+      ...eventLogDetails(event),
+      channel: "in_app",
+      notificationId,
+    });
+  } else if (message.inApp) {
+    logEvent("info", "notification_delivery_skipped", {
+      ...eventLogDetails(event),
+      channel: "in_app",
+      reason: !enabled ? "category_disabled" : "preference_disabled",
+    });
   }
 
   const switches = notificationKillSwitches();
@@ -132,10 +169,35 @@ async function materializeEvent(event: NotificationEvent) {
     });
   }
   if (deliveries.length > 0) {
-    const { error } = await admin
+    const { data: queued, error } = await admin
       .from("notification_deliveries")
-      .upsert(deliveries, { onConflict: "dedupe_key", ignoreDuplicates: true });
+      .upsert(deliveries, { onConflict: "dedupe_key", ignoreDuplicates: true })
+      .select("*");
     if (error) throw new Error(error.message);
+    for (const delivery of (queued ?? []) as NotificationDelivery[]) {
+      logEvent("info", "notification_delivery_queued", deliveryLogDetails(delivery));
+    }
+  }
+
+  if (message.email && (!enabled || !switches.email || !(preferences?.email_enabled ?? true))) {
+    logEvent("info", "notification_delivery_skipped", {
+      ...eventLogDetails(event),
+      channel: "email",
+      reason: !enabled ? "category_disabled" : !switches.email ? "kill_switch_disabled" : "preference_disabled",
+    });
+  }
+  if (message.push && (!enabled || !switches.push || !event.recipient_id || !preferences?.push_enabled)) {
+    logEvent("info", "notification_delivery_skipped", {
+      ...eventLogDetails(event),
+      channel: "push",
+      reason: !enabled
+        ? "category_disabled"
+        : !switches.push
+          ? "kill_switch_disabled"
+          : !event.recipient_id
+            ? "recipient_has_no_user"
+            : "preference_disabled",
+    });
   }
 
   await admin.from("notification_events").update({
@@ -146,7 +208,17 @@ async function materializeEvent(event: NotificationEvent) {
 
 async function deliverEmail(delivery: NotificationDelivery, event: NotificationEvent) {
   const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) return { skipped: "RESEND_API_KEY is not configured." } as const;
+  if (!apiKey) {
+    throw new NotificationProviderConfigurationError(
+      "RESEND_API_KEY is not configured in this deployment.",
+    );
+  }
+  const from = process.env.RESEND_FROM_EMAIL;
+  if (!from) {
+    throw new NotificationProviderConfigurationError(
+      "RESEND_FROM_EMAIL is not configured in this deployment.",
+    );
+  }
   const to = await recipientEmail(delivery.user_id, delivery.recipient_email);
   if (!to) return { skipped: "Notification recipient has no email." } as const;
   const message = notificationMessage(event);
@@ -156,7 +228,7 @@ async function deliverEmail(delivery: NotificationDelivery, event: NotificationE
   const href = message.href.startsWith("http") ? message.href : `${appUrl}${message.href}`;
   const resend = new Resend(apiKey);
   const { data, error } = await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL ?? "Portal <notifications@example.com>",
+    from,
     to,
     subject: message.title,
     html: `<div style="font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;background:#fafafa;padding:28px 16px"><div style="max-width:520px;margin:0 auto;background:#fff;border:1px solid #e4e4e7;border-radius:12px;padding:24px"><p style="font-size:12px;font-weight:700;color:#f97316;margin:0 0 8px">PORTAL</p><h1 style="font-size:20px;color:#18181b;margin:0 0 10px">${escapeHtml(message.title)}</h1><p style="font-size:14px;line-height:1.55;color:#52525b;margin:0 0 18px">${escapeHtml(message.body)}</p><a href="${escapeHtml(href)}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;font-size:14px;font-weight:600;padding:10px 15px;border-radius:8px">Open Portal</a></div></div>`,
@@ -169,7 +241,11 @@ async function deliverPush(delivery: NotificationDelivery, event: NotificationEv
   if (!delivery.user_id) return { skipped: "Push delivery has no user." } as const;
   const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;
-  if (!publicKey || !privateKey) return { skipped: "VAPID keys are not configured." } as const;
+  if (!publicKey || !privateKey) {
+    throw new NotificationProviderConfigurationError(
+      "NEXT_PUBLIC_VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY must be configured in this deployment.",
+    );
+  }
   const message = notificationMessage(event);
   if (!message) return { skipped: "Notification rule no longer exists." } as const;
 
@@ -192,7 +268,12 @@ async function deliverPush(delivery: NotificationDelivery, event: NotificationEv
       await webpush.sendNotification({
         endpoint: subscription.endpoint,
         keys: { p256dh: subscription.p256dh, auth: subscription.auth },
-      }, JSON.stringify({ title: message.title, body: message.body, url: message.href }), {
+      }, JSON.stringify({
+        title: message.title,
+        body: message.body,
+        url: message.href,
+        tag: delivery.dedupe_key,
+      }), {
         TTL: 60 * 60,
         urgency: "normal",
       });
@@ -225,6 +306,8 @@ async function processDelivery(delivery: NotificationDelivery) {
     .maybeSingle();
   if (!claimed) return;
 
+  logEvent("info", "notification_delivery_attempted", deliveryLogDetails(claimed as NotificationDelivery));
+
   const preferences = await preferencesFor(claimed.user_id);
   if (
     preferences?.quiet_hours_enabled &&
@@ -241,6 +324,10 @@ async function processDelivery(delivery: NotificationDelivery) {
       next_attempt_at: new Date(now.getTime() + 60 * 60 * 1000).toISOString(),
       last_error: "Deferred for quiet hours.",
     }).eq("id", claimed.id);
+    logEvent("info", "notification_delivery_skipped", {
+      ...deliveryLogDetails(claimed as NotificationDelivery),
+      reason: "quiet_hours",
+    });
     return;
   }
 
@@ -261,6 +348,10 @@ async function processDelivery(delivery: NotificationDelivery) {
         locked_at: null,
         last_error: result.skipped,
       }).eq("id", claimed.id);
+      logEvent("info", "notification_delivery_skipped", {
+        ...deliveryLogDetails(claimed as NotificationDelivery),
+        reason: result.skipped,
+      });
     } else {
       await admin.from("notification_deliveries").update({
         status: "delivered",
@@ -269,6 +360,10 @@ async function processDelivery(delivery: NotificationDelivery) {
         provider_id: result.providerId,
         last_error: null,
       }).eq("id", claimed.id);
+      logEvent("info", "notification_delivery_delivered", {
+        ...deliveryLogDetails(claimed as NotificationDelivery),
+        providerId: result.providerId,
+      });
     }
   } catch (error) {
     const attempt = claimed.attempt_count + 1;
@@ -280,59 +375,85 @@ async function processDelivery(delivery: NotificationDelivery) {
       next_attempt_at: new Date(Date.now() + retryDelayMs(attempt)).toISOString(),
       last_error: error instanceof Error ? error.message : "Notification delivery failed.",
     }).eq("id", claimed.id);
+    logEvent("error", "notification_delivery_failed", {
+      ...deliveryLogDetails(claimed as NotificationDelivery),
+      final: failed,
+      error: error instanceof Error ? error.message : "Notification delivery failed.",
+    });
   }
 }
 
 export async function processNotificationOutbox(options?: {
   maxEvents?: number;
   maxDeliveries?: number;
+  eventIds?: string[];
+  mode?: "immediate" | "maintenance";
 }) {
   const switches = notificationKillSwitches();
   if (!switches.all) return { disabled: true, events: 0, deliveries: 0 };
   const admin = createAdminClient();
   const now = new Date().toISOString();
-  const staleLock = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-  await admin
-    .from("notification_deliveries")
-    .update({ status: "retry", locked_at: null, next_attempt_at: now, last_error: "Recovered a stale delivery lock." })
-    .eq("status", "processing")
-    .lt("locked_at", staleLock);
-  const { data: events, error } = await admin
+  if (options?.mode === "maintenance") {
+    const staleLock = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    await admin
+      .from("notification_deliveries")
+      .update({ status: "retry", locked_at: null, next_attempt_at: now, last_error: "Recovered a stale delivery lock." })
+      .eq("status", "processing")
+      .lt("locked_at", staleLock);
+  }
+  let eventQuery = admin
     .from("notification_events")
     .select("*")
     .is("processed_at", null)
-    .lte("available_at", now)
+    .lte("available_at", now);
+  if (options?.eventIds?.length) eventQuery = eventQuery.in("id", options.eventIds);
+  if (options?.mode === "maintenance") {
+    eventQuery = eventQuery.or("event_type.in.(invoice_due,invoice_overdue),attempt_count.gt.0");
+  }
+  const { data: events, error } = await eventQuery
     .order("created_at")
     .limit(options?.maxEvents ?? 25);
   if (error) throw new Error(error.message);
 
-  let eventCount = 0;
-  for (const event of events ?? []) {
-    try {
-      await materializeEvent(event as NotificationEvent);
-      eventCount += 1;
-    } catch (eventError) {
-      const attempts = event.attempt_count + 1;
-      await admin.from("notification_events").update({
-        attempt_count: attempts,
-        available_at: new Date(Date.now() + retryDelayMs(attempts)).toISOString(),
-        last_error: eventError instanceof Error ? eventError.message : "Notification materialization failed.",
-      }).eq("id", event.id);
-    }
-  }
-
-  const { data: deliveries, error: deliveryError } = await admin
-    .from("notification_deliveries")
-    .select("*")
-    .in("status", ["pending", "retry"])
-    .lte("next_attempt_at", now)
-    .order("created_at")
-    .limit(options?.maxDeliveries ?? 25);
-  if (deliveryError) throw new Error(deliveryError.message);
-  for (const delivery of deliveries ?? []) {
-    await processDelivery(delivery as NotificationDelivery);
-  }
-  return { disabled: false, events: eventCount, deliveries: deliveries?.length ?? 0 };
+  const processed = await runImmediateDeliveryBatch<NotificationDelivery>({
+    materialize: async () => {
+      let eventCount = 0;
+      for (const event of events ?? []) {
+        try {
+          await materializeEvent(event as NotificationEvent);
+          eventCount += 1;
+        } catch (eventError) {
+          const attempts = event.attempt_count + 1;
+          await admin.from("notification_events").update({
+            attempt_count: attempts,
+            available_at: new Date(Date.now() + retryDelayMs(attempts)).toISOString(),
+            last_error: eventError instanceof Error ? eventError.message : "Notification materialization failed.",
+          }).eq("id", event.id);
+          logEvent("error", "notification_event_failed", {
+            ...eventLogDetails(event as NotificationEvent),
+            attempt: attempts,
+            error: eventError instanceof Error ? eventError.message : "Notification materialization failed.",
+          });
+        }
+      }
+      return eventCount;
+    },
+    loadDueDeliveries: async (deliveryCutoff) => {
+      let deliveryQuery = admin
+        .from("notification_deliveries")
+        .select("*")
+        .in("status", ["pending", "retry"])
+        .lte("next_attempt_at", deliveryCutoff);
+      if (options?.eventIds?.length) deliveryQuery = deliveryQuery.in("event_id", options.eventIds);
+      const { data: deliveries, error: deliveryError } = await deliveryQuery
+        .order("created_at")
+        .limit(options?.maxDeliveries ?? 25);
+      if (deliveryError) throw new Error(deliveryError.message);
+      return (deliveries ?? []) as NotificationDelivery[];
+    },
+    deliver: processDelivery,
+  });
+  return { disabled: false, ...processed };
 }
 
 function daysBetween(left: string, right: string) {

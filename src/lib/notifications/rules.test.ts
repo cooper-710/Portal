@@ -22,6 +22,7 @@ function event(eventType: string, payload: Record<string, unknown> = {}): Notifi
 
 describe("notification rules", () => {
   it.each([
+    "test_notification",
     "client_invited", "client_invite_reminder", "deliverable_review_requested",
     "deliverable_changes_requested", "deliverable_approved", "final_approval_requested",
     "final_approval_received", "project_changes_requested", "invoice_created", "invoice_due",
@@ -36,6 +37,13 @@ describe("notification rules", () => {
 
   it("formats payment amounts from cents", () => {
     expect(notificationMessage(event("payment_succeeded", { amount: 5000, currency: "usd" }))?.body).toContain("$50.00");
+  });
+
+  it("routes channel tests to exactly one requested channel", () => {
+    const email = notificationMessage(event("test_notification", { requested_channel: "email" }));
+    expect(email).toMatchObject({ inApp: false, email: true, push: false });
+    const push = notificationMessage(event("test_notification", { requested_channel: "push" }));
+    expect(push).toMatchObject({ inApp: false, email: false, push: true });
   });
 
   it("defaults to useful zero-configuration preferences", () => {

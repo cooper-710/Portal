@@ -19,6 +19,23 @@ test.describe("authenticated owner", () => {
     await page.goto("/dashboard/settings");
     await expect(page.getByRole("heading", { name: "Notifications" })).toBeVisible();
     await expect(page.getByRole("button", { name: /Turn on|Turn off/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Test in-app" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Test email" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Test push" })).toBeVisible();
+  });
+
+  test("in-app test updates the notification bell without a page refresh", async ({ page }) => {
+    test.setTimeout(45_000);
+    await page.goto("/dashboard/settings");
+    const bell = page.getByRole("button", { name: /Notifications/ });
+    await bell.click();
+    const markAll = page.getByRole("button", { name: "Mark all read" });
+    if (await markAll.count()) await markAll.click();
+    await bell.click();
+
+    await page.getByRole("button", { name: "Test in-app" }).click();
+    await expect(page.getByRole("status")).toContainText("In-app test delivered");
+    await expect(bell).toHaveAttribute("aria-label", /Notifications, [1-9][0-9]* unread/, { timeout: 35_000 });
   });
 });
 

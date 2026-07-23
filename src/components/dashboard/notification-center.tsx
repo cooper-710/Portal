@@ -2,11 +2,13 @@
 
 import { Bell, CheckCheck, Loader2 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { mergeLiveNotification } from "@/lib/notifications/live-state";
 import type { Notification } from "@/types/database";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/utils/supabase/client";
 
 function timeAgo(value: string) {
   const seconds = Math.max(0, Math.floor((Date.now() - Date.parse(value)) / 1000));
@@ -16,7 +18,7 @@ function timeAgo(value: string) {
   return `${Math.floor(seconds / 86400)}d`;
 }
 
-export function NotificationCenter() {
+export function NotificationCenter({ userId }: { userId: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -24,7 +26,7 @@ export function NotificationCenter() {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Notification[]>([]);
 
-  async function load() {
+  const load = useCallback(async () => {
     try {
       const response = await fetch("/api/notifications", { cache: "no-store" });
       if (!response.ok) return;
@@ -33,9 +35,51 @@ export function NotificationCenter() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  useEffect(() => { void load(); }, [pathname]);
+  useEffect(() => { void load(); }, [load, pathname]);
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`notifications:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          if (payload.eventType === "DELETE") {
+            const removed = payload.old as Partial<Notification>;
+            if (removed.id) setItems((current) => current.filter((item) => item.id !== removed.id));
+            return;
+          }
+          const notification = payload.new as Notification;
+          if (notification?.id) {
+            setItems((current) => mergeLiveNotification(current, notification));
+            setLoading(false);
+          }
+        },
+      )
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") void load();
+      });
+
+    // Realtime can be interrupted by sleeping laptops, proxies, or publication
+    // configuration. Polling and focus refresh provide a bounded fallback.
+    const poll = window.setInterval(() => void load(), 30_000);
+    const refresh = () => void load();
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(poll);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+      void supabase.removeChannel(channel);
+    };
+  }, [load, userId]);
   useEffect(() => {
     function close(event: MouseEvent) {
       if (rootRef.current && !rootRef.current.contains(event.target as Node)) setOpen(false);
@@ -72,6 +116,7 @@ export function NotificationCenter() {
         size="icon"
         className="relative size-8 text-zinc-600"
         aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
+        aria-live="polite"
         aria-expanded={open}
         onClick={() => { setOpen((value) => !value); if (!open) void load(); }}
       >

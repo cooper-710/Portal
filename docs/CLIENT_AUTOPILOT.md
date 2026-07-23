@@ -5,6 +5,7 @@
 - A durable, unique event outbox captured by database triggers in the same
   transaction as project, review, and invoice changes.
 - Per-user in-app notifications with unread/read state and deep links.
+- Supabase Realtime bell updates with a 30-second polling/focus fallback.
 - One prioritized next action on owner and client home screens.
 - Retryable, idempotent Resend email and opt-in browser-push deliveries.
 - Default-on rules for invitations, deliverable review/change/approval, final
@@ -21,9 +22,11 @@ npx supabase db push --dry-run
 npx supabase db push
 ```
 
-The forward-only migration is:
+The forward-only migrations are:
 
 `20260722223024_client_autopilot_notifications.sql`
+
+`20260723012106_enable_notification_realtime.sql`
 
 It does not rewrite any applied migration.
 
@@ -59,19 +62,26 @@ Optional emergency controls (all default to enabled):
 - `NOTIFICATION_PUSH_ENABLED=false` prevents new push deliveries from being
   created.
 
+Unset kill switches do not disable notifications. Missing provider credentials
+are recorded as retryable delivery failures with a visible reason; they are not
+treated as a successful skip.
+
 ## Schedule
 
 `vercel.json` runs `GET /api/cron/notifications` at `13:05 UTC` daily. This fits
 Vercel Hobby's daily cron limit. It creates reminders due today, overdue day 1,
-and then weekly until the invoice is settled, and processes retryable outbox
-deliveries. The in-app center and business actions also process fresh events so
-normal activity is not delayed until the daily job.
+and then weekly until the invoice is settled, retries failed deliveries, and
+recovers stale delivery locks. Business actions and Stripe webhook handling
+process fresh events immediately; opening the notification center is not part of
+delivery processing.
 
 ## Manual acceptance
 
 1. Sign in as an owner and confirm exactly one **Next action** card and the bell
    are visible.
 2. Open Settings → Notifications; save categories and quiet hours.
+   Use **Test in-app**, **Test email**, and **Test push** to see each channel's
+   provider result independently.
 3. Invite an existing test client; sign in as that client and confirm an unread
    deep link appears once.
 4. Upload a deliverable, request changes, upload again, and approve. Confirm the

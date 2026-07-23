@@ -11,7 +11,10 @@ self.addEventListener("push", (event) => {
       icon: "/portal-icon-192.png",
       badge: "/portal-icon-192.png",
       data: { url: data.url || "/dashboard" },
-      tag: data.url || "portal-notification",
+      // One stable tag per outbox delivery prevents retries from duplicating a
+      // popup without collapsing unrelated events that share a deep link.
+      tag: data.tag || "portal-notification",
+      renotify: true,
     }),
   );
 });
