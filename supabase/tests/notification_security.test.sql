@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(29);
+select plan(34);
 
 select ok(
   exists (
@@ -113,6 +113,111 @@ reset role;
 
 select is((select count(*)::integer from public.notifications where id = '44000000-0000-0000-0000-000000000001'), 0, 'user can delete their own notification');
 select is((select count(*)::integer from public.notifications where id = '44000000-0000-0000-0000-000000000002'), 1, 'user cannot delete another tenant notification');
+
+insert into public.projects (id, freelancer_id, client_id, client_email, title)
+values (
+  '46000000-0000-0000-0000-000000000001',
+  '41000000-0000-0000-0000-000000000001',
+  '42000000-0000-0000-0000-000000000002',
+  'notify-b@example.test',
+  'Feedback notification project'
+);
+
+insert into public.assets (
+  id, project_id, file_url, file_name, visibility, uploaded_by,
+  review_status, review_note, reviewed_at
+) values
+  (
+    '47000000-0000-0000-0000-000000000001',
+    '46000000-0000-0000-0000-000000000001',
+    'feedback/reviewed.png',
+    'Reviewed.png',
+    'deliverable',
+    '41000000-0000-0000-0000-000000000001',
+    'changes_requested',
+    'Please revise this',
+    now()
+  ),
+  (
+    '47000000-0000-0000-0000-000000000002',
+    '46000000-0000-0000-0000-000000000001',
+    'feedback/auto-resolved.png',
+    'Auto resolved.png',
+    'deliverable',
+    '41000000-0000-0000-0000-000000000001',
+    'changes_requested',
+    'Please revise this too',
+    now()
+  );
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"41000000-0000-0000-0000-000000000001","role":"authenticated","email":"notify-a@example.test"}',
+  true
+);
+set local role authenticated;
+
+update public.assets
+set feedback_reviewed_at = '2026-07-22T22:00:00Z'
+where id = '47000000-0000-0000-0000-000000000001';
+
+update public.assets
+set feedback_reviewed_at = feedback_reviewed_at
+where id = '47000000-0000-0000-0000-000000000001';
+
+update public.assets
+set feedback_reviewed_at = '2026-07-22T22:01:00Z',
+    feedback_resolved_at = '2026-07-22T22:01:00Z'
+where id = '47000000-0000-0000-0000-000000000002';
+
+reset role;
+
+select is(
+  (
+    select count(*)::integer
+    from public.notification_events
+    where event_type = 'deliverable_feedback_reviewed'
+  ),
+  1,
+  'explicitly marking feedback reviewed creates one durable event'
+);
+select is(
+  (
+    select recipient_id
+    from public.notification_events
+    where event_type = 'deliverable_feedback_reviewed'
+  ),
+  '42000000-0000-0000-0000-000000000002'::uuid,
+  'feedback reviewed event is routed to the project client'
+);
+select is(
+  (
+    select actor_id
+    from public.notification_events
+    where event_type = 'deliverable_feedback_reviewed'
+  ),
+  '41000000-0000-0000-0000-000000000001'::uuid,
+  'feedback reviewed event records the project owner as actor'
+);
+select is(
+  (
+    select asset_id
+    from public.notification_events
+    where event_type = 'deliverable_feedback_reviewed'
+  ),
+  '47000000-0000-0000-0000-000000000001'::uuid,
+  'feedback reviewed event links to the reviewed deliverable'
+);
+select is(
+  (
+    select count(*)::integer
+    from public.notification_events
+    where event_type = 'deliverable_feedback_reviewed'
+      and asset_id = '47000000-0000-0000-0000-000000000002'
+  ),
+  0,
+  'automatic feedback resolution does not send a redundant reviewed event'
+);
 
 select * from finish();
 rollback;

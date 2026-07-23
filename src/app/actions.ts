@@ -81,7 +81,10 @@ async function resolveOutstandingDeliverableFeedback(
   const resolvedAt = new Date().toISOString();
   const { error: reviewedError } = await supabase
     .from("assets")
-    .update({ feedback_reviewed_at: resolvedAt })
+    .update({
+      feedback_reviewed_at: resolvedAt,
+      feedback_resolved_at: resolvedAt,
+    })
     .eq("project_id", projectId)
     .eq("review_status", "changes_requested")
     .is("feedback_reviewed_at", null)
@@ -94,6 +97,7 @@ async function resolveOutstandingDeliverableFeedback(
     .update({ feedback_resolved_at: resolvedAt })
     .eq("project_id", projectId)
     .eq("review_status", "changes_requested")
+    .not("feedback_reviewed_at", "is", null)
     .is("feedback_resolved_at", null);
 
   if (resolvedError) return { error: resolvedError.message };
@@ -1223,6 +1227,7 @@ export async function acknowledgeDeliverableFeedback(formData: FormData) {
   if (error) return { error: error.message };
 
   await markProjectChangeNotificationsRead(supabase, user.id, project.id);
+  await flushNotifications();
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/projects/${project.id}`);
   return { success: true as const };

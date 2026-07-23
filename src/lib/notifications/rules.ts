@@ -113,6 +113,16 @@ export function notificationMessage(event: NotificationEvent): NotificationMessa
         email: true,
         push: true,
       };
+    case "deliverable_feedback_reviewed":
+      return {
+        category: "reviews",
+        title: "Your feedback was reviewed",
+        body: `${fileName} feedback was reviewed. You’ll be notified when the owner shares an update or completes the project.`,
+        href: projectHref(event),
+        inApp: true,
+        email: true,
+        push: true,
+      };
     case "deliverable_approved":
       return {
         category: "reviews",

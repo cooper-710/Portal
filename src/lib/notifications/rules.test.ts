@@ -24,7 +24,8 @@ describe("notification rules", () => {
   it.each([
     "test_notification",
     "client_invited", "client_invite_reminder", "deliverable_review_requested",
-    "deliverable_changes_requested", "deliverable_approved", "final_approval_requested",
+    "deliverable_changes_requested", "deliverable_feedback_reviewed",
+    "deliverable_approved", "final_approval_requested",
     "final_approval_received", "project_changes_requested", "invoice_created", "invoice_due",
     "invoice_overdue", "payment_succeeded", "payment_failed", "refund_initiated",
     "refund_completed", "refund_failed", "payment_disputed", "project_closed",
@@ -37,6 +38,20 @@ describe("notification rules", () => {
 
   it("formats payment amounts from cents", () => {
     expect(notificationMessage(event("payment_succeeded", { amount: 5000, currency: "usd" }))?.body).toContain("$50.00");
+  });
+
+  it("notifies a client on every enabled channel when feedback is reviewed", () => {
+    const result = notificationMessage(event("deliverable_feedback_reviewed", {
+      file_name: "Homepage.png",
+    }));
+
+    expect(result).toMatchObject({
+      category: "reviews",
+      inApp: true,
+      email: true,
+      push: true,
+    });
+    expect(result?.body).toContain("Homepage.png");
   });
 
   it("routes channel tests to exactly one requested channel", () => {
