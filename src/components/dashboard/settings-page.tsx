@@ -8,6 +8,7 @@ import { BrandingForm } from "@/components/dashboard/branding-form";
 import { ChangePasswordForm } from "@/components/dashboard/change-password-form";
 import { DeleteAccountForm } from "@/components/dashboard/delete-account-form";
 import { ProfileNameForm } from "@/components/dashboard/profile-name-form";
+import { NotificationPreferencesForm } from "@/components/dashboard/notification-preferences";
 import { StripeConnectBanner } from "@/components/dashboard/stripe-connect-banner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { displayName } from "@/lib/format";
@@ -110,6 +111,13 @@ export function SettingsPage({
         <div className="max-w-sm">
           <ChangePasswordForm hasPassword={profile.password_set} />
         </div>
+      </SettingsSection>
+
+      <SettingsSection
+        title="Notifications"
+        description="Choose where Portal sends action reminders and set optional quiet hours."
+      >
+        <NotificationPreferencesForm />
       </SettingsSection>
 
       {isFreelancer ? (

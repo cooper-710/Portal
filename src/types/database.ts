@@ -255,6 +255,90 @@ export type ClientAction = {
   updated_at: string;
 };
 
+export type NotificationEvent = {
+  id: string;
+  event_key: string;
+  event_type: string;
+  recipient_id: string | null;
+  recipient_email: string | null;
+  actor_id: string | null;
+  freelancer_id: string | null;
+  project_id: string | null;
+  invoice_id: string | null;
+  asset_id: string | null;
+  payload: Record<string, unknown>;
+  occurred_at: string;
+  available_at: string;
+  processed_at: string | null;
+  attempt_count: number;
+  last_error: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Notification = {
+  id: string;
+  event_id: string;
+  user_id: string;
+  notification_type: string;
+  title: string;
+  body: string;
+  href: string;
+  read_at: string | null;
+  created_at: string;
+};
+
+export type NotificationDelivery = {
+  id: string;
+  event_id: string;
+  notification_id: string | null;
+  user_id: string | null;
+  recipient_email: string | null;
+  channel: "email" | "push";
+  status: "pending" | "processing" | "retry" | "delivered" | "failed" | "skipped";
+  dedupe_key: string;
+  scheduled_for: string;
+  next_attempt_at: string;
+  attempt_count: number;
+  max_attempts: number;
+  locked_at: string | null;
+  delivered_at: string | null;
+  provider_id: string | null;
+  last_error: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type NotificationPreferences = {
+  user_id: string;
+  in_app_enabled: boolean;
+  email_enabled: boolean;
+  push_enabled: boolean;
+  quiet_hours_enabled: boolean;
+  quiet_hours_start: string;
+  quiet_hours_end: string;
+  timezone: string;
+  invites_enabled: boolean;
+  reviews_enabled: boolean;
+  invoices_enabled: boolean;
+  payments_enabled: boolean;
+  projects_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PushSubscriptionRow = {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  user_agent: string | null;
+  created_at: string;
+  updated_at: string;
+  last_used_at: string | null;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -400,6 +484,70 @@ export type Database = {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["client_actions"]["Insert"]>;
+        Relationships: [];
+      };
+      notification_events: {
+        Row: NotificationEvent;
+        Insert: Omit<NotificationEvent, "id" | "occurred_at" | "available_at" | "processed_at" | "attempt_count" | "last_error" | "created_at" | "updated_at"> & {
+          id?: string;
+          occurred_at?: string;
+          available_at?: string;
+          processed_at?: string | null;
+          attempt_count?: number;
+          last_error?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["notification_events"]["Insert"]>;
+        Relationships: [];
+      };
+      notifications: {
+        Row: Notification;
+        Insert: Omit<Notification, "id" | "read_at" | "created_at"> & {
+          id?: string;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Update: Pick<Partial<Notification>, "read_at">;
+        Relationships: [];
+      };
+      notification_deliveries: {
+        Row: NotificationDelivery;
+        Insert: Omit<NotificationDelivery, "id" | "status" | "scheduled_for" | "next_attempt_at" | "attempt_count" | "max_attempts" | "locked_at" | "delivered_at" | "provider_id" | "last_error" | "created_at" | "updated_at"> & {
+          id?: string;
+          status?: NotificationDelivery["status"];
+          scheduled_for?: string;
+          next_attempt_at?: string;
+          attempt_count?: number;
+          max_attempts?: number;
+          locked_at?: string | null;
+          delivered_at?: string | null;
+          provider_id?: string | null;
+          last_error?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["notification_deliveries"]["Insert"]>;
+        Relationships: [];
+      };
+      notification_preferences: {
+        Row: NotificationPreferences;
+        Insert: { user_id: string } & Partial<Omit<NotificationPreferences, "user_id">> & {
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["notification_preferences"]["Insert"]>;
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: PushSubscriptionRow;
+        Insert: Omit<PushSubscriptionRow, "id" | "created_at" | "updated_at" | "last_used_at"> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          last_used_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["push_subscriptions"]["Insert"]>;
         Relationships: [];
       };
     };

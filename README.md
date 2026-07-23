@@ -56,6 +56,9 @@ Open [http://localhost:3001](http://localhost:3001).
 | `STRIPE_PLATFORM_FEE_PERCENT` | Application fee % on client invoices (default 1) |
 | `RESEND_API_KEY` | Project invite emails (recommended) |
 | `RESEND_FROM_EMAIL` | Invite From address (needs verified domain for real clients) |
+| `CRON_SECRET` | Authenticate the daily Autopilot reminder job |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Optional browser push |
+| `NOTIFICATIONS_ENABLED` | Global notification kill switch (defaults on) |
 
 **Google authentication:** configure Supabase and Google Cloud using **[docs/GOOGLE_AUTH.md](./docs/GOOGLE_AUTH.md)**. Resend is used for project invitations, not primary sign-in.
 
@@ -76,9 +79,26 @@ drive direct client-invoice payments, refunds, disputes, expiration, and async
 payment outcomes. Checkout return URLs reconcile through the stored connected
 account if a webhook is delayed.
 
-If the Connect webhook destination uses a selected event list, include
-`charge.refunded` and `refund.failed` so owner-initiated refunds can move from
-"Refund initiated" to their completed or failed state.
+Create a separate **Connected accounts** event destination using snapshot/v1
+payloads at the same endpoint. If it uses a selected event list, include:
+`checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+`checkout.session.async_payment_failed`, `checkout.session.expired`,
+`payment_intent.succeeded`, `payment_intent.payment_failed`,
+`payment_intent.canceled`, `charge.refunded`, `refund.failed`, and
+`charge.dispute.created`, `charge.dispute.updated`, `charge.dispute.closed`, plus
+`account.updated` for Connect readiness changes.
+Copy that destination's signing secret—not an event ID—into
+`STRIPE_CONNECT_WEBHOOK_SECRET`.
+
+### Client Autopilot
+
+The migration-backed notification outbox captures invites, reviews, approvals,
+invoice/payment/refund/dispute state, and project closeout without an AI or
+workflow-builder dependency. The dashboard notification center processes fresh
+events on use; `/api/cron/notifications` adds due/overdue reminders and retries
+channel deliveries daily. Browser push is optional and email uses Resend's
+idempotency key support. See `docs/CLIENT_AUTOPILOT.md` for setup and acceptance
+tests.
 
 Health check: [http://localhost:3001/api/health](http://localhost:3001/api/health).
 

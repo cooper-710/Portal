@@ -204,6 +204,17 @@ export async function POST(
       });
     }
 
+    try {
+      const { processNotificationOutbox } = await import("@/lib/notifications/processor");
+      await processNotificationOutbox({ maxEvents: 10, maxDeliveries: 10 });
+    } catch (notificationError) {
+      logEvent("error", "invoice_refund_notification_failed", {
+        requestId,
+        invoiceId: invoice.id,
+        message: notificationError instanceof Error ? notificationError.message : String(notificationError),
+      });
+    }
+
     logEvent("info", "invoice_refund_started", {
       requestId,
       invoiceId: invoice.id,

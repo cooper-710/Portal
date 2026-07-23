@@ -8,11 +8,17 @@ test.describe("authenticated owner", () => {
   test.use({ storageState: ownerState });
 
   test("can open projects and invoice controls", async ({ page }) => {
+    await page.goto("/dashboard");
+    await expect(page.getByText("Next action", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Notifications/ })).toBeVisible();
     await page.goto("/dashboard/projects");
     await expect(page.getByRole("heading", { name: "Projects" })).toBeVisible();
     await page.goto("/dashboard/invoices");
     await expect(page.getByRole("heading", { name: "Invoices" })).toBeVisible();
     await expect(page.getByText(/connect stripe|billing|outstanding balance/i).first()).toBeVisible();
+    await page.goto("/dashboard/settings");
+    await expect(page.getByRole("heading", { name: "Notifications" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Turn on|Turn off/ })).toBeVisible();
   });
 });
 
@@ -23,6 +29,8 @@ test.describe("authenticated client", () => {
   test("can reach deliverables, approvals, and invoice documents", async ({ page }) => {
     await page.goto("/dashboard");
     await expect(page.getByRole("heading", { name: "Home" })).toBeVisible();
+    await expect(page.getByText("Next required action", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Notifications/ })).toBeVisible();
 
     const reviewButton = page
       .getByRole("button", { name: "Preview & review" })

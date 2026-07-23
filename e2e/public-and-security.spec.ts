@@ -35,3 +35,14 @@ test("pricing discloses both revenue components", async ({ page }) => {
   await expect(page.getByText(/14-day free trial, then \$25\/mo/i).first()).toBeVisible();
   await expect(page.getByText(/~1% platform fee/i).first()).toBeVisible();
 });
+
+test("notification worker is public but notification APIs stay protected", async ({ request }) => {
+  const worker = await request.get("/push-sw.js");
+  expect(worker.ok()).toBeTruthy();
+  expect(await worker.text()).toContain("notificationclick");
+
+  const notifications = await request.get("/api/notifications");
+  expect(notifications.status()).toBe(401);
+  const cron = await request.get("/api/cron/notifications");
+  expect(cron.status()).toBe(401);
+});

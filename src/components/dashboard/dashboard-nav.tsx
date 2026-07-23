@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 import { signOut } from "@/app/actions";
 import { PortalBrand } from "@/components/portal-brand";
+import { NotificationCenter } from "@/components/dashboard/notification-center";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/types/database";
@@ -126,6 +127,7 @@ export function DashboardNav({
         ) : null}
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <NotificationCenter />
           {displayLabel ? (
             <span
               className="hidden max-w-[10rem] truncate text-xs font-medium text-zinc-500 sm:inline"

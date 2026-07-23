@@ -24,6 +24,7 @@ import {
   dismissOpenDeliverableActions,
 } from "@/lib/client-actions";
 import { displayName } from "@/lib/format";
+import { processNotificationOutbox } from "@/lib/notifications/processor";
 import type { PaymentKind, RecurrenceFrequency } from "@/types/database";
 
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
@@ -46,6 +47,14 @@ function normalizeCreatePaymentKind(raw: PaymentKind): PaymentKind {
   if (raw === "standalone") return "standard";
   if (raw === "retainer") return "recurring";
   return raw;
+}
+
+async function flushNotifications() {
+  try {
+    await processNotificationOutbox({ maxEvents: 20, maxDeliveries: 20 });
+  } catch (error) {
+    console.error("[autopilot] action completed but notification processing failed:", error);
+  }
 }
 
 export async function signOut() {
@@ -514,6 +523,8 @@ export async function reviewDeliverable(formData: FormData) {
 
   if (reviewError) return { error: reviewError.message };
 
+  await flushNotifications();
+
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/projects/${action.project_id}`);
   return { success: true as const };
@@ -556,6 +567,8 @@ export async function reviewProject(formData: FormData) {
   });
 
   if (reviewError) return { error: reviewError.message };
+
+  await flushNotifications();
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/projects");
@@ -885,6 +898,8 @@ export async function createInvoice(formData: FormData) {
       });
     }
 
+    await flushNotifications();
+
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/invoices");
     revalidatePath(`/dashboard/projects/${projectId}`);
@@ -940,6 +955,8 @@ export async function createInvoice(formData: FormData) {
       });
     }
 
+    await flushNotifications();
+
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/invoices");
     revalidatePath(`/dashboard/projects/${projectId}`);
@@ -974,6 +991,8 @@ export async function createInvoice(formData: FormData) {
     dueDate: invoice.due_date,
     title: invoice.title,
   });
+
+  await flushNotifications();
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/invoices");
@@ -1184,6 +1203,8 @@ export async function updateProjectPhase(formData: FormData) {
   } else {
     await completeOpenProjectReviewActions(supabase, projectId);
   }
+
+  await flushNotifications();
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/projects");
@@ -1409,6 +1430,8 @@ export async function uploadAsset(formData: FormData) {
     });
   }
 
+  await flushNotifications();
+
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/projects/${projectId}`);
   return { success: true as const };
@@ -1481,6 +1504,8 @@ export async function updateAssetVisibility(formData: FormData) {
   } else {
     await dismissOpenDeliverableActions(supabase, asset.id);
   }
+
+  await flushNotifications();
 
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/projects/${asset.project_id}`);

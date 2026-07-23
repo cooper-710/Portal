@@ -9,6 +9,7 @@ import {
   CircleDollarSign,
   FolderKanban,
   Receipt,
+  Sparkles,
 } from "lucide-react";
 
 import {
@@ -45,6 +46,7 @@ import type {
 } from "@/lib/client-home-scope";
 import { formatMoney, isCompletedProject, displayName, projectClientLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { pickOwnerNextAction } from "@/lib/owner-next-action";
 import { isInvoiceOutstanding, isInvoiceSettled, type Profile } from "@/types/database";
 
 type FreelancerDashboardProps = {
@@ -106,6 +108,7 @@ export function FreelancerDashboard({
   const previewActive = activeProjects.slice(0, 4);
 
   const welcomeMessage = profile.welcome_message?.trim() || null;
+  const nextAction = pickOwnerNextAction(projects, invoices, deliverables);
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -166,6 +169,19 @@ export function FreelancerDashboard({
           {message}
         </p>
       ) : null}
+
+      <section className="flex flex-col gap-4 rounded-2xl border border-orange-200/80 bg-gradient-to-br from-orange-50 via-white to-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-2.5 py-1 text-xs font-medium text-orange-800 shadow-sm">
+            <Sparkles className="size-3.5" /> Next action
+          </div>
+          <h2 className="text-base font-semibold text-zinc-900">{nextAction.title}</h2>
+          <p className="max-w-2xl text-sm text-zinc-600">{nextAction.description}</p>
+        </div>
+        <Link href={nextAction.href} className={cn(buttonVariants({ size: "sm" }), "shrink-0 shadow-sm")}>
+          {nextAction.label}<ArrowUpRight className="size-3.5" />
+        </Link>
+      </section>
 
       <GettingStartedChecklist
         profile={profile}

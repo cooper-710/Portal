@@ -286,6 +286,18 @@ export async function applyInvoicePaymentEvent(
     }
   }
 
+  if (!isOutOfOrder) {
+    try {
+      const { processNotificationOutbox } = await import("@/lib/notifications/processor");
+      await processNotificationOutbox({ maxEvents: 10, maxDeliveries: 10 });
+    } catch (notificationError) {
+      console.error(
+        `[invoice lifecycle] payment persisted but notification processing failed invoice=${invoice.id}:`,
+        notificationError,
+      );
+    }
+  }
+
   return { ok: true as const, invoiceId: invoice.id, outOfOrder: isOutOfOrder };
 }
 
