@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(26);
+select plan(29);
 
 select ok(
   exists (
@@ -23,6 +23,7 @@ select ok(has_table_privilege('authenticated', 'public.notifications', 'select')
 select ok(not has_table_privilege('authenticated', 'public.notifications', 'insert'), 'authenticated users cannot forge in-app notifications');
 select ok(has_column_privilege('authenticated', 'public.notifications', 'read_at', 'update'), 'authenticated users can mark a notification read');
 select ok(not has_column_privilege('authenticated', 'public.notifications', 'title', 'update'), 'authenticated users cannot rewrite notification content');
+select ok(has_table_privilege('authenticated', 'public.notifications', 'delete'), 'authenticated users can delete their own notifications through RLS');
 select ok(has_table_privilege('authenticated', 'public.notification_preferences', 'update'), 'authenticated users can manage preferences through RLS');
 select ok(has_table_privilege('authenticated', 'public.push_subscriptions', 'delete'), 'authenticated users can remove their browser subscription through RLS');
 
@@ -97,6 +98,21 @@ select is((select read_at is null from public.notifications where id = '44000000
 select is((select email_enabled from public.notification_preferences where user_id = '42000000-0000-0000-0000-000000000002'), true, 'cross-tenant preference did not change');
 select is((select count(*)::integer from public.push_subscriptions where user_id = '42000000-0000-0000-0000-000000000002'), 1, 'cross-tenant push subscription was not deleted');
 select is((select count(*)::integer from public.notification_events), 2, 'internal events were not exposed or modified');
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"41000000-0000-0000-0000-000000000001","role":"authenticated","email":"notify-a@example.test"}',
+  true
+);
+set local role authenticated;
+delete from public.notifications where id in (
+  '44000000-0000-0000-0000-000000000001',
+  '44000000-0000-0000-0000-000000000002'
+);
+reset role;
+
+select is((select count(*)::integer from public.notifications where id = '44000000-0000-0000-0000-000000000001'), 0, 'user can delete their own notification');
+select is((select count(*)::integer from public.notifications where id = '44000000-0000-0000-0000-000000000002'), 1, 'user cannot delete another tenant notification');
 
 select * from finish();
 rollback;

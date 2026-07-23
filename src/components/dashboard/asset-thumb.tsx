@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { File, FileCode, FileText, Loader2 } from "lucide-react";
+import { File, FileCode, FileImage, FileText, Loader2 } from "lucide-react";
 
 import { getAssetDownloadUrl } from "@/app/actions";
 import { getPreviewKind, type PreviewKind } from "@/lib/file-preview";
@@ -17,6 +17,7 @@ export function FileTypeIcon({
   const cls = cn("size-8 text-zinc-400", className);
   if (kind === "pdf") return <FileText className={cls} />;
   if (kind === "text") return <FileCode className={cls} />;
+  if (kind === "image") return <FileImage className={cls} />;
   return <File className={cls} />;
 }
 
@@ -99,33 +100,36 @@ export function AssetThumb({
     );
   }
 
-  if (kind === "image" && url && !failed) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={url}
-        alt={alt}
-        className={cn("absolute inset-0 size-full object-cover", className)}
-        onError={() => setFailed(true)}
-      />
-    );
-  }
-
-  if (kind === "image" && !failed && !url) {
-    return <Loader2 className={cn("size-5 animate-spin text-zinc-400", className)} />;
-  }
-
   return (
     <div
       className={cn(
-        "flex flex-col items-center gap-2 px-4 text-center",
+        "relative size-full min-h-0 overflow-hidden bg-zinc-100",
         className,
       )}
     >
-      <FileTypeIcon kind={kind} />
-      {label ? (
-        <p className="line-clamp-2 text-xs text-zinc-500">{label}</p>
-      ) : null}
+      {kind === "image" && url && !failed ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={url}
+          alt={alt}
+          className="absolute inset-0 size-full object-cover"
+          onError={() => setFailed(true)}
+        />
+      ) : kind === "image" && !failed && !url ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-50 to-zinc-100">
+          <Loader2 className="size-5 animate-spin text-zinc-400" />
+          <span className="sr-only">Loading preview</span>
+        </div>
+      ) : (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-zinc-50 to-zinc-100 px-4 text-center">
+          <FileTypeIcon kind={kind} />
+          {label ? (
+            <p className="line-clamp-2 text-xs font-medium text-zinc-500">
+              {failed && kind === "image" ? "Preview unavailable" : label}
+            </p>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }

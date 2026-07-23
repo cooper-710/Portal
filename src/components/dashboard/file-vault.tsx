@@ -122,6 +122,10 @@ export function FileVault({
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [assetPendingDelete, setAssetPendingDelete] = useState<Asset | null>(
+    null,
+  );
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [viewingAsset, setViewingAsset] = useState<Asset | null>(null);
   const [viewUrl, setViewUrl] = useState<string | null>(null);
@@ -293,16 +297,28 @@ export function FileVault({
     });
   }
 
-  function handleDelete(asset: Asset) {
+  function requestDelete(asset: Asset) {
     if (!canManageVisibility) return;
 
+    setDeleteError(null);
+    setAssetPendingDelete(asset);
+  }
+
+  function closeDeleteDialog(open: boolean) {
+    if (!open && !deletingId) {
+      setAssetPendingDelete(null);
+      setDeleteError(null);
+    }
+  }
+
+  function confirmDelete() {
+    if (!canManageVisibility || !assetPendingDelete) return;
+
+    const asset = assetPendingDelete;
     const name = displayName(asset);
-    const confirmed = window.confirm(
-      `Delete "${name}"? This permanently removes the file from storage and cannot be undone.`,
-    );
-    if (!confirmed) return;
 
     setDeletingId(asset.id);
+    setDeleteError(null);
     setError(null);
     setMessage(null);
 
@@ -313,12 +329,13 @@ export function FileVault({
       const result = await deleteAsset(formData);
       setDeletingId(null);
       if (result?.error) {
-        setError(result.error);
+        setDeleteError(result.error);
         return;
       }
       if (viewingAsset?.id === asset.id) {
         closeViewer(false);
       }
+      setAssetPendingDelete(null);
       setMessage(`Deleted "${name}".`);
       router.refresh();
     });
@@ -438,7 +455,7 @@ export function FileVault({
             onView={openViewer}
             onDownload={downloadAsset}
             onToggleVisibility={toggleVisibility}
-            onDelete={handleDelete}
+            onDelete={requestDelete}
           />
           <AssetSection
             title="Internal reference"
@@ -451,7 +468,7 @@ export function FileVault({
             onView={openViewer}
             onDownload={downloadAsset}
             onToggleVisibility={toggleVisibility}
-            onDelete={handleDelete}
+            onDelete={requestDelete}
           />
         </>
       ) : (
@@ -466,7 +483,7 @@ export function FileVault({
           onView={openViewer}
           onDownload={downloadAsset}
           onToggleVisibility={toggleVisibility}
-          onDelete={handleDelete}
+          onDelete={requestDelete}
           reviewActions={reviewActions}
         />
       )}
@@ -571,7 +588,7 @@ export function FileVault({
                   type="button"
                   variant="destructive"
                   disabled={deletingId === viewingAsset.id}
-                  onClick={() => handleDelete(viewingAsset)}
+                  onClick={() => requestDelete(viewingAsset)}
                 >
                   {deletingId === viewingAsset.id ? (
                     <Loader2 className="size-4 animate-spin" />
@@ -582,6 +599,65 @@ export function FileVault({
                 </Button>
               ) : null}
             </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(assetPendingDelete)}
+        onOpenChange={closeDeleteDialog}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mb-1 flex size-10 items-center justify-center rounded-full bg-red-50 text-red-600">
+              <Trash2 className="size-5" aria-hidden="true" />
+            </div>
+            <DialogTitle>Delete file?</DialogTitle>
+            <DialogDescription>
+              This permanently removes
+              {assetPendingDelete ? (
+                <>
+                  {" "}
+                  <span className="font-medium text-zinc-900">
+                    “{displayName(assetPendingDelete)}”
+                  </span>
+                </>
+              ) : null}{" "}
+              from storage. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          {deleteError ? (
+            <p
+              role="alert"
+              className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+            >
+              {deleteError}
+            </p>
+          ) : null}
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={Boolean(deletingId)}
+              onClick={() => closeDeleteDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={Boolean(deletingId)}
+              onClick={confirmDelete}
+            >
+              {deletingId ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <Trash2 className="size-4" aria-hidden="true" />
+              )}
+              {deletingId ? "Deleting…" : "Delete file"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

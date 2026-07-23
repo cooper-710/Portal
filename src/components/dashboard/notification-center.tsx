@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, CheckCheck, Loader2 } from "lucide-react";
+import { Bell, CheckCheck, Loader2, Trash2 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -24,6 +24,7 @@ export function NotificationCenter({ userId }: { userId: string }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [items, setItems] = useState<Notification[]>([]);
 
   const load = useCallback(async () => {
@@ -108,6 +109,25 @@ export function NotificationCenter({ userId }: { userId: string }) {
     router.push(item.href);
   }
 
+  async function deleteNotification(id: string) {
+    setDeletingId(id);
+    const previous = items;
+    setItems((current) => current.filter((item) => item.id !== id));
+    try {
+      const response = await fetch("/api/notifications", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!response.ok) {
+        setItems(previous);
+        void load();
+      }
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <div className="relative" ref={rootRef}>
       <Button
@@ -141,28 +161,43 @@ export function NotificationCenter({ userId }: { userId: string }) {
               </button>
             ) : null}
           </div>
-          <div className="max-h-[28rem] overflow-y-auto">
+          <div className="max-h-72 overflow-y-auto overscroll-contain">
             {loading ? (
               <div className="flex items-center justify-center p-8 text-zinc-400"><Loader2 className="size-5 animate-spin" /></div>
             ) : items.length === 0 ? (
               <p className="p-8 text-center text-sm text-zinc-500">Project and payment updates will appear here.</p>
             ) : items.map((item) => (
-              <button
+              <div
                 key={item.id}
-                type="button"
-                onClick={() => void openNotification(item)}
                 className={cn(
-                  "flex w-full gap-3 border-b border-zinc-100 px-4 py-3 text-left transition-colors last:border-0 hover:bg-zinc-50",
+                  "flex h-24 w-full items-start gap-2 border-b border-zinc-100 px-4 py-3 transition-colors last:border-0 hover:bg-zinc-50",
                   !item.read_at && "bg-orange-50/60",
                 )}
               >
-                <span className={cn("mt-1.5 size-2 shrink-0 rounded-full", item.read_at ? "bg-zinc-200" : "bg-orange-500")} />
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-medium text-zinc-900">{item.title}</span>
-                  <span className="mt-0.5 block text-xs leading-5 text-zinc-500">{item.body}</span>
-                </span>
-                <span className="shrink-0 text-[10px] font-medium text-zinc-400">{timeAgo(item.created_at)}</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => void openNotification(item)}
+                  className="flex min-w-0 flex-1 gap-3 text-left"
+                >
+                  <span className={cn("mt-1.5 size-2 shrink-0 rounded-full", item.read_at ? "bg-zinc-200" : "bg-orange-500")} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium text-zinc-900">{item.title}</span>
+                    <span className="mt-0.5 line-clamp-2 block text-xs leading-5 text-zinc-500">{item.body}</span>
+                  </span>
+                  <span className="shrink-0 text-[10px] font-medium text-zinc-400">{timeAgo(item.created_at)}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void deleteNotification(item.id)}
+                  disabled={deletingId !== null}
+                  aria-label={`Delete ${item.title}`}
+                  className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                >
+                  {deletingId === item.id
+                    ? <Loader2 className="size-3.5 animate-spin" />
+                    : <Trash2 className="size-3.5" />}
+                </button>
+              </div>
             ))}
           </div>
         </div>

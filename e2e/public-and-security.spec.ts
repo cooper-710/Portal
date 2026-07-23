@@ -43,6 +43,10 @@ test("notification worker is public but notification APIs stay protected", async
 
   const notifications = await request.get("/api/notifications");
   expect(notifications.status()).toBe(401);
+  const deleteNotification = await request.delete("/api/notifications", {
+    data: { id: "44000000-0000-0000-0000-000000000001" },
+  });
+  expect(deleteNotification.status()).toBe(401);
   const testNotification = await request.post("/api/notifications/test", {
     data: { channel: "in_app" },
   });

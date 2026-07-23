@@ -495,17 +495,20 @@ export function ClientHome({ profile, home }: ClientHomeProps) {
                   {action.asset_id ? (
                     <Link
                       href={`/dashboard/projects/${action.project_id}?review=${action.asset_id}`}
-                      className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                      className="group self-start overflow-hidden rounded-lg border border-zinc-200 bg-white text-left shadow-sm transition hover:border-zinc-300 hover:shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                     >
-                      <AssetThumb
-                        assetId={action.asset_id}
-                        fileName={action.asset?.file_name ?? null}
-                        variant="tile"
-                        label={action.asset?.file_name ?? "Deliverable"}
-                        alt=""
-                      />
-                      <span className="block px-2 py-1.5 text-center text-xs font-medium text-blue-700">
-                        Preview file
+                      <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-100">
+                        <AssetThumb
+                          assetId={action.asset_id}
+                          fileName={action.asset?.file_name ?? null}
+                          variant="tile"
+                          label={action.asset?.file_name ?? "Deliverable"}
+                          alt=""
+                        />
+                        <span className="pointer-events-none absolute inset-0 bg-zinc-950/0 transition group-hover:bg-zinc-950/10" />
+                      </div>
+                      <span className="block border-t border-zinc-100 px-2 py-2 text-center text-xs font-medium text-blue-700">
+                        Open preview
                       </span>
                     </Link>
                   ) : null}
