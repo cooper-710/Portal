@@ -26,7 +26,12 @@ select ok(not has_column_privilege('authenticated', 'public.notifications', 'tit
 select ok(has_table_privilege('authenticated', 'public.notifications', 'delete'), 'authenticated users can delete their own notifications through RLS');
 select ok(has_table_privilege('authenticated', 'public.notification_preferences', 'update'), 'authenticated users can manage preferences through RLS');
 select ok(has_table_privilege('authenticated', 'public.push_subscriptions', 'delete'), 'authenticated users can remove their browser subscription through RLS');
-select ok(has_column('public', 'push_subscriptions', 'origin'), 'push subscriptions record the service-worker origin');
+select has_column(
+  'public',
+  'push_subscriptions',
+  'origin',
+  'push subscriptions record the service-worker origin'
+);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
