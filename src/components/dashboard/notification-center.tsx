@@ -5,6 +5,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+  ensurePushSubscription,
+  supportsBrowserPush,
+} from "@/lib/notifications/browser-push";
 import { mergeLiveNotification } from "@/lib/notifications/live-state";
 import type { Notification } from "@/types/database";
 import { cn } from "@/lib/utils";
@@ -39,6 +43,47 @@ export function NotificationCenter({ userId }: { userId: string }) {
   }, []);
 
   useEffect(() => { void load(); }, [load, pathname]);
+  useEffect(() => {
+    if (
+      !supportsBrowserPush() ||
+      Notification.permission !== "granted"
+    ) {
+      return;
+    }
+    const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    if (!publicKey) return;
+    let cancelled = false;
+    const controller = new AbortController();
+
+    void (async () => {
+      const preferenceResponse = await fetch(
+        "/api/notifications/preferences",
+        { cache: "no-store", signal: controller.signal },
+      );
+      if (!preferenceResponse.ok || cancelled) return;
+      const preferenceData = await preferenceResponse.json() as {
+        preferences?: { push_enabled?: boolean };
+      };
+      if (!preferenceData.preferences?.push_enabled) return;
+
+      const subscription = await ensurePushSubscription(publicKey);
+      if (cancelled) return;
+      await fetch("/api/notifications/push-subscriptions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(subscription.toJSON()),
+        signal: controller.signal,
+      });
+    })().catch(() => {
+      // Settings exposes actionable push errors. Background origin migration
+      // stays silent so it never disrupts normal dashboard navigation.
+    });
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [userId]);
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase

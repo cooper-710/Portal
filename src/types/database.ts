@@ -335,6 +335,7 @@ export type PushSubscriptionRow = {
   endpoint: string;
   p256dh: string;
   auth: string;
+  origin: string | null;
   user_agent: string | null;
   created_at: string;
   updated_at: string;
@@ -545,8 +546,9 @@ export type Database = {
       };
       push_subscriptions: {
         Row: PushSubscriptionRow;
-        Insert: Omit<PushSubscriptionRow, "id" | "created_at" | "updated_at" | "last_used_at"> & {
+        Insert: Omit<PushSubscriptionRow, "id" | "created_at" | "updated_at" | "last_used_at" | "origin"> & {
           id?: string;
+          origin?: string | null;
           created_at?: string;
           updated_at?: string;
           last_used_at?: string | null;

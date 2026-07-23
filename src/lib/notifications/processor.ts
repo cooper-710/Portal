@@ -6,6 +6,7 @@ import webpush from "web-push";
 import { appBaseUrl, PRODUCT_NAME } from "@/lib/product";
 import { notificationKillSwitches } from "@/lib/notifications/config";
 import { runImmediateDeliveryBatch } from "@/lib/notifications/immediate-batch";
+import { eligiblePushSubscriptions } from "@/lib/notifications/push-origin";
 import { logEvent } from "@/lib/monitoring";
 import {
   categoryEnabled,
@@ -257,6 +258,15 @@ async function deliverPush(delivery: NotificationDelivery, event: NotificationEv
     .eq("user_id", delivery.user_id);
   if (error) throw new Error(error.message);
   if (!subscriptions?.length) return { skipped: "No active browser subscription." } as const;
+  const canonicalSubscriptions = eligiblePushSubscriptions(
+    subscriptions,
+    new URL(appBaseUrl()).origin,
+  );
+  if (canonicalSubscriptions.length === 0) {
+    return {
+      skipped: "No browser subscription is registered on the canonical app origin.",
+    } as const;
+  }
 
   webpush.setVapidDetails(
     process.env.VAPID_SUBJECT ?? "mailto:support@example.com",
@@ -264,7 +274,7 @@ async function deliverPush(delivery: NotificationDelivery, event: NotificationEv
     privateKey,
   );
   let delivered = 0;
-  for (const subscription of subscriptions) {
+  for (const subscription of canonicalSubscriptions) {
     try {
       await webpush.sendNotification({
         endpoint: subscription.endpoint,

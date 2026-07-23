@@ -150,7 +150,7 @@ export function scopeClientHomeData(
     })),
     amountDueCents,
     nextPaymentDate,
-    nextAction: pickNextRequiredAction(actions),
+    nextAction: pickNextRequiredAction(actions, invoices),
     activeProject: focusProject,
     brand,
   };

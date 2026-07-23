@@ -458,7 +458,7 @@ export async function loadClientWorkspace(
     brand,
     amountDueCents,
     nextPaymentDate,
-    nextAction: pickNextRequiredAction(actionsWithLinks),
+    nextAction: pickNextRequiredAction(actionsWithLinks, invoices),
     upcoming: upcoming.slice(0, 12),
     activity: activity.slice(0, 24),
     activeProject: defaultFocus,

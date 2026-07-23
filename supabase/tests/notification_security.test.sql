@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(34);
+select plan(35);
 
 select ok(
   exists (
@@ -26,6 +26,7 @@ select ok(not has_column_privilege('authenticated', 'public.notifications', 'tit
 select ok(has_table_privilege('authenticated', 'public.notifications', 'delete'), 'authenticated users can delete their own notifications through RLS');
 select ok(has_table_privilege('authenticated', 'public.notification_preferences', 'update'), 'authenticated users can manage preferences through RLS');
 select ok(has_table_privilege('authenticated', 'public.push_subscriptions', 'delete'), 'authenticated users can remove their browser subscription through RLS');
+select ok(has_column('public', 'push_subscriptions', 'origin'), 'push subscriptions record the service-worker origin');
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -49,10 +50,10 @@ values
   ('41000000-0000-0000-0000-000000000001', 'America/Detroit'),
   ('42000000-0000-0000-0000-000000000002', 'UTC');
 
-insert into public.push_subscriptions (id, user_id, endpoint, p256dh, auth)
+insert into public.push_subscriptions (id, user_id, endpoint, p256dh, auth, origin)
 values
-  ('45000000-0000-0000-0000-000000000001', '41000000-0000-0000-0000-000000000001', 'https://push.example.test/a', 'key-a', 'auth-a'),
-  ('45000000-0000-0000-0000-000000000002', '42000000-0000-0000-0000-000000000002', 'https://push.example.test/b', 'key-b', 'auth-b');
+  ('45000000-0000-0000-0000-000000000001', '41000000-0000-0000-0000-000000000001', 'https://push.example.test/a', 'key-a', 'auth-a', 'https://finalia.app'),
+  ('45000000-0000-0000-0000-000000000002', '42000000-0000-0000-0000-000000000002', 'https://push.example.test/b', 'key-b', 'auth-b', 'https://finalia.app');
 
 select set_config(
   'request.jwt.claims',

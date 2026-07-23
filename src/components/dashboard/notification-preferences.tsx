@@ -4,14 +4,12 @@ import { BellRing, Loader2, Mail, MonitorUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+  ensurePushSubscription,
+  getPushRegistration,
+  supportsBrowserPush,
+} from "@/lib/notifications/browser-push";
 import type { NotificationPreferences } from "@/types/database";
-
-function base64Key(value: string) {
-  const padding = "=".repeat((4 - value.length % 4) % 4);
-  const base64 = (value + padding).replaceAll("-", "+").replaceAll("_", "/");
-  const raw = window.atob(base64);
-  return Uint8Array.from([...raw].map((character) => character.charCodeAt(0)));
-}
 
 const categoryFields = [
   ["invites_enabled", "Invites"],
@@ -25,8 +23,10 @@ export function NotificationPreferencesForm() {
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
   const [saving, setSaving] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
+  const [devicePushEnabled, setDevicePushEnabled] = useState(false);
   const [testBusy, setTestBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const preferenceUserId = preferences?.user_id;
 
   useEffect(() => {
     void fetch("/api/notifications/preferences", { cache: "no-store" })
@@ -42,6 +42,23 @@ export function NotificationPreferencesForm() {
         } else if (data.error) setMessage(data.error);
       });
   }, []);
+
+  useEffect(() => {
+    if (!preferenceUserId || !supportsBrowserPush()) return;
+    let cancelled = false;
+    void navigator.serviceWorker
+      .getRegistration("/")
+      .then((registration) => registration?.pushManager.getSubscription())
+      .then((subscription) => {
+        if (!cancelled) setDevicePushEnabled(Boolean(subscription));
+      })
+      .catch(() => {
+        if (!cancelled) setDevicePushEnabled(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [preferenceUserId]);
 
   async function save(next = preferences) {
     if (!next) return;
@@ -63,29 +80,39 @@ export function NotificationPreferencesForm() {
     setPushBusy(true);
     setMessage(null);
     try {
-      if (!("serviceWorker" in navigator) || !("PushManager" in window)) throw new Error("This browser does not support push notifications.");
-      const registration = await navigator.serviceWorker.register("/push-sw.js");
+      if (!supportsBrowserPush()) throw new Error("This browser does not support push notifications.");
+      const registration = await getPushRegistration();
       const existing = await registration.pushManager.getSubscription();
-      if (preferences.push_enabled) {
+      if (devicePushEnabled) {
         if (existing) {
-          await fetch("/api/notifications/push-subscriptions", {
+          const response = await fetch("/api/notifications/push-subscriptions", {
             method: "DELETE", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ endpoint: existing.endpoint }),
           });
+          const data = await response.json() as {
+            error?: string;
+            pushEnabled?: boolean;
+          };
+          if (!response.ok) {
+            throw new Error(data.error ?? "Could not remove the browser subscription.");
+          }
           await existing.unsubscribe();
+          const next = {
+            ...preferences,
+            push_enabled: data.pushEnabled ?? false,
+          };
+          setPreferences(next);
+        } else {
+          setPreferences({ ...preferences, push_enabled: false });
         }
-        const next = { ...preferences, push_enabled: false };
-        setPreferences(next);
+        setDevicePushEnabled(false);
         setMessage("Browser push turned off.");
       } else {
         const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
         if (!publicKey) throw new Error("Browser push is not configured on this deployment yet.");
         const permission = await Notification.requestPermission();
         if (permission !== "granted") throw new Error("Browser notification permission was not granted.");
-        const subscription = existing ?? await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: base64Key(publicKey),
-        });
+        const subscription = existing ?? await ensurePushSubscription(publicKey);
         const response = await fetch("/api/notifications/push-subscriptions", {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify(subscription.toJSON()),
@@ -93,6 +120,7 @@ export function NotificationPreferencesForm() {
         if (!response.ok) throw new Error("Could not save the browser subscription.");
         const next = { ...preferences, push_enabled: true };
         setPreferences(next);
+        setDevicePushEnabled(true);
         setMessage("Browser push turned on for this device.");
       }
     } catch (error) {
@@ -152,7 +180,7 @@ export function NotificationPreferencesForm() {
         </div>
         <Button type="button" variant="outline" size="sm" onClick={() => void togglePush()} disabled={pushBusy}>
           {pushBusy ? <Loader2 className="size-3.5 animate-spin" /> : null}
-          {preferences.push_enabled ? "Turn off" : "Turn on"}
+          {devicePushEnabled ? "Turn off on this device" : "Turn on"}
         </Button>
       </div>
 
